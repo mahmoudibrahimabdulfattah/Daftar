@@ -14,6 +14,7 @@ val daftarModules: List<Module> = listOf(
     networkModule,
     datastoreModule,
     dataModule,
+    domainModule,
     platformServicesModule,
 )
 
