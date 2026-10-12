@@ -79,14 +79,32 @@ internal class DefaultVaultSecurity(
             is Outcome.Failure -> return Outcome.Failure(ready.error)
             is Outcome.Success -> Unit
         }
+        // Any lock or unlock before the envelope commit supersedes this change, so the commit checks this token again.
+        val generation = sessionMutex.withLock { sessionGeneration }
         return coordinator.attempt(
             verify = { record -> verifyPin(currentPin, record) },
             finish = { dek ->
                 try {
-                    rewrap(dek, newPin)
+                    rewrap(dek, newPin, generation)
                 } finally {
                     dek.wipe()
                 }
+            },
+        )
+    }
+
+    override suspend fun verifyCurrentPin(pin: SecretBytes): Outcome<Unit, SecurityError> {
+        if (!pin.use { PinNormalizer.isValidDigits(it) }) return Outcome.Failure(SecurityError.InvalidPinFormat)
+        when (val ready = Libsodium.ensureReady()) {
+            is Outcome.Failure -> return Outcome.Failure(ready.error)
+            is Outcome.Success -> Unit
+        }
+        return coordinator.attempt(
+            verify = { record -> verifyPin(pin, record) },
+            // The verified key is discarded at once: verification never publishes a lease.
+            finish = { dek ->
+                dek.wipe()
+                Outcome.Success(Unit)
             },
         )
     }
@@ -371,7 +389,7 @@ internal class DefaultVaultSecurity(
     }
 
     /** Commits a new envelope around the existing DEK. The old envelope stays if anything before the replace fails. */
-    private suspend fun rewrap(dek: SecretBytes, newPin: SecretBytes): Outcome<Unit, SecurityError> {
+    private suspend fun rewrap(dek: SecretBytes, newPin: SecretBytes, generation: Long): Outcome<Unit, SecurityError> {
         val current = when (val opened = openEnvelope()) {
             is Outcome.Failure -> return Outcome.Failure(opened.error)
             is Outcome.Success -> opened.data
@@ -395,9 +413,16 @@ internal class DefaultVaultSecurity(
             is Outcome.Failure -> return Outcome.Failure(result.error)
             is Outcome.Success -> result.data
         }
-        return when (val replaced = records.replace(sealed)) {
-            is Outcome.Failure -> replaced
-            is Outcome.Success -> Outcome.Success(Unit)
+        // The session is checked and the envelope replaced under one lock, so a lock cannot slip in between them. A
+        // session that was locked during the KDF leaves the previous envelope in place.
+        return sessionMutex.withLock {
+            if (sessionGeneration != generation) {
+                return@withLock Outcome.Failure(SecurityError.SessionSuperseded)
+            }
+            when (val replaced = records.replace(sealed)) {
+                is Outcome.Failure -> replaced
+                is Outcome.Success -> Outcome.Success(Unit)
+            }
         }
     }
 

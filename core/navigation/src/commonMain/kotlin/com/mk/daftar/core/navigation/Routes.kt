@@ -19,6 +19,18 @@ data object JournalRoute : NavKey
 @Serializable
 data object SettingsRoute : NavKey
 
+/** Theme, language and the inactivity timeout, reached from Settings. Choices apply at once and persist. */
+@Serializable
+data object PreferencesRoute : NavKey
+
+/** Changing the Daftar PIN. Its stages are internal state of the screen, never route arguments. */
+@Serializable
+data object ChangePinRoute : NavKey
+
+/** The app's version, the bundled font licenses and their source links. */
+@Serializable
+data object AboutRoute : NavKey
+
 /** The bank list inside Assets. It is the list pane when the window is wide enough for two panes. */
 @Serializable
 data object BanksRoute : NavKey

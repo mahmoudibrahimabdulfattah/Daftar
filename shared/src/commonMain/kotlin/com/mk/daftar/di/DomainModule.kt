@@ -28,13 +28,17 @@ import com.mk.daftar.core.domain.usecase.ObserveGoldHoldingsUseCase
 import com.mk.daftar.core.domain.usecase.ObservePersonalNoteUseCase
 import com.mk.daftar.core.domain.usecase.ObservePersonalNotesUseCase
 import com.mk.daftar.core.domain.usecase.ObservePortfolioValuationUseCase
+import com.mk.daftar.core.domain.usecase.ObservePreferencesUseCase
 import com.mk.daftar.core.domain.usecase.ObserveQuoteSnapshotUseCase
 import com.mk.daftar.core.domain.usecase.ObserveSelectedQuotesUseCase
 import com.mk.daftar.core.domain.usecase.ObserveZakatPaymentUseCase
 import com.mk.daftar.core.domain.usecase.ObserveZakatPaymentsUseCase
 import com.mk.daftar.core.domain.usecase.RefreshPricesUseCase
 import com.mk.daftar.core.domain.usecase.RemoveOverrideUseCase
+import com.mk.daftar.core.domain.usecase.SetInactivityTimeoutUseCase
+import com.mk.daftar.core.domain.usecase.SetLanguageUseCase
 import com.mk.daftar.core.domain.usecase.SetManualQuoteUseCase
+import com.mk.daftar.core.domain.usecase.SetThemeModeUseCase
 import com.mk.daftar.core.domain.usecase.UpdateBankAccountUseCase
 import com.mk.daftar.core.domain.usecase.UpdateBankUseCase
 import com.mk.daftar.core.domain.usecase.UpdateCashBalanceUseCase
@@ -86,4 +90,8 @@ val domainModule = module {
     factoryOf(::ObserveSelectedQuotesUseCase)
     factoryOf(::ObserveQuoteSnapshotUseCase)
     factoryOf(::ObservePortfolioValuationUseCase)
+    factoryOf(::ObservePreferencesUseCase)
+    factoryOf(::SetThemeModeUseCase)
+    factoryOf(::SetLanguageUseCase)
+    factoryOf(::SetInactivityTimeoutUseCase)
 }

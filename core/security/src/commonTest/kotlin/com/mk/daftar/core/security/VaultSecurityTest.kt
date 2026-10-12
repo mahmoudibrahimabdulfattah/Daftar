@@ -445,4 +445,46 @@ class VaultSecurityTest {
         assertEquals(KdfPolicy.MEMORY_KIB, parsed.header.kdf.memoryKiB)
         assertEquals(1L, parsed.header.generation)
     }
+
+    @Test
+    fun verifyingTheCurrentPinResetsTheCountWithoutPublishingALease() = runTest {
+        val harness = VaultHarness()
+        val vault = harness.vault()
+        vault.create(pin("123456")).requireSuccess()
+        vault.lock()
+        assertEquals(SecurityError.AuthenticationFailed, vault.verifyCurrentPin(pin("000000")).requireFailure())
+        assertEquals(1, harness.storedRecord().failures)
+        vault.verifyCurrentPin(pin("123456")).requireSuccess()
+        assertEquals(0, harness.storedRecord().failures)
+        assertEquals(SecurityStatus.Locked(null), vault.status())
+    }
+
+    @Test
+    fun verifyingTheCurrentPinLeavesAnOpenSessionOpen() = runTest {
+        val harness = VaultHarness()
+        val vault = harness.vault()
+        vault.create(pin("123456")).requireSuccess()
+        vault.verifyCurrentPin(pin("123456")).requireSuccess()
+        assertEquals(SecurityStatus.Unlocked, vault.status())
+    }
+
+    @Test
+    fun aLockBeforeThePinChangeCommitsKeepsTheOldEnvelope() = runTest {
+        val harness = VaultHarness()
+        val vault = harness.created()
+        val before = harness.records.record?.copyOf()
+        // Call one is the current-PIN check and call two is the rewrap's KDF, which is held until the lock lands.
+        val base = harness.kdf.derivations
+        val arrived = CompletableDeferred<Unit>()
+        val release = CompletableDeferred<Unit>()
+        harness.kdf.arrivals[base + 2] = arrived
+        harness.kdf.holds[base + 2] = release
+        val pending = async { vault.changePin(pin("123456"), pin("654321")) }
+        arrived.await()
+        vault.lock()
+        release.complete(Unit)
+        assertEquals(SecurityError.SessionSuperseded, pending.await().requireFailure())
+        assertContentEquals(before, harness.records.record)
+        vault.unlock(pin("123456")).requireSuccess()
+    }
 }

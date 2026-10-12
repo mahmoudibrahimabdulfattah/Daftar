@@ -12,7 +12,10 @@ import com.mk.daftar.core.ui.presentation.ValuesVisibility
 import com.mk.daftar.feature.auth.AuthDraftRegistry
 import com.mk.daftar.feature.auth.AuthGateway
 import com.mk.daftar.feature.backup.restore.RestoreDraftRegistry
+import com.mk.daftar.feature.settings.SettingsDraftRegistry
+import com.mk.daftar.feature.settings.SettingsSecurityGateway
 import com.mk.daftar.gate.VaultAuthGateway
+import com.mk.daftar.gate.VaultSettingsSecurityGateway
 import com.mk.daftar.lifecycle.InactivityMonitor
 import com.mk.daftar.lifecycle.VaultLifecycleCoordinator
 import com.mk.daftar.refresh.SessionPriceRefresh
@@ -35,6 +38,14 @@ val platformServicesModule: Module = module {
             prompter = get<BiometricPrompter>(),
         )
     }
+    single<SettingsSecurityGateway> {
+        VaultSettingsSecurityGateway(
+            security = get<VaultSecurity>(),
+            authenticator = get<VaultAuthenticator>(),
+            session = get<VaultSession>(),
+            prompter = get<BiometricPrompter>(),
+        )
+    }
     single {
         VaultLifecycleCoordinator(
             session = get<VaultSession>(),
@@ -44,6 +55,7 @@ val platformServicesModule: Module = module {
             onPrivacyObscured = {
                 get<AuthDraftRegistry>().invalidateAll()
                 get<RestoreDraftRegistry>().invalidateAll()
+                get<SettingsDraftRegistry>().invalidateAll()
             },
         )
     }
