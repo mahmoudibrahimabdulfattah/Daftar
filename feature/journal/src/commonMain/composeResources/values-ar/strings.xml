@@ -1,5 +1,102 @@
 <?xml version="1.0" encoding="utf-8"?>
 <resources>
-    <string name="journal_title">اليومية</string>
-    <string name="journal_message">تظهر هنا الملاحظات والزكاة والسجلات الشخصية التي تحتفظ بها لنفسك.</string>
+    <string name="journal_title">السجل</string>
+    <string name="journal_heading">سجلك الشخصي</string>
+    <string name="journal_zakat">الزكاة</string>
+    <string name="journal_notes">الملاحظات</string>
+    <string name="journal_zakat_last">آخر دفعة · %1$s</string>
+    <string name="journal_zakat_none">لا دفعات مسجّلة</string>
+    <plurals name="journal_notes_count">
+        <item quantity="zero">لا ملاحظات</item>
+        <item quantity="one">ملاحظة واحدة</item>
+        <item quantity="two">ملاحظتان</item>
+        <item quantity="few">%1$d ملاحظات</item>
+        <item quantity="many">%1$d ملاحظة</item>
+        <item quantity="other">%1$d ملاحظة</item>
+    </plurals>
+    <string name="journal_ledger">السجل لا يعدّل أرصدة الأصول. سجّل الرصيد الجديد بنفسك بعد أي دفع.</string>
+    <string name="journal_hidden_note">ملاحظة مخفية</string>
+    <string name="journal_hidden_body">النص مخفي. أظهر القيم لقراءته.</string>
+    <string name="journal_load_failed_title">تعذّر تحميل السجل</string>
+    <string name="journal_load_failed_message">بياناتك ما زالت محفوظة. ارجع وافتح السجل مرة أخرى.</string>
+    <string-array name="journal_months">
+        <item>يناير</item>
+        <item>فبراير</item>
+        <item>مارس</item>
+        <item>أبريل</item>
+        <item>مايو</item>
+        <item>يونيو</item>
+        <item>يوليو</item>
+        <item>أغسطس</item>
+        <item>سبتمبر</item>
+        <item>أكتوبر</item>
+        <item>نوفمبر</item>
+        <item>ديسمبر</item>
+    </string-array>
+    <string name="journal_reveal_message">القيم مخفية. أظهرها لفتح هذا السجل.</string>
+    <string name="journal_reveal_action">إظهار القيم</string>
+    <string name="journal_cancel">إلغاء</string>
+    <string name="journal_select_date">اختيار</string>
+    <string name="journal_loading">جارٍ التحميل</string>
+    <string name="journal_missing_title">هذا السجل لم يعد موجودًا</string>
+    <string name="journal_missing_message">ربما حُذف من مكان آخر. ارجع إلى القائمة.</string>
+    <string name="journal_retry">إعادة المحاولة</string>
+    <string name="journal_back_to_editing">العودة للتعديل</string>
+    <string name="journal_input_kept">مدخلاتك ما زالت هنا</string>
+    <string name="journal_save_failed_title">لم يُحفظ التعديل</string>
+    <string name="journal_save_failed_message">تعذّر الحفظ. أعد المحاولة؛ بياناتك السابقة لم تتغيّر.</string>
+    <string name="journal_save_storage_message">المساحة غير كافية. حرّر مساحة ثم أعد المحاولة؛ بياناتك السابقة لم تتغيّر.</string>
+    <string name="journal_save_uncertain_message">لم نتمكن من تأكيد النتيجة لأن الدفتر أُغلق أثناء الحفظ. افتح الدفتر للتحقق من السجل.</string>
+    <string name="journal_delete_failed_message">تعذّر الحذف. السجل ما زال محفوظًا.</string>
+    <string name="journal_conflict_message">تغيّر هذا السجل. أعد تحميله قبل الحفظ.</string>
+    <string name="journal_reload">إعادة التحميل</string>
+    <string name="journal_confirm_delete_title">حذف هذا السجل؟</string>
+    <string name="journal_confirm_delete_message">لن يظهر في دفتر بعد الحذف. لا يمكن التراجع؛ يمكنك استعادته فقط من نسخة احتياطية أقدم.</string>
+    <string name="journal_confirm_delete_cancel">إلغاء والرجوع</string>
+    <string name="journal_confirm_delete_action">حذف السجل</string>
+    <string name="journal_confirm_discard_title">تجاهل التغييرات؟</string>
+    <string name="journal_confirm_discard_message">لديك تعديلات لم تُحفظ. استمر في التحرير أو تجاهلها للعودة إلى القائمة.</string>
+    <string name="journal_confirm_keep">متابعة التحرير</string>
+    <string name="journal_confirm_discard_action">تجاهل التغييرات</string>
+    <string name="zakat_title">سجل الزكاة</string>
+    <string name="zakat_heading">ما أخرجته من زكاة</string>
+    <string name="zakat_recording_only">تسجيل فقط، بدون حساب تلقائي</string>
+    <string name="zakat_year_recorded">مسجّل في %1$d</string>
+    <string name="zakat_add">إضافة دفعة</string>
+    <string name="zakat_empty_title">لا دفعات مسجّلة</string>
+    <string name="zakat_empty_message">عندما تدفع الزكاة، سجّل التاريخ والمبلغ هنا.</string>
+    <string name="zakat_add_title">إضافة زكاة</string>
+    <string name="zakat_edit_title">تعديل دفعة</string>
+    <string name="zakat_date">التاريخ</string>
+    <string name="zakat_date_pick">اختيار التاريخ</string>
+    <string name="zakat_amount">المبلغ · ج.م</string>
+    <string name="zakat_note">ملاحظة · اختياري</string>
+    <string name="zakat_record">تسجيل الدفعة</string>
+    <string name="zakat_save">حفظ التعديل</string>
+    <string name="zakat_delete">حذف الدفعة</string>
+    <string name="zakat_notice">هذه الدفعة لا تُخصم من أرصدة البنوك أو النقد تلقائيًا.</string>
+    <string name="zakat_error_date_required">أدخل التاريخ.</string>
+    <string name="zakat_error_date_invalid">أدخل تاريخًا صحيحًا، مثل 2026-03-20.</string>
+    <string name="zakat_error_date_future">لا يمكن أن يكون تاريخ الدفع في المستقبل.</string>
+    <string name="zakat_error_amount_required">أدخل المبلغ.</string>
+    <string name="zakat_error_amount_invalid">أدخل مبلغًا أكبر من صفر، بحد أقصى منزلتين عشريتين.</string>
+    <string name="zakat_error_note_long">الملاحظة طويلة جدًا. الحد الأقصى 4,000 حرف.</string>
+    <string name="notes_title">الملاحظات</string>
+    <string name="notes_heading">حتى لا تنسى</string>
+    <string name="notes_new">ملاحظة جديدة</string>
+    <string name="notes_context">المبالغ هنا لا تدخل في قيمة الأصول.</string>
+    <string name="notes_empty_title">مساحة لما تريد تذكّره</string>
+    <string name="notes_empty_message">ملاحظة عن سلفة أو مكان فاتورة.</string>
+    <string name="notes_updated">آخر تحديث · %1$s</string>
+    <string name="note_add_title">إضافة ملاحظة</string>
+    <string name="note_edit_title">تعديل ملاحظة</string>
+    <string name="note_title_label">العنوان</string>
+    <string name="note_body_label">الملاحظة</string>
+    <string name="note_save">حفظ</string>
+    <string name="note_delete">حذف الملاحظة</string>
+    <string name="note_private">نص خاص محفوظ داخل قاعدة البيانات المشفّرة.</string>
+    <string name="note_error_title_required">أدخل عنوانًا.</string>
+    <string name="note_error_title_long">العنوان طويل جدًا. الحد الأقصى 120 حرفًا.</string>
+    <string name="note_error_body_required">أدخل نص الملاحظة.</string>
+    <string name="note_error_body_long">نص الملاحظة طويل جدًا. الحد الأقصى 10,000 حرف.</string>
 </resources>

@@ -11,7 +11,13 @@ import com.mk.daftar.core.navigation.BankDetailRoute
 import com.mk.daftar.core.navigation.BanksRoute
 import com.mk.daftar.core.navigation.HomeRoute
 import com.mk.daftar.core.navigation.JournalRoute
+import com.mk.daftar.core.navigation.NoteAddRoute
+import com.mk.daftar.core.navigation.NoteEditRoute
+import com.mk.daftar.core.navigation.NotesRoute
 import com.mk.daftar.core.navigation.SettingsRoute
+import com.mk.daftar.core.navigation.ZakatAddRoute
+import com.mk.daftar.core.navigation.ZakatEditRoute
+import com.mk.daftar.core.navigation.ZakatRoute
 import com.mk.daftar.feature.assets.di.assetsModule
 import com.mk.daftar.feature.home.di.homeModule
 import com.mk.daftar.feature.journal.di.journalModule
@@ -54,6 +60,12 @@ class ShellEntriesTest {
             SettingsRoute,
             BanksRoute,
             BankDetailRoute("sample-a"),
+            ZakatRoute,
+            ZakatAddRoute,
+            ZakatEditRoute("sample-payment"),
+            NotesRoute,
+            NoteAddRoute,
+            NoteEditRoute("sample-note"),
         )
         routes.forEach { route ->
             assertNotNull(provider(route), "$route resolves to an entry")

@@ -1,5 +1,98 @@
 <?xml version="1.0" encoding="utf-8"?>
 <resources>
     <string name="journal_title">Journal</string>
-    <string name="journal_message">Notes, zakat and personal records you keep for yourself appear here.</string>
+    <string name="journal_heading">Your personal journal</string>
+    <string name="journal_zakat">Zakat</string>
+    <string name="journal_notes">Notes</string>
+    <string name="journal_zakat_last">Last payment · %1$s</string>
+    <string name="journal_zakat_none">No payments recorded</string>
+    <plurals name="journal_notes_count">
+        <item quantity="one">%1$d note</item>
+        <item quantity="other">%1$d notes</item>
+    </plurals>
+    <string name="journal_ledger">The journal does not change asset balances. Update your balance yourself after a payment.</string>
+    <string name="journal_hidden_note">Hidden note</string>
+    <string name="journal_hidden_body">Text hidden. Show values to read it.</string>
+    <string name="journal_load_failed_title">Records could not be loaded</string>
+    <string name="journal_load_failed_message">Your records are still saved. Return and open the journal again.</string>
+    <string-array name="journal_months">
+        <item>January</item>
+        <item>February</item>
+        <item>March</item>
+        <item>April</item>
+        <item>May</item>
+        <item>June</item>
+        <item>July</item>
+        <item>August</item>
+        <item>September</item>
+        <item>October</item>
+        <item>November</item>
+        <item>December</item>
+    </string-array>
+    <string name="journal_reveal_message">Values are hidden. Show them to open this record.</string>
+    <string name="journal_reveal_action">Show values</string>
+    <string name="journal_cancel">Cancel</string>
+    <string name="journal_select_date">Select</string>
+    <string name="journal_loading">Loading</string>
+    <string name="journal_missing_title">This record no longer exists</string>
+    <string name="journal_missing_message">It may have been deleted elsewhere. Return to the list.</string>
+    <string name="journal_retry">Retry</string>
+    <string name="journal_back_to_editing">Back to editing</string>
+    <string name="journal_input_kept">Your input is still here</string>
+    <string name="journal_save_failed_title">Changes were not saved</string>
+    <string name="journal_save_failed_message">Saving failed. Retry; your previous records are unchanged.</string>
+    <string name="journal_save_storage_message">Not enough storage. Free some space and retry; your previous records are unchanged.</string>
+    <string name="journal_save_uncertain_message">The result is unknown because the notebook locked during saving. Unlock Daftar to check the record.</string>
+    <string name="journal_delete_failed_message">Deletion failed. The record is still saved.</string>
+    <string name="journal_conflict_message">This record changed. Reload it before saving.</string>
+    <string name="journal_reload">Reload</string>
+    <string name="journal_confirm_delete_title">Delete this record?</string>
+    <string name="journal_confirm_delete_message">This record will be removed from Daftar. This cannot be undone; recovery requires an earlier backup.</string>
+    <string name="journal_confirm_delete_cancel">Cancel &amp; go back</string>
+    <string name="journal_confirm_delete_action">Delete record</string>
+    <string name="journal_confirm_discard_title">Discard changes?</string>
+    <string name="journal_confirm_discard_message">You have unsaved changes. Keep editing or discard them to return to the list.</string>
+    <string name="journal_confirm_keep">Keep editing</string>
+    <string name="journal_confirm_discard_action">Discard changes</string>
+    <string name="zakat_title">Zakat log</string>
+    <string name="zakat_heading">Zakat you have paid</string>
+    <string name="zakat_recording_only">Recording only, no automatic calculation</string>
+    <string name="zakat_year_recorded">Recorded in %1$d</string>
+    <string name="zakat_add">Add payment</string>
+    <string name="zakat_empty_title">No payments recorded</string>
+    <string name="zakat_empty_message">When you pay zakat, record the date and amount here.</string>
+    <string name="zakat_add_title">Add zakat payment</string>
+    <string name="zakat_edit_title">Edit payment</string>
+    <string name="zakat_date">Date</string>
+    <string name="zakat_date_pick">Choose date</string>
+    <string name="zakat_amount">Amount · EGP</string>
+    <string name="zakat_note">Note · optional</string>
+    <string name="zakat_record">Record payment</string>
+    <string name="zakat_save">Save changes</string>
+    <string name="zakat_delete">Delete payment</string>
+    <string name="zakat_notice">This payment is not automatically deducted from bank or cash balances.</string>
+    <string name="zakat_error_date_required">Enter the date.</string>
+    <string name="zakat_error_date_invalid">Enter a real date, such as 2026-03-20.</string>
+    <string name="zakat_error_date_future">Payment date cannot be in the future.</string>
+    <string name="zakat_error_amount_required">Enter the amount.</string>
+    <string name="zakat_error_amount_invalid">Enter an amount greater than zero, with at most two decimal places.</string>
+    <string name="zakat_error_note_long">The note is too long. Use 4,000 characters at most.</string>
+    <string name="notes_title">Notes</string>
+    <string name="notes_heading">For things to remember</string>
+    <string name="notes_new">New note</string>
+    <string name="notes_context">Amounts here do not contribute to asset value.</string>
+    <string name="notes_empty_title">Room for things to remember</string>
+    <string name="notes_empty_message">A note about a loan or where you keep a receipt.</string>
+    <string name="notes_updated">Updated %1$s</string>
+    <string name="note_add_title">Add note</string>
+    <string name="note_edit_title">Edit note</string>
+    <string name="note_title_label">Title</string>
+    <string name="note_body_label">Note</string>
+    <string name="note_save">Save</string>
+    <string name="note_delete">Delete note</string>
+    <string name="note_private">Private text stored in the encrypted database.</string>
+    <string name="note_error_title_required">Enter a title.</string>
+    <string name="note_error_title_long">The title is too long. Use 120 characters at most.</string>
+    <string name="note_error_body_required">Enter the note.</string>
+    <string name="note_error_body_long">The note is too long. Use 10,000 characters at most.</string>
 </resources>

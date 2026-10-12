@@ -154,6 +154,9 @@ object NumericInput {
         return match.value.toInt()
     }
 
+    /** Replaces Arabic-Indic and Persian digits with ASCII digits. Every other character is left as it is. */
+    fun normalizeDigits(raw: String): String = raw.map { digitOrSelf(it) }.joinToString("")
+
     private fun digitOrSelf(ch: Char): Char = when (ch) {
         in '٠'..'٩' -> '0' + (ch - '٠')
         in '۰'..'۹' -> '0' + (ch - '۰')

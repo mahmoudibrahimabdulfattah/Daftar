@@ -61,7 +61,8 @@ fun DaftarAmount(
     val text = buildAnnotatedString {
         append(LTR_ISOLATE)
         withStyle(SpanStyle(fontFamily = numeric)) { append(shown) }
-        append(" ")
+        // A no-break space keeps the unit beside the figure (or its mask) instead of wrapping onto its own line.
+        append("\u00A0")
         append(unit)
         append(POP_ISOLATE)
     }

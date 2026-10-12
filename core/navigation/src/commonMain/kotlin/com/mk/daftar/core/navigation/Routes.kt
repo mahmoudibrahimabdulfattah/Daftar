@@ -39,6 +39,30 @@ data object CashRoute : NavKey
 @Serializable
 data object PricesRoute : NavKey
 
+/** The zakat log inside Journal: the list of recorded payments. */
+@Serializable
+data object ZakatRoute : NavKey
+
+/** A new zakat payment. */
+@Serializable
+data object ZakatAddRoute : NavKey
+
+/** One recorded zakat payment, edited or deleted. */
+@Serializable
+data class ZakatEditRoute(val paymentId: String) : NavKey
+
+/** The personal notes list inside Journal. */
+@Serializable
+data object NotesRoute : NavKey
+
+/** A new personal note. */
+@Serializable
+data object NoteAddRoute : NavKey
+
+/** One personal note, edited or deleted. */
+@Serializable
+data class NoteEditRoute(val noteId: String) : NavKey
+
 /** The four top-level destinations, in display order. Each owns an independent back stack rooted at its key. */
 enum class TopLevelDestination(val route: NavKey) {
     HOME(HomeRoute),
