@@ -27,6 +27,18 @@ data object BanksRoute : NavKey
 @Serializable
 data class BankDetailRoute(val bankId: String) : NavKey
 
+/** Gold holdings, reached from Home and Assets. A placeholder until the gold feature phase replaces its entry. */
+@Serializable
+data object GoldRoute : NavKey
+
+/** Cash and wallet balances, reached from Home and Assets. A placeholder until the cash feature phase. */
+@Serializable
+data object CashRoute : NavKey
+
+/** Merchant quotes and their sources. A neutral placeholder entry until the prices phase replaces it. */
+@Serializable
+data object PricesRoute : NavKey
+
 /** The four top-level destinations, in display order. Each owns an independent back stack rooted at its key. */
 enum class TopLevelDestination(val route: NavKey) {
     HOME(HomeRoute),

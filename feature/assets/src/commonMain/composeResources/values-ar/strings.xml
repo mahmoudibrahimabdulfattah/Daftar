@@ -1,7 +1,27 @@
 <?xml version="1.0" encoding="utf-8"?>
 <resources>
     <string name="assets_title">الأصول</string>
-    <string name="assets_message">تُسجَّل هنا أرصدة الذهب والحسابات البنكية والنقد. تصل السجلات في تحديث لاحق.</string>
+    <string name="assets_subtitle">كل رصيد في مكانه.</string>
+    <string name="assets_note_manual">أرصدة مكتوبة يدويًا. دفتر لا يتصل بحساباتك البنكية.</string>
+    <string name="assets_hidden_note">القيم والأوزان والملاحظات مخفية. اضغط العين لإظهارها.</string>
+    <string name="assets_show_values">إظهار القيم</string>
+    <string name="assets_hide_values">إخفاء القيم</string>
+    <string name="assets_state_visible">ظاهرة</string>
+    <string name="assets_state_hidden">مخفية</string>
+    <string name="assets_masked_value">مخفي</string>
+    <string name="assets_no_records">لا توجد سجلات</string>
+    <string name="assets_incomplete">التقييم غير مكتمل. الفئات التي ينقصها سعر تظهر شرطة.</string>
+    <string name="assets_failed">تعذّر قراءة سجلاتك. لم يتغيّر شيء.</string>
+    <string name="assets_fx_attribution">Rates By Exchange Rate API</string>
+    <string name="assets_gold">الذهب</string>
+    <string name="assets_banks">البنوك</string>
+    <string name="assets_cash">النقد والمحافظ</string>
+    <string name="unit_egp_short">ج.م</string>
+    <string name="assets_banks_summary">%1$s · %2$s</string>
+    <string name="gold_title">الذهب</string>
+    <string name="gold_message">تُسجَّل مقتنيات الذهب في تحديث لاحق.</string>
+    <string name="cash_title">النقد والمحافظ</string>
+    <string name="cash_message">تُسجَّل أرصدة النقد والمحافظ في تحديث لاحق.</string>
     <string name="banks_title">البنوك</string>
     <string name="banks_message">الحسابات التي تملكها في البنوك، مرتبة بالاسم.</string>
     <string name="bank_select">اختر بنكًا</string>
@@ -12,4 +32,20 @@
     <string name="bank_sample_b">بنك تجريبي ب</string>
     <string name="bank_sample_c">بنك تجريبي ج</string>
     <string name="bank_sample_unknown">بنك</string>
+    <string name="assets_holdings_one">مقتنى واحد</string>
+    <string name="assets_holdings_two">مقتنيان</string>
+    <string name="assets_holdings_few">مقتنيات</string>
+    <string name="assets_holdings_other">مقتنى</string>
+    <string name="assets_banks_count_one">بنك واحد</string>
+    <string name="assets_banks_count_two">بنكان</string>
+    <string name="assets_banks_count_few">بنوك</string>
+    <string name="assets_banks_count_other">بنكًا</string>
+    <string name="assets_accounts_count_one">حساب واحد</string>
+    <string name="assets_accounts_count_two">حسابان</string>
+    <string name="assets_accounts_count_few">حسابات</string>
+    <string name="assets_accounts_count_other">حسابًا</string>
+    <string name="assets_balances_count_one">رصيد واحد</string>
+    <string name="assets_balances_count_two">رصيدان</string>
+    <string name="assets_balances_count_few">أرصدة</string>
+    <string name="assets_balances_count_other">رصيدًا</string>
 </resources>
