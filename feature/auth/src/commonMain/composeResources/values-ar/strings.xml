@@ -63,4 +63,5 @@
         <item quantity="many">الرمز غير صحيح. حاول بعد ⁦%1$d⁩ ثانية.</item>
         <item quantity="other">الرمز غير صحيح. حاول بعد ⁦%1$d⁩ ثانية.</item>
     </plurals>
+    <string name="auth_restore_cloud">الاستعادة من النسخ السحابية</string>
 </resources>

@@ -121,4 +121,17 @@
     <string name="restore_failed_choose_other">اختيار ملف آخر</string>
     <string name="restore_close">إغلاق</string>
     <string name="restore_erase_digit">حذف رقم</string>
+    <string name="cloud_upload_retention">نحتفظ بآخر ثلاث نسخ سحابية. رفع نسخة جديدة يستبدل الأقدم.</string>
+    <string name="cloud_upload_signin_intro">سجّل الدخول للرفع. تظل كلمة مرور النسخة مطلوبة للاستعادة.</string>
+    <string name="cloud_upload_preparing">جارٍ تجهيز النسخة…</string>
+    <string name="cloud_upload_committing">جارٍ الرفع…</string>
+    <string name="cloud_upload_uploaded">تم رفع النسخة</string>
+    <string name="cloud_upload_failed">فشل الرفع</string>
+    <string name="cloud_upload_oversize">تتجاوز هذه النسخة الحد السحابي البالغ 768 KiB. صدّر ملفًا مشفّرًا بدلًا من ذلك.</string>
+    <string name="cloud_upload_quota">تم بلوغ حد الاستخدام السحابي. حاول لاحقًا أو صدّر ملفًا مشفّرًا.</string>
+    <string name="cloud_upload_offline">لا يوجد اتصال. بيانات جهازك لم تتغير.</string>
+    <string name="cloud_upload_changed">تغيّرت هذه النسخة. حدّث القائمة.</string>
+    <string name="cloud_upload_unknown">ربما رُفعت النسخة أو لم تُرفع. حدّث القائمة السحابية قبل المحاولة مرة أخرى.</string>
+    <string name="cloud_sign_in_google">المتابعة باستخدام Google</string>
+    <string name="cloud_sign_in_apple">المتابعة باستخدام Apple</string>
 </resources>

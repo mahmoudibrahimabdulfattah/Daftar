@@ -10,6 +10,9 @@ encrypted on the device behind an app-specific PIN. Arabic (RTL) is the primary 
   squash-merge into `master`, delete the branch locally and on the remote, pull `master`, then start the next phase.
 - Commits and PRs never mention AI tools or assistants and carry no `Co-authored-by` trailers.
 - Never commit real balances, keystores, `keystore.properties`, signing passwords or Firebase config.
+- Never commit `androidApp/google-services.json` or `iosApp/iosApp/GoogleService-Info.plist`. Firebase config is
+  ignored, variant-specific, and installed locally or by CI from a secret. Without it the build succeeds and cloud
+  backups are unavailable.
 
 ## Verify before every PR
 
@@ -68,6 +71,10 @@ mapping (`androidApp/build/outputs/mapping/release`), not a package-wide keep.
 - The backup password is separate from the PIN and must be at least 12 characters.
 - Corrupt, truncated or wrong-password files fail authentication and are rejected; the header is authenticated.
 - Recovery limits: a lost backup password or a forgotten PIN with no backup means the data cannot be recovered.
+- Optional cloud backups (Android only, Google sign-in) store the same `.dftar` file in Firestore on the Spark plan:
+  three fixed slots, a 768 KiB ciphertext cap and no Storage, Functions, Analytics or Crashlytics. Sign-in never
+  unlocks the vault, and restoring still requires the backup password. Local OS backup stays disabled.
+  The rules and runbook live in `docs/firebase`; deploy them only with `firebase deploy --only firestore`.
 
 ## Design system (`core:designsystem`)
 

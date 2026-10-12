@@ -170,6 +170,9 @@ sealed interface AuthIntent : UiIntent {
      */
     data object OpenRestore : AuthIntent
 
+    /** Opens the cloud recovery screen: sign in, choose a stored version, and download it to restore. */
+    data object OpenCloudRestore : AuthIntent
+
     /** Background, inactivity, developer entry: drop every draft now and cancel work that has not finished. */
     data object PrivacyInvalidated : AuthIntent
 }

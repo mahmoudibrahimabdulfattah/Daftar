@@ -6,6 +6,9 @@ kotlin {
     sourceSets {
         commonMain.dependencies {
             implementation(projects.core.backup)
+            implementation(projects.core.account)
+            implementation(projects.core.cloud)
+            implementation(projects.feature.cloud)
             implementation(projects.core.designsystem)
             implementation(projects.core.domain)
             implementation(projects.core.data)

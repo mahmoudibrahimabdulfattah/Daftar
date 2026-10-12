@@ -73,6 +73,7 @@ class AuthViewModel(
             AuthIntent.Recheck -> refreshStatus()
             AuthIntent.PrivacyInvalidated -> invalidate()
             AuthIntent.OpenRestore -> Unit
+            AuthIntent.OpenCloudRestore -> Unit
         }
     }
 

@@ -33,6 +33,10 @@ androidxBiometric = "1.1.0"
 androidxTestRunner = "1.6.1"
 androidxTestExtJunit = "1.2.1"
 junit = "4.13.2"
+firebaseBom = "34.19.0"
+credentials = "1.6.0"
+googleId = "1.2.1"
+googleServices = "4.5.0"
 
 android-compileSdk = "37"
 android-targetSdk = "36"
@@ -93,6 +97,15 @@ androidx-sqlite-bundled = { module = "androidx.sqlite:sqlite-bundled", version.r
 sqlcipher-android = { module = "net.zetetic:sqlcipher-android", version.ref = "sqlcipher" }
 androidx-datastore-preferences-core = { module = "androidx.datastore:datastore-preferences-core", version.ref = "datastore" }
 
+firebase-bom = { module = "com.google.firebase:firebase-bom", version.ref = "firebaseBom" }
+firebase-auth = { module = "com.google.firebase:firebase-auth" }
+firebase-firestore = { module = "com.google.firebase:firebase-firestore" }
+firebase-appcheck-playintegrity = { module = "com.google.firebase:firebase-appcheck-playintegrity" }
+firebase-appcheck-debug = { module = "com.google.firebase:firebase-appcheck-debug" }
+androidx-credentials = { module = "androidx.credentials:credentials", version.ref = "credentials" }
+androidx-credentials-play-services-auth = { module = "androidx.credentials:credentials-play-services-auth", version.ref = "credentials" }
+googleid = { module = "com.google.android.libraries.identity.googleid:googleid", version.ref = "googleId" }
+
 turbine = { module = "app.cash.turbine:turbine", version.ref = "turbine" }
 
 koin-bom = { module = "io.insert-koin:koin-bom", version.ref = "koin" }
@@ -120,3 +133,4 @@ compose-compiler = { id = "org.jetbrains.kotlin.plugin.compose", version.ref = "
 ksp = { id = "com.google.devtools.ksp", version.ref = "ksp" }
 room = { id = "androidx.room", version.ref = "room" }
 spotless = { id = "com.diffplug.spotless", version.ref = "spotless" }
+google-services = { id = "com.google.gms.google-services", version.ref = "googleServices" }

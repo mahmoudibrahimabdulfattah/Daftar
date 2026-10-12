@@ -100,4 +100,7 @@
     <string name="about_source_alexandria">Alexandria project</string>
     <string name="about_source_rubik">Rubik project</string>
     <string name="about_local">Local only · no sync</string>
+    <string name="settings_cloud_title">Cloud backups</string>
+    <string name="settings_cloud_subtitle">Google, optional, encrypted</string>
+    <string name="settings_cloud_action">Open</string>
 </resources>

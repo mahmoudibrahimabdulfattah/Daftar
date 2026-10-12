@@ -119,6 +119,14 @@ data class ManualQuoteRoute(val quoteKey: String? = null) : NavKey
 @Serializable
 data object BackupExportRoute : NavKey
 
+/** Cloud backups: sign-in, the three stored versions and deletion. Reached from Settings and never a top-level tab. */
+@Serializable
+data object CloudRoute : NavKey
+
+/** The cloud upload form: sign-in when needed, then the backup password and one encrypted upload. */
+@Serializable
+data object CloudUploadRoute : NavKey
+
 /** The four top-level destinations, in display order. Each owns an independent back stack rooted at its key. */
 enum class TopLevelDestination(val route: NavKey) {
     HOME(HomeRoute),

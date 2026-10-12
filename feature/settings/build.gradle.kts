@@ -19,6 +19,8 @@ kotlin {
             // PIN buffers and security outcomes cross the gateway. The feature never reaches core:data.
             implementation(projects.core.security)
             implementation(projects.core.common)
+            implementation(projects.core.navigation)
+            implementation(projects.core.domain)
         }
         getByName("androidDeviceTest").dependencies {
             implementation(libs.androidx.test.runner)

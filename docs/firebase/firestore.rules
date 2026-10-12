@@ -1,0 +1,103 @@
+rules_version = '2';
+
+// Optional encrypted cloud backups. Default deny. Owners read and write only their own control document and the
+// three fixed backup slots; the server rules bound storage without trusting a client-kept count.
+service cloud.firestore {
+  match /databases/{database}/documents {
+
+    function isOwner(uid) {
+      return request.auth != null && request.auth.uid == uid;
+    }
+
+    function controlPath(uid) {
+      return /databases/$(database)/documents/users/$(uid);
+    }
+
+    function isSlot(slot) {
+      return slot in ['0', '1', '2'];
+    }
+
+    function isUuid(value) {
+      return value is string && value.matches('^[0-9a-f]{8}-[0-9a-f]{4}-4[0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$');
+    }
+
+    function validControl(d) {
+      return d.keys().hasOnly(['schemaVersion', 'state', 'revision', 'updatedAt'])
+        && d.keys().hasAll(['schemaVersion', 'state', 'revision', 'updatedAt'])
+        && d.schemaVersion == 1
+        && d.state in ['active', 'deleting']
+        && d.revision is int
+        && d.updatedAt == request.time;
+    }
+
+    function validBackup(d) {
+      return d.keys().hasOnly(['backupId', 'formatVersion', 'size', 'sha256', 'createdAt', 'ciphertext'])
+        && d.keys().hasAll(['backupId', 'formatVersion', 'size', 'sha256', 'createdAt', 'ciphertext'])
+        && d.ciphertext is bytes
+        && d.ciphertext.size() >= 84
+        && d.ciphertext.size() <= 786432
+        && d.size is int
+        && d.size == d.ciphertext.size()
+        && d.formatVersion == 1
+        && isUuid(d.backupId)
+        && d.sha256 is string
+        && d.sha256.matches('^[0-9a-f]{64}$')
+        && d.createdAt == request.time;
+    }
+
+    match /users/{uid} {
+      // Owners read their control document, including while a deletion is incomplete.
+      allow read: if isOwner(uid);
+
+      // Creation happens once, at revision zero, in the active state.
+      allow create: if isOwner(uid)
+        && validControl(request.resource.data)
+        && request.resource.data.state == 'active'
+        && request.resource.data.revision == 0;
+
+      // Revision increases by exactly one. The only state change is the irreversible active -> deleting transition.
+      // Clients never delete or reactivate the control document.
+      allow update: if isOwner(uid)
+        && resource.data.state == 'active'
+        && validControl(request.resource.data)
+        && request.resource.data.revision == resource.data.revision + 1;
+
+      allow delete: if false;
+
+      match /backups/{slot} {
+        // Backups are readable only while the account is active. A deleting account is read from its control document.
+        allow read: if isOwner(uid)
+          && isSlot(slot)
+          && get(controlPath(uid)).data.state == 'active';
+
+        // A write requires the same atomic operation to increase the control revision once and keep the account active.
+        allow create, update: if isOwner(uid)
+          && isSlot(slot)
+          && validBackup(request.resource.data)
+          && get(controlPath(uid)).data.state == 'active'
+          && getAfter(controlPath(uid)).data.state == 'active'
+          && getAfter(controlPath(uid)).data.revision == get(controlPath(uid)).data.revision + 1;
+
+        // Deletes are allowed for the owner while the account is deleting (no revision change), or with a version
+        // removal that increases the revision once.
+        allow delete: if isOwner(uid)
+          && isSlot(slot)
+          && (
+            get(controlPath(uid)).data.state == 'deleting'
+            || (
+              get(controlPath(uid)).data.state == 'active'
+              && getAfter(controlPath(uid)).data.revision == get(controlPath(uid)).data.revision + 1
+            )
+          );
+      }
+
+      match /{anything=**} {
+        allow read, write: if false;
+      }
+    }
+
+    match /{document=**} {
+      allow read, write: if false;
+    }
+  }
+}
