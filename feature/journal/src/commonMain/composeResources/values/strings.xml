@@ -1,0 +1,5 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <string name="journal_title">Journal</string>
+    <string name="journal_message">Notes, zakat and personal records you keep for yourself appear here.</string>
+</resources>

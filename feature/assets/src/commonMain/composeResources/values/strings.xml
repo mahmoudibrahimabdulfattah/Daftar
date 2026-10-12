@@ -1,0 +1,15 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <string name="assets_title">Assets</string>
+    <string name="assets_message">Gold, bank accounts and cash are recorded here. Records arrive in a later update.</string>
+    <string name="banks_title">Banks</string>
+    <string name="banks_message">Accounts you hold at banks, listed by name.</string>
+    <string name="bank_select">Select a bank</string>
+    <string name="bank_detail_title">Bank details</string>
+    <string name="bank_detail_message">Account details appear here once records are available.</string>
+    <string name="bank_placeholder_note">Placeholder entry. No balance is shown.</string>
+    <string name="bank_sample_a">Sample bank A</string>
+    <string name="bank_sample_b">Sample bank B</string>
+    <string name="bank_sample_c">Sample bank C</string>
+    <string name="bank_sample_unknown">Bank</string>
+</resources>

@@ -15,9 +15,12 @@ class SpotlessConventionPlugin : Plugin<Project> {
                 target(sources("**/*.kt"))
                 ktlint(ktlint)
                     .customRuleSets(listOf("io.nlopez.compose.rules:ktlint:$composeRules"))
-                    // The design system's single theme local.
+                    // The design system's single theme local, and the navigator and shell locals that screens read.
                     .editorConfigOverride(
-                        mapOf("compose_allowed_composition_locals" to "LocalDaftarThemeInstance,LocalMirror"),
+                        mapOf(
+                            "compose_allowed_composition_locals" to
+                                "LocalDaftarThemeInstance,LocalMirror,LocalNavigator,LocalShellNavigation,LocalSimultaneousPanes",
+                        ),
                     )
             }
             kotlinGradle {

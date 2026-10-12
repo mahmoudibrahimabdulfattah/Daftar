@@ -18,6 +18,7 @@ datastore = "1.2.1"
 lifecycle = "2.11.0"
 navigation3 = "1.1.2"
 material3Adaptive = "1.9.0"
+material3AdaptiveNavigation3 = "1.3.0"
 activityCompose = "1.13.0"
 coreKtx = "1.19.1"
 coreSplashscreen = "1.2.0"
@@ -63,6 +64,7 @@ androidx-navigation3-ui = { module = "org.jetbrains.androidx.navigation3:navigat
 androidx-lifecycle-viewmodel-navigation3 = { module = "org.jetbrains.androidx.lifecycle:lifecycle-viewmodel-navigation3", version.ref = "lifecycle" }
 androidx-lifecycle-process = { module = "androidx.lifecycle:lifecycle-process", version.ref = "lifecycle" }
 compose-material3-navigation-suite = { module = "org.jetbrains.compose.material3:material3-adaptive-navigation-suite", version.ref = "material3Adaptive" }
+compose-material3-adaptive-navigation3 = { module = "org.jetbrains.compose.material3.adaptive:adaptive-navigation3", version.ref = "material3AdaptiveNavigation3" }
 
 ktor-client-core = { module = "io.ktor:ktor-client-core", version.ref = "ktor" }
 ktor-client-content-negotiation = { module = "io.ktor:ktor-client-content-negotiation", version.ref = "ktor" }

@@ -1,0 +1,5 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <string name="home_title">الرئيسية</string>
+    <string name="home_message">ستظهر نظرتك العامة هنا بعد حفظ السجلات في الخزنة. لا يظهر شيء بعد.</string>
+</resources>

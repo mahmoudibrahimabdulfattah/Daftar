@@ -35,6 +35,8 @@ class KmpComposeConventionPlugin : Plugin<Project> {
         extensions.configure<ComposeExtension> {
             extensions.configure<ResourcesExtension> {
                 packageOfResClass = "$daftarNamespace.resources"
+                // Shared strings (navigation labels, back labels) are read by the shell and by features.
+                publicResClass = true
             }
         }
     }
