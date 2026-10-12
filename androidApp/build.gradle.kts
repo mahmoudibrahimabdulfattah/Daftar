@@ -23,5 +23,7 @@ android {
 
 dependencies {
     implementation(projects.shared)
+    // The build variant selects the Android key policy; the policy type lives in core:security.
+    implementation(projects.core.security)
     implementation(libs.androidx.activity.compose)
 }

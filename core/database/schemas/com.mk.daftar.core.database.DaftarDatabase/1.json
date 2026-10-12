@@ -1,0 +1,669 @@
+{
+  "formatVersion": 1,
+  "database": {
+    "version": 1,
+    "identityHash": "42a7432c16c9f1d66d80655a34bdfbe2",
+    "entities": [
+      {
+        "tableName": "gold_holdings",
+        "createSql": "CREATE TABLE IF NOT EXISTS `${TABLE_NAME}` (`id` TEXT NOT NULL, `created_seconds` INTEGER NOT NULL, `created_nanos` INTEGER NOT NULL, `updated_seconds` INTEGER NOT NULL, `updated_nanos` INTEGER NOT NULL, `revision` INTEGER NOT NULL, `karat` TEXT NOT NULL, `form` TEXT NOT NULL, `weight_grams` TEXT NOT NULL, `note` TEXT, PRIMARY KEY(`id`))",
+        "fields": [
+          {
+            "fieldPath": "id",
+            "columnName": "id",
+            "affinity": "TEXT",
+            "notNull": true
+          },
+          {
+            "fieldPath": "createdSeconds",
+            "columnName": "created_seconds",
+            "affinity": "INTEGER",
+            "notNull": true
+          },
+          {
+            "fieldPath": "createdNanos",
+            "columnName": "created_nanos",
+            "affinity": "INTEGER",
+            "notNull": true
+          },
+          {
+            "fieldPath": "updatedSeconds",
+            "columnName": "updated_seconds",
+            "affinity": "INTEGER",
+            "notNull": true
+          },
+          {
+            "fieldPath": "updatedNanos",
+            "columnName": "updated_nanos",
+            "affinity": "INTEGER",
+            "notNull": true
+          },
+          {
+            "fieldPath": "revision",
+            "columnName": "revision",
+            "affinity": "INTEGER",
+            "notNull": true
+          },
+          {
+            "fieldPath": "karat",
+            "columnName": "karat",
+            "affinity": "TEXT",
+            "notNull": true
+          },
+          {
+            "fieldPath": "form",
+            "columnName": "form",
+            "affinity": "TEXT",
+            "notNull": true
+          },
+          {
+            "fieldPath": "weightGrams",
+            "columnName": "weight_grams",
+            "affinity": "TEXT",
+            "notNull": true
+          },
+          {
+            "fieldPath": "note",
+            "columnName": "note",
+            "affinity": "TEXT"
+          }
+        ],
+        "primaryKey": {
+          "autoGenerate": false,
+          "columnNames": [
+            "id"
+          ]
+        },
+        "indices": [
+          {
+            "name": "index_gold_holdings_created_seconds_created_nanos_id",
+            "unique": false,
+            "columnNames": [
+              "created_seconds",
+              "created_nanos",
+              "id"
+            ],
+            "orders": [],
+            "createSql": "CREATE INDEX IF NOT EXISTS `index_gold_holdings_created_seconds_created_nanos_id` ON `${TABLE_NAME}` (`created_seconds`, `created_nanos`, `id`)"
+          }
+        ]
+      },
+      {
+        "tableName": "banks",
+        "createSql": "CREATE TABLE IF NOT EXISTS `${TABLE_NAME}` (`id` TEXT NOT NULL, `created_seconds` INTEGER NOT NULL, `created_nanos` INTEGER NOT NULL, `updated_seconds` INTEGER NOT NULL, `updated_nanos` INTEGER NOT NULL, `revision` INTEGER NOT NULL, `name` TEXT NOT NULL, PRIMARY KEY(`id`))",
+        "fields": [
+          {
+            "fieldPath": "id",
+            "columnName": "id",
+            "affinity": "TEXT",
+            "notNull": true
+          },
+          {
+            "fieldPath": "createdSeconds",
+            "columnName": "created_seconds",
+            "affinity": "INTEGER",
+            "notNull": true
+          },
+          {
+            "fieldPath": "createdNanos",
+            "columnName": "created_nanos",
+            "affinity": "INTEGER",
+            "notNull": true
+          },
+          {
+            "fieldPath": "updatedSeconds",
+            "columnName": "updated_seconds",
+            "affinity": "INTEGER",
+            "notNull": true
+          },
+          {
+            "fieldPath": "updatedNanos",
+            "columnName": "updated_nanos",
+            "affinity": "INTEGER",
+            "notNull": true
+          },
+          {
+            "fieldPath": "revision",
+            "columnName": "revision",
+            "affinity": "INTEGER",
+            "notNull": true
+          },
+          {
+            "fieldPath": "name",
+            "columnName": "name",
+            "affinity": "TEXT",
+            "notNull": true
+          }
+        ],
+        "primaryKey": {
+          "autoGenerate": false,
+          "columnNames": [
+            "id"
+          ]
+        },
+        "indices": [
+          {
+            "name": "index_banks_created_seconds_created_nanos_id",
+            "unique": false,
+            "columnNames": [
+              "created_seconds",
+              "created_nanos",
+              "id"
+            ],
+            "orders": [],
+            "createSql": "CREATE INDEX IF NOT EXISTS `index_banks_created_seconds_created_nanos_id` ON `${TABLE_NAME}` (`created_seconds`, `created_nanos`, `id`)"
+          }
+        ]
+      },
+      {
+        "tableName": "bank_accounts",
+        "createSql": "CREATE TABLE IF NOT EXISTS `${TABLE_NAME}` (`id` TEXT NOT NULL, `created_seconds` INTEGER NOT NULL, `created_nanos` INTEGER NOT NULL, `updated_seconds` INTEGER NOT NULL, `updated_nanos` INTEGER NOT NULL, `revision` INTEGER NOT NULL, `bank_id` TEXT NOT NULL, `name` TEXT NOT NULL, `balance` TEXT NOT NULL, `currency` TEXT NOT NULL, `note` TEXT, PRIMARY KEY(`id`), FOREIGN KEY(`bank_id`) REFERENCES `banks`(`id`) ON UPDATE NO ACTION ON DELETE RESTRICT )",
+        "fields": [
+          {
+            "fieldPath": "id",
+            "columnName": "id",
+            "affinity": "TEXT",
+            "notNull": true
+          },
+          {
+            "fieldPath": "createdSeconds",
+            "columnName": "created_seconds",
+            "affinity": "INTEGER",
+            "notNull": true
+          },
+          {
+            "fieldPath": "createdNanos",
+            "columnName": "created_nanos",
+            "affinity": "INTEGER",
+            "notNull": true
+          },
+          {
+            "fieldPath": "updatedSeconds",
+            "columnName": "updated_seconds",
+            "affinity": "INTEGER",
+            "notNull": true
+          },
+          {
+            "fieldPath": "updatedNanos",
+            "columnName": "updated_nanos",
+            "affinity": "INTEGER",
+            "notNull": true
+          },
+          {
+            "fieldPath": "revision",
+            "columnName": "revision",
+            "affinity": "INTEGER",
+            "notNull": true
+          },
+          {
+            "fieldPath": "bankId",
+            "columnName": "bank_id",
+            "affinity": "TEXT",
+            "notNull": true
+          },
+          {
+            "fieldPath": "name",
+            "columnName": "name",
+            "affinity": "TEXT",
+            "notNull": true
+          },
+          {
+            "fieldPath": "balance",
+            "columnName": "balance",
+            "affinity": "TEXT",
+            "notNull": true
+          },
+          {
+            "fieldPath": "currency",
+            "columnName": "currency",
+            "affinity": "TEXT",
+            "notNull": true
+          },
+          {
+            "fieldPath": "note",
+            "columnName": "note",
+            "affinity": "TEXT"
+          }
+        ],
+        "primaryKey": {
+          "autoGenerate": false,
+          "columnNames": [
+            "id"
+          ]
+        },
+        "indices": [
+          {
+            "name": "index_bank_accounts_bank_id_created_seconds_created_nanos_id",
+            "unique": false,
+            "columnNames": [
+              "bank_id",
+              "created_seconds",
+              "created_nanos",
+              "id"
+            ],
+            "orders": [],
+            "createSql": "CREATE INDEX IF NOT EXISTS `index_bank_accounts_bank_id_created_seconds_created_nanos_id` ON `${TABLE_NAME}` (`bank_id`, `created_seconds`, `created_nanos`, `id`)"
+          }
+        ],
+        "foreignKeys": [
+          {
+            "table": "banks",
+            "onDelete": "RESTRICT",
+            "onUpdate": "NO ACTION",
+            "columns": [
+              "bank_id"
+            ],
+            "referencedColumns": [
+              "id"
+            ]
+          }
+        ]
+      },
+      {
+        "tableName": "cash_balances",
+        "createSql": "CREATE TABLE IF NOT EXISTS `${TABLE_NAME}` (`id` TEXT NOT NULL, `created_seconds` INTEGER NOT NULL, `created_nanos` INTEGER NOT NULL, `updated_seconds` INTEGER NOT NULL, `updated_nanos` INTEGER NOT NULL, `revision` INTEGER NOT NULL, `name` TEXT NOT NULL, `kind` TEXT NOT NULL, `balance` TEXT NOT NULL, `currency` TEXT NOT NULL, `note` TEXT, PRIMARY KEY(`id`))",
+        "fields": [
+          {
+            "fieldPath": "id",
+            "columnName": "id",
+            "affinity": "TEXT",
+            "notNull": true
+          },
+          {
+            "fieldPath": "createdSeconds",
+            "columnName": "created_seconds",
+            "affinity": "INTEGER",
+            "notNull": true
+          },
+          {
+            "fieldPath": "createdNanos",
+            "columnName": "created_nanos",
+            "affinity": "INTEGER",
+            "notNull": true
+          },
+          {
+            "fieldPath": "updatedSeconds",
+            "columnName": "updated_seconds",
+            "affinity": "INTEGER",
+            "notNull": true
+          },
+          {
+            "fieldPath": "updatedNanos",
+            "columnName": "updated_nanos",
+            "affinity": "INTEGER",
+            "notNull": true
+          },
+          {
+            "fieldPath": "revision",
+            "columnName": "revision",
+            "affinity": "INTEGER",
+            "notNull": true
+          },
+          {
+            "fieldPath": "name",
+            "columnName": "name",
+            "affinity": "TEXT",
+            "notNull": true
+          },
+          {
+            "fieldPath": "kind",
+            "columnName": "kind",
+            "affinity": "TEXT",
+            "notNull": true
+          },
+          {
+            "fieldPath": "balance",
+            "columnName": "balance",
+            "affinity": "TEXT",
+            "notNull": true
+          },
+          {
+            "fieldPath": "currency",
+            "columnName": "currency",
+            "affinity": "TEXT",
+            "notNull": true
+          },
+          {
+            "fieldPath": "note",
+            "columnName": "note",
+            "affinity": "TEXT"
+          }
+        ],
+        "primaryKey": {
+          "autoGenerate": false,
+          "columnNames": [
+            "id"
+          ]
+        },
+        "indices": [
+          {
+            "name": "index_cash_balances_created_seconds_created_nanos_id",
+            "unique": false,
+            "columnNames": [
+              "created_seconds",
+              "created_nanos",
+              "id"
+            ],
+            "orders": [],
+            "createSql": "CREATE INDEX IF NOT EXISTS `index_cash_balances_created_seconds_created_nanos_id` ON `${TABLE_NAME}` (`created_seconds`, `created_nanos`, `id`)"
+          }
+        ]
+      },
+      {
+        "tableName": "zakat_payments",
+        "createSql": "CREATE TABLE IF NOT EXISTS `${TABLE_NAME}` (`id` TEXT NOT NULL, `created_seconds` INTEGER NOT NULL, `created_nanos` INTEGER NOT NULL, `updated_seconds` INTEGER NOT NULL, `updated_nanos` INTEGER NOT NULL, `revision` INTEGER NOT NULL, `paid_on` TEXT NOT NULL, `amount` TEXT NOT NULL, `currency` TEXT NOT NULL, `note` TEXT, PRIMARY KEY(`id`))",
+        "fields": [
+          {
+            "fieldPath": "id",
+            "columnName": "id",
+            "affinity": "TEXT",
+            "notNull": true
+          },
+          {
+            "fieldPath": "createdSeconds",
+            "columnName": "created_seconds",
+            "affinity": "INTEGER",
+            "notNull": true
+          },
+          {
+            "fieldPath": "createdNanos",
+            "columnName": "created_nanos",
+            "affinity": "INTEGER",
+            "notNull": true
+          },
+          {
+            "fieldPath": "updatedSeconds",
+            "columnName": "updated_seconds",
+            "affinity": "INTEGER",
+            "notNull": true
+          },
+          {
+            "fieldPath": "updatedNanos",
+            "columnName": "updated_nanos",
+            "affinity": "INTEGER",
+            "notNull": true
+          },
+          {
+            "fieldPath": "revision",
+            "columnName": "revision",
+            "affinity": "INTEGER",
+            "notNull": true
+          },
+          {
+            "fieldPath": "paidOn",
+            "columnName": "paid_on",
+            "affinity": "TEXT",
+            "notNull": true
+          },
+          {
+            "fieldPath": "amount",
+            "columnName": "amount",
+            "affinity": "TEXT",
+            "notNull": true
+          },
+          {
+            "fieldPath": "currency",
+            "columnName": "currency",
+            "affinity": "TEXT",
+            "notNull": true
+          },
+          {
+            "fieldPath": "note",
+            "columnName": "note",
+            "affinity": "TEXT"
+          }
+        ],
+        "primaryKey": {
+          "autoGenerate": false,
+          "columnNames": [
+            "id"
+          ]
+        },
+        "indices": [
+          {
+            "name": "index_zakat_payments_paid_on_id",
+            "unique": false,
+            "columnNames": [
+              "paid_on",
+              "id"
+            ],
+            "orders": [],
+            "createSql": "CREATE INDEX IF NOT EXISTS `index_zakat_payments_paid_on_id` ON `${TABLE_NAME}` (`paid_on`, `id`)"
+          }
+        ]
+      },
+      {
+        "tableName": "personal_notes",
+        "createSql": "CREATE TABLE IF NOT EXISTS `${TABLE_NAME}` (`id` TEXT NOT NULL, `created_seconds` INTEGER NOT NULL, `created_nanos` INTEGER NOT NULL, `updated_seconds` INTEGER NOT NULL, `updated_nanos` INTEGER NOT NULL, `revision` INTEGER NOT NULL, `title` TEXT NOT NULL, `body` TEXT NOT NULL, PRIMARY KEY(`id`))",
+        "fields": [
+          {
+            "fieldPath": "id",
+            "columnName": "id",
+            "affinity": "TEXT",
+            "notNull": true
+          },
+          {
+            "fieldPath": "createdSeconds",
+            "columnName": "created_seconds",
+            "affinity": "INTEGER",
+            "notNull": true
+          },
+          {
+            "fieldPath": "createdNanos",
+            "columnName": "created_nanos",
+            "affinity": "INTEGER",
+            "notNull": true
+          },
+          {
+            "fieldPath": "updatedSeconds",
+            "columnName": "updated_seconds",
+            "affinity": "INTEGER",
+            "notNull": true
+          },
+          {
+            "fieldPath": "updatedNanos",
+            "columnName": "updated_nanos",
+            "affinity": "INTEGER",
+            "notNull": true
+          },
+          {
+            "fieldPath": "revision",
+            "columnName": "revision",
+            "affinity": "INTEGER",
+            "notNull": true
+          },
+          {
+            "fieldPath": "title",
+            "columnName": "title",
+            "affinity": "TEXT",
+            "notNull": true
+          },
+          {
+            "fieldPath": "body",
+            "columnName": "body",
+            "affinity": "TEXT",
+            "notNull": true
+          }
+        ],
+        "primaryKey": {
+          "autoGenerate": false,
+          "columnNames": [
+            "id"
+          ]
+        },
+        "indices": [
+          {
+            "name": "index_personal_notes_updated_seconds_updated_nanos_id",
+            "unique": false,
+            "columnNames": [
+              "updated_seconds",
+              "updated_nanos",
+              "id"
+            ],
+            "orders": [],
+            "createSql": "CREATE INDEX IF NOT EXISTS `index_personal_notes_updated_seconds_updated_nanos_id` ON `${TABLE_NAME}` (`updated_seconds`, `updated_nanos`, `id`)"
+          }
+        ]
+      },
+      {
+        "tableName": "remote_quotes",
+        "createSql": "CREATE TABLE IF NOT EXISTS `${TABLE_NAME}` (`quote_key` TEXT NOT NULL, `provider` TEXT NOT NULL, `value` TEXT NOT NULL, `source_url` TEXT NOT NULL, `source_time_kind` TEXT NOT NULL, `source_seconds` INTEGER, `source_nanos` INTEGER, `source_date` TEXT, `fetched_seconds` INTEGER NOT NULL, `fetched_nanos` INTEGER NOT NULL, `recorded_seconds` INTEGER NOT NULL, `recorded_nanos` INTEGER NOT NULL, `note` TEXT, `next_update_seconds` INTEGER, `next_update_nanos` INTEGER, `attribution_url` TEXT, PRIMARY KEY(`quote_key`, `provider`))",
+        "fields": [
+          {
+            "fieldPath": "quoteKey",
+            "columnName": "quote_key",
+            "affinity": "TEXT",
+            "notNull": true
+          },
+          {
+            "fieldPath": "provider",
+            "columnName": "provider",
+            "affinity": "TEXT",
+            "notNull": true
+          },
+          {
+            "fieldPath": "value",
+            "columnName": "value",
+            "affinity": "TEXT",
+            "notNull": true
+          },
+          {
+            "fieldPath": "sourceUrl",
+            "columnName": "source_url",
+            "affinity": "TEXT",
+            "notNull": true
+          },
+          {
+            "fieldPath": "sourceTimeKind",
+            "columnName": "source_time_kind",
+            "affinity": "TEXT",
+            "notNull": true
+          },
+          {
+            "fieldPath": "sourceSeconds",
+            "columnName": "source_seconds",
+            "affinity": "INTEGER"
+          },
+          {
+            "fieldPath": "sourceNanos",
+            "columnName": "source_nanos",
+            "affinity": "INTEGER"
+          },
+          {
+            "fieldPath": "sourceDate",
+            "columnName": "source_date",
+            "affinity": "TEXT"
+          },
+          {
+            "fieldPath": "fetchedSeconds",
+            "columnName": "fetched_seconds",
+            "affinity": "INTEGER",
+            "notNull": true
+          },
+          {
+            "fieldPath": "fetchedNanos",
+            "columnName": "fetched_nanos",
+            "affinity": "INTEGER",
+            "notNull": true
+          },
+          {
+            "fieldPath": "recordedSeconds",
+            "columnName": "recorded_seconds",
+            "affinity": "INTEGER",
+            "notNull": true
+          },
+          {
+            "fieldPath": "recordedNanos",
+            "columnName": "recorded_nanos",
+            "affinity": "INTEGER",
+            "notNull": true
+          },
+          {
+            "fieldPath": "note",
+            "columnName": "note",
+            "affinity": "TEXT"
+          },
+          {
+            "fieldPath": "nextUpdateSeconds",
+            "columnName": "next_update_seconds",
+            "affinity": "INTEGER"
+          },
+          {
+            "fieldPath": "nextUpdateNanos",
+            "columnName": "next_update_nanos",
+            "affinity": "INTEGER"
+          },
+          {
+            "fieldPath": "attributionUrl",
+            "columnName": "attribution_url",
+            "affinity": "TEXT"
+          }
+        ],
+        "primaryKey": {
+          "autoGenerate": false,
+          "columnNames": [
+            "quote_key",
+            "provider"
+          ]
+        }
+      },
+      {
+        "tableName": "manual_quotes",
+        "createSql": "CREATE TABLE IF NOT EXISTS `${TABLE_NAME}` (`quote_key` TEXT NOT NULL, `value` TEXT NOT NULL, `entered_seconds` INTEGER NOT NULL, `entered_nanos` INTEGER NOT NULL, `pinned` INTEGER NOT NULL, `note` TEXT, `revision` INTEGER NOT NULL, PRIMARY KEY(`quote_key`))",
+        "fields": [
+          {
+            "fieldPath": "quoteKey",
+            "columnName": "quote_key",
+            "affinity": "TEXT",
+            "notNull": true
+          },
+          {
+            "fieldPath": "value",
+            "columnName": "value",
+            "affinity": "TEXT",
+            "notNull": true
+          },
+          {
+            "fieldPath": "enteredSeconds",
+            "columnName": "entered_seconds",
+            "affinity": "INTEGER",
+            "notNull": true
+          },
+          {
+            "fieldPath": "enteredNanos",
+            "columnName": "entered_nanos",
+            "affinity": "INTEGER",
+            "notNull": true
+          },
+          {
+            "fieldPath": "pinned",
+            "columnName": "pinned",
+            "affinity": "INTEGER",
+            "notNull": true
+          },
+          {
+            "fieldPath": "note",
+            "columnName": "note",
+            "affinity": "TEXT"
+          },
+          {
+            "fieldPath": "revision",
+            "columnName": "revision",
+            "affinity": "INTEGER",
+            "notNull": true
+          }
+        ],
+        "primaryKey": {
+          "autoGenerate": false,
+          "columnNames": [
+            "quote_key"
+          ]
+        }
+      }
+    ],
+    "setupQueries": [
+      "CREATE TABLE IF NOT EXISTS room_master_table (id INTEGER PRIMARY KEY,identity_hash TEXT)",
+      "INSERT OR REPLACE INTO room_master_table (id,identity_hash) VALUES(42, '42a7432c16c9f1d66d80655a34bdfbe2')"
+    ]
+  }
+}

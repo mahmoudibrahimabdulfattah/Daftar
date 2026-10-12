@@ -32,8 +32,8 @@ class VaultOnDeviceTest {
         val directory = File(context.cacheDir, "security-device-test-$run")
         val pinAlias = "com.mk.daftar.security.devicetest.pin.$run"
         val backoffAlias = "com.mk.daftar.security.devicetest.backoff.$run"
-        val pinProtector = AndroidKeystoreProtector(pinAlias, KeystorePolicy.AllowSoftwareForDeviceTests)
-        val backoffProtector = AndroidKeystoreProtector(backoffAlias, KeystorePolicy.AllowSoftwareForDeviceTests)
+        val pinProtector = AndroidKeystoreProtector(pinAlias, KeystorePolicy.AllowSoftwareForDebug)
+        val backoffProtector = AndroidKeystoreProtector(backoffAlias, KeystorePolicy.AllowSoftwareForDebug)
         val records = FileRecordStore(File(directory, "pin-envelope.v1.bin"))
         val backoff = FileBackoffStore(File(directory, "backoff.v1.bin"), backoffProtector)
         val clock = SystemMonotonicClock

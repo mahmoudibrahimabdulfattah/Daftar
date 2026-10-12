@@ -24,8 +24,11 @@ internal enum class KeystorePolicy {
     /** StrongBox or a hardware-backed TEE. Software-backed keys are refused. */
     RequireHardware,
 
-    /** Device tests only, on emulators whose keys are software-backed. Never selected by the app module. */
-    AllowSoftwareForDeviceTests,
+    /**
+     * Debug builds only, on emulators whose keys are software-backed. Selected by [resolveKeystorePolicy] when the
+     * configuration asks for it and the installed application is debuggable. Release builds never reach this value.
+     */
+    AllowSoftwareForDebug,
 }
 
 internal enum class KeystoreLevel {
@@ -145,7 +148,7 @@ internal class AndroidKeystoreProtector(private val alias: String, private val p
 
     private fun acceptable(level: KeystoreLevel): Boolean = when (policy) {
         KeystorePolicy.RequireHardware -> level == KeystoreLevel.StrongBox || level == KeystoreLevel.TrustedEnvironment
-        KeystorePolicy.AllowSoftwareForDeviceTests -> true
+        KeystorePolicy.AllowSoftwareForDebug -> true
     }
 
     private fun loadKey(): SecretKey? {

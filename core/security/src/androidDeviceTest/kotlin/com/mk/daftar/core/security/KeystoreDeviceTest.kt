@@ -22,7 +22,7 @@ class KeystoreDeviceTest {
 
     @Test
     fun wrapAndUnwrapRoundTripWithAFreshIvEveryTime() = runTest {
-        val protector = AndroidKeystoreProtector(alias("roundtrip"), KeystorePolicy.AllowSoftwareForDeviceTests)
+        val protector = AndroidKeystoreProtector(alias("roundtrip"), KeystorePolicy.AllowSoftwareForDebug)
         try {
             protector.prepare().requireSuccess()
             val first = protector.seal(plain).requireSuccess()
@@ -37,7 +37,7 @@ class KeystoreDeviceTest {
 
     @Test
     fun aSealedRecordIsNotPlaintextAndIsCompactlyBounded() = runTest {
-        val protector = AndroidKeystoreProtector(alias("layout"), KeystorePolicy.AllowSoftwareForDeviceTests)
+        val protector = AndroidKeystoreProtector(alias("layout"), KeystorePolicy.AllowSoftwareForDebug)
         try {
             protector.prepare().requireSuccess()
             val sealed = protector.seal(plain).requireSuccess()
@@ -52,7 +52,7 @@ class KeystoreDeviceTest {
 
     @Test
     fun securityLevelIsReportedAndTheProductionPolicyMatchesIt() = runTest {
-        val probe = AndroidKeystoreProtector(alias("level"), KeystorePolicy.AllowSoftwareForDeviceTests)
+        val probe = AndroidKeystoreProtector(alias("level"), KeystorePolicy.AllowSoftwareForDebug)
         val level = try {
             probe.prepare().requireSuccess()
             probe.securityLevel().requireSuccess()
@@ -75,8 +75,8 @@ class KeystoreDeviceTest {
 
     @Test
     fun aRecordSealedUnderOneKeyIsRejectedByAnother() = runTest {
-        val sealingKey = AndroidKeystoreProtector(alias("sealer"), KeystorePolicy.AllowSoftwareForDeviceTests)
-        val otherKey = AndroidKeystoreProtector(alias("other"), KeystorePolicy.AllowSoftwareForDeviceTests)
+        val sealingKey = AndroidKeystoreProtector(alias("sealer"), KeystorePolicy.AllowSoftwareForDebug)
+        val otherKey = AndroidKeystoreProtector(alias("other"), KeystorePolicy.AllowSoftwareForDebug)
         try {
             sealingKey.prepare().requireSuccess()
             otherKey.prepare().requireSuccess()
@@ -91,7 +91,7 @@ class KeystoreDeviceTest {
 
     @Test
     fun tamperedCiphertextAndTagAreRejected() = runTest {
-        val protector = AndroidKeystoreProtector(alias("tamper"), KeystorePolicy.AllowSoftwareForDeviceTests)
+        val protector = AndroidKeystoreProtector(alias("tamper"), KeystorePolicy.AllowSoftwareForDebug)
         try {
             protector.prepare().requireSuccess()
             val sealed = protector.seal(plain).requireSuccess()
@@ -108,7 +108,7 @@ class KeystoreDeviceTest {
 
     @Test
     fun aMissingKeyIsReportedAndNeverReplacedByUnseal() = runTest {
-        val protector = AndroidKeystoreProtector(alias("lost"), KeystorePolicy.AllowSoftwareForDeviceTests)
+        val protector = AndroidKeystoreProtector(alias("lost"), KeystorePolicy.AllowSoftwareForDebug)
         protector.prepare().requireSuccess()
         val sealed = protector.seal(plain).requireSuccess()
         protector.deleteKeyForTests()
@@ -118,7 +118,7 @@ class KeystoreDeviceTest {
 
     @Test
     fun prepareNeverReplacesAnExistingKey() = runTest {
-        val protector = AndroidKeystoreProtector(alias("keep"), KeystorePolicy.AllowSoftwareForDeviceTests)
+        val protector = AndroidKeystoreProtector(alias("keep"), KeystorePolicy.AllowSoftwareForDebug)
         try {
             protector.prepare().requireSuccess()
             val sealed = protector.seal(plain).requireSuccess()
@@ -131,8 +131,8 @@ class KeystoreDeviceTest {
 
     @Test
     fun differentAliasesHoldDifferentKeys() = runTest {
-        val a = AndroidKeystoreProtector(alias("a"), KeystorePolicy.AllowSoftwareForDeviceTests)
-        val b = AndroidKeystoreProtector(alias("b"), KeystorePolicy.AllowSoftwareForDeviceTests)
+        val a = AndroidKeystoreProtector(alias("a"), KeystorePolicy.AllowSoftwareForDebug)
+        val b = AndroidKeystoreProtector(alias("b"), KeystorePolicy.AllowSoftwareForDebug)
         try {
             a.prepare().requireSuccess()
             b.prepare().requireSuccess()
