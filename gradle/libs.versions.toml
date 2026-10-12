@@ -24,6 +24,8 @@ appcompat = "1.7.1"
 spotless = "8.10.3"
 ktlint = "1.8.0"
 composeRules = "0.6.7"
+ksoup = "0.2.5"
+bignum = "0.3.10"
 
 android-compileSdk = "37"
 android-targetSdk = "36"
@@ -62,6 +64,9 @@ ktor-serialization-kotlinx-json = { module = "io.ktor:ktor-serialization-kotlinx
 ktor-client-okhttp = { module = "io.ktor:ktor-client-okhttp", version.ref = "ktor" }
 ktor-client-darwin = { module = "io.ktor:ktor-client-darwin", version.ref = "ktor" }
 ktor-client-mock = { module = "io.ktor:ktor-client-mock", version.ref = "ktor" }
+
+ksoup = { module = "com.fleeksoft.ksoup:ksoup", version.ref = "ksoup" }
+bignum = { module = "com.ionspin.kotlin:bignum", version.ref = "bignum" }
 
 androidx-room-runtime = { module = "androidx.room:room-runtime", version.ref = "room" }
 androidx-room-compiler = { module = "androidx.room:room-compiler", version.ref = "room" }
