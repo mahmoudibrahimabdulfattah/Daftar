@@ -7,6 +7,7 @@ import com.mk.daftar.core.security.di.securityModule
 import com.mk.daftar.feature.assets.di.assetsModule
 import com.mk.daftar.feature.auth.di.authModule
 import com.mk.daftar.feature.cash.di.cashModule
+import com.mk.daftar.feature.gold.di.goldModule
 import com.mk.daftar.feature.home.di.homeModule
 import com.mk.daftar.feature.journal.di.journalModule
 import com.mk.daftar.feature.prices.di.pricesModule
@@ -28,6 +29,7 @@ val daftarModules: List<Module> = listOf(
     homeModule,
     assetsModule,
     cashModule,
+    goldModule,
     journalModule,
     pricesModule,
     settingsModule,

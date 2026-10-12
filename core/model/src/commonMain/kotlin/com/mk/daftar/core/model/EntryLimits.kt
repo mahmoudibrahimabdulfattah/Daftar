@@ -17,6 +17,9 @@ object EntryLimits {
     /** Most fractional digits a payment amount may carry. */
     const val PAYMENT_FRACTION_DIGITS: Int = USER_FRACTION_DIGITS
 
+    /** Most fractional digits a gold weight may carry. */
+    const val WEIGHT_FRACTION_DIGITS: Int = USER_FRACTION_DIGITS
+
     /** Unicode code points in [text]. A surrogate pair counts once. */
     fun codePoints(text: String): Int = codePointCount(text)
 
@@ -31,6 +34,10 @@ object EntryLimits {
 
     /** A personal-note body is valid when it has text and fits [NOTE_BODY_CODE_POINTS]. Its line breaks are kept. */
     fun isValidBody(text: String): Boolean = text.isNotBlank() && codePointCount(text) <= NOTE_BODY_CODE_POINTS
+
+    /** A gold weight in grams is strictly positive with at most [WEIGHT_FRACTION_DIGITS] fractional digits. */
+    fun isValidGoldWeight(grams: Decimal): Boolean =
+        grams > Decimal.ZERO && grams.fractionDigits <= WEIGHT_FRACTION_DIGITS
 
     /** A zakat payment is strictly positive with at most [PAYMENT_FRACTION_DIGITS] fractional digits. */
     fun isValidPayment(amount: Decimal): Boolean =

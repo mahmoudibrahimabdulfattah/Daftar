@@ -1,0 +1,89 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <string name="gold_title">الذهب</string>
+    <string name="gold_value_label">قيمة الذهب</string>
+    <string name="gold_value_unit">ج.م · بسعر بيع الصائغ</string>
+    <string name="gold_add">إضافة ذهب</string>
+    <string name="gold_weight_notice">إجمالي الوزن ⁦%1$s⁩ جرام بعيارات مختلفة؛ ليس وزن ذهب خالص.</string>
+    <string name="gold_weight_notice_single">إجمالي الوزن ⁦%1$s⁩ جرام؛ ليس وزن ذهب خالص.</string>
+    <string name="gold_weight_notice_hidden">الوزن الإجمالي مخفي. ليس وزن ذهب خالص.</string>
+    <string name="gold_subtotal">المتاح حتى الآن: ⁦%1$s⁩ ج.م</string>
+    <string name="gold_incomplete">التقييم غير مكتمل. المقتنيات بلا سعر بيع للصائغ تظهر بشرطة.</string>
+    <string name="gold_values_hidden">القيم مخفية. أظهرها لرؤية المبالغ.</string>
+    <string name="gold_empty_title">لم تضف ذهبًا بعد</string>
+    <string name="gold_empty_message">سبيكة أو مشغولات؛ يكفي العيار والوزن.</string>
+    <string name="gold_bars">سبايك</string>
+    <string name="gold_jewelry">مشغولات</string>
+    <string name="gold_karat_label">عيار ⁦%1$d⁩</string>
+    <string name="gold_row_title">%1$s · %2$s</string>
+    <string name="gold_row_weight">⁦%1$s⁩ جرام</string>
+    <string name="gold_row_weight_note">⁦%1$s⁩ جرام · %2$s</string>
+    <string name="gold_quote_heading">سعر بيع الصائغ</string>
+    <string name="gold_quote_line">%1$s · ⁦%2$s⁩ ج.م للجرام</string>
+    <string name="gold_quote_none">لا يوجد سعر بيع للصائغ لـ%1$s بعد.</string>
+    <string name="gold_recorded_at">⁦%1$d⁩ %2$s، ⁦%3$s⁩</string>
+    <string name="gold_manual_warning">سعر يدوي يتقدم على المصدر حتى تحذفه.</string>
+    <string name="gold_stale_warning">مضى على السعر أكثر من يوم. راجعه قبل الاعتماد عليه.</string>
+    <string name="gold_clock_warning">وقت السعر أحدث من ساعة الجهاز؛ لا يمكن الوثوق بعمره.</string>
+    <string name="gold_status_clock">راجع الساعة</string>
+    <string name="gold_reveal_message">القيم مخفية. أظهرها لفتح هذا المقتنى.</string>
+    <string name="gold_reveal_action">إظهار القيم</string>
+    <string name="gold_cancel">إلغاء</string>
+    <string name="gold_load_failed_title">تعذّر تحميل الذهب</string>
+    <string name="gold_load_failed_message">بياناتك ما زالت محفوظة. ارجع وافتح الذهب مرة أخرى.</string>
+    <string-array name="gold_months">
+        <item>يناير</item>
+        <item>فبراير</item>
+        <item>مارس</item>
+        <item>أبريل</item>
+        <item>مايو</item>
+        <item>يونيو</item>
+        <item>يوليو</item>
+        <item>أغسطس</item>
+        <item>سبتمبر</item>
+        <item>أكتوبر</item>
+        <item>نوفمبر</item>
+        <item>ديسمبر</item>
+    </string-array>
+    <string name="gold_new_title">مقتنى جديد</string>
+    <string name="gold_edit_title">تعديل المقتنى</string>
+    <string name="gold_add_title">إضافة ذهب</string>
+    <string name="gold_edit_bar_title">تعديل الذهب</string>
+    <string name="gold_intro">سجّل الوزن الصافي للذهب بالجرام.</string>
+    <string name="gold_karat_field">العيار</string>
+    <string name="gold_form_field">الشكل</string>
+    <string name="gold_weight">الوزن · جرام</string>
+    <string name="gold_weight_helper">أكبر من صفر · حتى منزلتين عشريتين</string>
+    <string name="gold_weight_invalid">أدخل وزنًا أكبر من صفر، مثل ٢٦٫٧٧.</string>
+    <string name="gold_note">ملاحظة · اختياري</string>
+    <string name="gold_note_long">الملاحظة طويلة جدًا. الحد الأقصى 4,000 حرف.</string>
+    <string name="gold_preview_quote">بيع الصائغ · %1$s: ⁦%2$s⁩ ج.م للجرام</string>
+    <string name="gold_preview_value">القيمة بهذا السعر: ⁦%1$s⁩ ج.م</string>
+    <string name="gold_preview_unavailable">لا يوجد سعر بيع للصائغ لـ%1$s بعد. يمكنك حفظ المقتنى.</string>
+    <string name="gold_preview_needs_weight">أدخل وزنًا لرؤية قيمته.</string>
+    <string name="gold_fees_notice">التقييم لا يشمل المصنعية أو الرسوم.</string>
+    <string name="gold_add_holding">إضافة المقتنى</string>
+    <string name="gold_save_changes">حفظ التعديل</string>
+    <string name="gold_delete_holding">حذف المقتنى</string>
+    <string name="gold_missing_title">هذا المقتنى لم يعد موجودًا</string>
+    <string name="gold_missing_message">ربما حُذف من مكان آخر. ارجع إلى القائمة.</string>
+    <string name="gold_retry">إعادة المحاولة</string>
+    <string name="gold_back_to_editing">العودة للتعديل</string>
+    <string name="gold_input_kept">مدخلاتك ما زالت هنا</string>
+    <string name="gold_save_failed_title">لم يُحفظ التعديل</string>
+    <string name="gold_save_failed_message">تعذّر الحفظ. أعد المحاولة؛ بياناتك السابقة لم تتغيّر.</string>
+    <string name="gold_save_storage_message">المساحة غير كافية. حرّر مساحة ثم أعد المحاولة؛ بياناتك السابقة لم تتغيّر.</string>
+    <string name="gold_save_uncertain_message">أُغلق الدفتر أثناء الحفظ فلم تتأكد النتيجة. افتح الدفتر للتحقق من السجل.</string>
+    <string name="gold_delete_failed_message">تعذّر الحذف. المقتنى ما زال محفوظًا.</string>
+    <string name="gold_conflict_message">تغيّر هذا السجل. أعد تحميله قبل الحفظ.</string>
+    <string name="gold_reload">إعادة التحميل</string>
+    <string name="gold_confirm_delete_title">حذف هذا السجل؟</string>
+    <string name="gold_confirm_delete_message">لن يظهر في دفتر بعد الحذف. لا يمكن التراجع؛ يمكنك استعادته فقط من نسخة احتياطية أقدم.</string>
+    <string name="gold_confirm_delete_cancel">إلغاء والرجوع</string>
+    <string name="gold_confirm_delete_action">حذف السجل</string>
+    <string name="gold_confirm_discard_title">تجاهل التغييرات؟</string>
+    <string name="gold_confirm_discard_message">لديك تعديلات لم تُحفظ. استمر في التحرير أو تجاهلها للعودة إلى القائمة.</string>
+    <string name="gold_confirm_keep">متابعة التحرير</string>
+    <string name="gold_confirm_discard_action">تجاهل التغييرات</string>
+    <string name="gold_unit_egp">ج.م</string>
+</resources>

@@ -27,9 +27,17 @@ data object BanksRoute : NavKey
 @Serializable
 data class BankDetailRoute(val bankId: String) : NavKey
 
-/** Gold holdings, reached from Home and Assets. A placeholder until the gold feature phase replaces its entry. */
+/** Gold holdings, reached from Home and Assets: the holdings list with its category valuation. */
 @Serializable
 data object GoldRoute : NavKey
+
+/** A new gold holding. */
+@Serializable
+data object GoldAddRoute : NavKey
+
+/** One gold holding, edited or deleted. */
+@Serializable
+data class GoldEditRoute(val holdingId: String) : NavKey
 
 /** Cash and wallet balances, reached from Home and Assets. The list of the cash feature. */
 @Serializable
