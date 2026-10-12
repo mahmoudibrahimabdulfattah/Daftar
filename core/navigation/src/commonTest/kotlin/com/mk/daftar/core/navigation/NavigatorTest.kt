@@ -111,4 +111,26 @@ class NavigatorTest {
         assertEquals(listOf(HomeRoute), navigator.backStack)
         assertFalse(navigator.goBack())
     }
+
+    @Test
+    fun returnToDropsEverythingAboveTheKeptEntry() {
+        val navigator = Navigator()
+        navigator.select(TopLevelDestination.ASSETS)
+        navigator.goTo(BanksRoute)
+        navigator.goTo(BankDetailRoute("a"))
+        navigator.goTo(BankEditRoute("a"))
+
+        assertTrue(navigator.returnTo { it == BanksRoute })
+        assertEquals(listOf(HomeRoute, AssetsRoute, BanksRoute), navigator.backStack)
+    }
+
+    @Test
+    fun returnToWithoutAKeptEntryPopsOneLikeBack() {
+        val navigator = Navigator()
+        navigator.select(TopLevelDestination.ASSETS)
+        navigator.goTo(BankAddRoute)
+
+        assertTrue(navigator.returnTo { it == BanksRoute })
+        assertEquals(listOf(HomeRoute, AssetsRoute), navigator.backStack)
+    }
 }

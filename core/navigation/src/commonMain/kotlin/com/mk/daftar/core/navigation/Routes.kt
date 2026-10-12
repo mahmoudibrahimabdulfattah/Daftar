@@ -27,7 +27,23 @@ data object BanksRoute : NavKey
 @Serializable
 data class BankDetailRoute(val bankId: String) : NavKey
 
-/** Gold holdings, reached from Home and Assets: the holdings list with its category valuation. */
+/** A new bank, from the bank list. Its name is the only field. */
+@Serializable
+data object BankAddRoute : NavKey
+
+/** One bank's name, edited or deleted. */
+@Serializable
+data class BankEditRoute(val bankId: String) : NavKey
+
+/** A new account inside [bankId]. Currency and balance are entered on the form. */
+@Serializable
+data class AccountAddRoute(val bankId: String) : NavKey
+
+/** One account, edited, moved to another bank, or deleted. */
+@Serializable
+data class AccountEditRoute(val accountId: String) : NavKey
+
+/** Gold holdings, reached from Home and Assets. A placeholder until the gold feature phase replaces its entry. */
 @Serializable
 data object GoldRoute : NavKey
 

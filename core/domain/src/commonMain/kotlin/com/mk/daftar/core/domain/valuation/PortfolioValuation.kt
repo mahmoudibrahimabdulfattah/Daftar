@@ -108,6 +108,13 @@ fun valuePortfolio(input: PortfolioInput, quotes: SelectedQuotes): PortfolioValu
     )
 }
 
+/**
+ * The bank accounts alone, valued with the same rules as the banks category of [valuePortfolio]. A bank's own value and
+ * the list's aggregate both come from here, so a bank and its accounts can never disagree with the portfolio.
+ */
+fun valueBankAccounts(accounts: List<BankAccount>, quotes: SelectedQuotes): CategoryValuation =
+    categoryOf(AssetCategory.BANKS, accounts.map { valueMoney(AssetRef.Account(it.id), it.balance, quotes) })
+
 private fun valueGold(holding: GoldHolding, quotes: SelectedQuotes): AssetValuation {
     val ref = AssetRef.Gold(holding.id)
     val key = goldSellKey(holding.karat)

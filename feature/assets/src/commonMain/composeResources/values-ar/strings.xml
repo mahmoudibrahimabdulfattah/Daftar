@@ -18,16 +18,6 @@
     <string name="assets_cash">النقد والمحافظ</string>
     <string name="unit_egp_short">ج.م</string>
     <string name="assets_banks_summary">%1$s · %2$s</string>
-    <string name="banks_title">البنوك</string>
-    <string name="banks_message">الحسابات التي تملكها في البنوك، مرتبة بالاسم.</string>
-    <string name="bank_select">اختر بنكًا</string>
-    <string name="bank_detail_title">تفاصيل البنك</string>
-    <string name="bank_detail_message">تظهر تفاصيل الحساب هنا عند توفر السجلات.</string>
-    <string name="bank_placeholder_note">بند تجريبي. لا يظهر أي رصيد.</string>
-    <string name="bank_sample_a">بنك تجريبي أ</string>
-    <string name="bank_sample_b">بنك تجريبي ب</string>
-    <string name="bank_sample_c">بنك تجريبي ج</string>
-    <string name="bank_sample_unknown">بنك</string>
     <string name="assets_holdings_one">مقتنى واحد</string>
     <string name="assets_holdings_two">مقتنيان</string>
     <string name="assets_holdings_few">مقتنيات</string>

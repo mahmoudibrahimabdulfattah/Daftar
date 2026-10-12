@@ -6,8 +6,12 @@ import androidx.navigation3.runtime.EntryProviderScope
 import androidx.navigation3.runtime.NavEntry
 import androidx.navigation3.runtime.NavKey
 import androidx.navigation3.runtime.entryProvider
+import com.mk.daftar.core.navigation.AccountAddRoute
+import com.mk.daftar.core.navigation.AccountEditRoute
 import com.mk.daftar.core.navigation.AssetsRoute
+import com.mk.daftar.core.navigation.BankAddRoute
 import com.mk.daftar.core.navigation.BankDetailRoute
+import com.mk.daftar.core.navigation.BankEditRoute
 import com.mk.daftar.core.navigation.BanksRoute
 import com.mk.daftar.core.navigation.GoldAddRoute
 import com.mk.daftar.core.navigation.GoldEditRoute
@@ -24,6 +28,7 @@ import com.mk.daftar.core.navigation.ZakatAddRoute
 import com.mk.daftar.core.navigation.ZakatEditRoute
 import com.mk.daftar.core.navigation.ZakatRoute
 import com.mk.daftar.feature.assets.di.assetsModule
+import com.mk.daftar.feature.banks.di.banksModule
 import com.mk.daftar.feature.gold.di.goldModule
 import com.mk.daftar.feature.home.di.homeModule
 import com.mk.daftar.feature.journal.di.journalModule
@@ -46,6 +51,8 @@ class ShellEntriesTest {
     private val koin = koinApplication {
         modules(homeModule, assetsModule, journalModule, settingsModule, pricesModule)
         modules(homeModule, assetsModule, goldModule, journalModule, settingsModule)
+
+        modules(homeModule, assetsModule, banksModule, journalModule, settingsModule, pricesModule)
     }.koin
 
     /**
@@ -71,6 +78,10 @@ class ShellEntriesTest {
             GoldAddRoute,
             GoldEditRoute("sample-holding"),
             BankDetailRoute("sample-a"),
+            BankAddRoute,
+            BankEditRoute("sample-a"),
+            AccountAddRoute("sample-a"),
+            AccountEditRoute("sample-account"),
             ZakatRoute,
             ZakatAddRoute,
             ZakatEditRoute("sample-payment"),
