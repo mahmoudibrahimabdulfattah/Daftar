@@ -8,10 +8,10 @@ import com.mk.daftar.core.common.Outcome
  * The simulator has no Secure Enclave. This protector seals with an XChaCha20-Poly1305 key kept in the simulator
  * Keychain. It exercises the same envelope and persistence paths, and it gives no hardware guarantee.
  */
-internal class SimulatorOnlyTestEnvelopeProtector : PlatformEnvelopeProtector {
+internal class SimulatorOnlyTestEnvelopeProtector(private val keyAccount: String) : PlatformEnvelopeProtector {
     private val aead = LibsodiumAead()
     private val random = LibsodiumSecureRandom()
-    private val keyItem = KeychainItem(KEY_ACCOUNT)
+    private val keyItem = KeychainItem(keyAccount)
 
     override suspend fun prepare(): Outcome<Unit, SecurityError> {
         when (val existing = keyItem.read()) {
@@ -53,7 +53,6 @@ internal class SimulatorOnlyTestEnvelopeProtector : PlatformEnvelopeProtector {
     }
 
     private companion object {
-        const val KEY_ACCOUNT = "simulator-only-test-envelope-key.v1"
         const val KEY_BYTES = 32
         const val NONCE_BYTES = 24
         val AD = "DFSIM".encodeToByteArray()

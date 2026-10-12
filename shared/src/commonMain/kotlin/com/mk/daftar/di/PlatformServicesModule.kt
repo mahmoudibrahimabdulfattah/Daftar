@@ -11,6 +11,7 @@ import com.mk.daftar.core.security.VaultSecurity
 import com.mk.daftar.core.ui.presentation.ValuesVisibility
 import com.mk.daftar.feature.auth.AuthDraftRegistry
 import com.mk.daftar.feature.auth.AuthGateway
+import com.mk.daftar.feature.backup.restore.RestoreDraftRegistry
 import com.mk.daftar.gate.VaultAuthGateway
 import com.mk.daftar.lifecycle.InactivityMonitor
 import com.mk.daftar.lifecycle.VaultLifecycleCoordinator
@@ -40,7 +41,10 @@ val platformServicesModule: Module = module {
             scope = CoroutineScope(SupervisorJob() + Dispatchers.Default),
             mainDispatcher = Dispatchers.Main,
             // Auth drafts are dropped on the synchronous privacy signal, even when the vault is already locked.
-            onPrivacyObscured = { get<AuthDraftRegistry>().invalidateAll() },
+            onPrivacyObscured = {
+                get<AuthDraftRegistry>().invalidateAll()
+                get<RestoreDraftRegistry>().invalidateAll()
+            },
         )
     }
     // The privacy eye: one per open generation, visible again whenever the vault locks.

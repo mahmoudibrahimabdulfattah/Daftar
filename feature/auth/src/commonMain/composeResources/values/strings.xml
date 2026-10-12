@@ -39,7 +39,6 @@
     <string name="auth_recovery_backup_warning">Restoring a backup requires its password. Without your PIN, biometrics or a valid backup, your data cannot be opened. Nothing is deleted automatically.</string>
     <string name="auth_try_pin_again">Try PIN again</string>
     <string name="auth_restore_backup">Restore encrypted backup</string>
-    <string name="auth_restore_later">Available in a later update</string>
     <string name="auth_unavailable_heading">Daftar cannot open</string>
     <string name="auth_unavailable_hardware">This device does not support the required protection.</string>
     <string name="auth_unavailable_key">The protection key on this device is unavailable.</string>

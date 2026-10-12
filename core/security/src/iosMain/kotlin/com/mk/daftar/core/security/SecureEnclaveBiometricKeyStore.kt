@@ -76,7 +76,7 @@ import platform.Security.kSecUseAuthenticationContext
  *
  * Verified by construction only: the Secure Enclave and the biometric prompt need a physical device.
  */
-internal class SecureEnclaveBiometricKeyStore : BiometricKeyStore {
+internal class SecureEnclaveBiometricKeyStore(private val tagPrefix: String) : BiometricKeyStore {
 
     override suspend fun capability(): BiometricCapability {
         val context = LAContext()
@@ -246,12 +246,14 @@ internal class SecureEnclaveBiometricKeyStore : BiometricKeyStore {
 
     private companion object {
         val ALGORITHM = kSecKeyAlgorithmECIESEncryptionCofactorX963SHA256AESGCM
-        const val TAG_PREFIX = "com.mk.daftar.security.biometric.v1."
 
-        fun tagFor(keyId: ByteArray): ByteArray = (
-            TAG_PREFIX + keyId.joinToString("") {
+        /** The tag of a key's [keyId] under [tagPrefix]. */
+        fun tagFor(tagPrefix: String, keyId: ByteArray): ByteArray = (
+            tagPrefix + keyId.joinToString("") {
                 (it.toInt() and 0xFF).toString(16).padStart(2, '0')
             }
             ).encodeToByteArray()
     }
+
+    private fun tagFor(keyId: ByteArray): ByteArray = tagFor(tagPrefix, keyId)
 }

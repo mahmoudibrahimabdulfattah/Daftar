@@ -39,7 +39,6 @@
     <string name="auth_recovery_backup_warning">استعادة نسخة احتياطية تحتاج كلمة مرور النسخة. بدون الرمز أو البصمة أو نسخة صالحة، لن تتمكن من فتح بياناتك. لا نحذف شيئًا تلقائيًا.</string>
     <string name="auth_try_pin_again">المحاولة بالرمز</string>
     <string name="auth_restore_backup">استعادة نسخة مشفّرة</string>
-    <string name="auth_restore_later">متاح في تحديث لاحق</string>
     <string name="auth_unavailable_heading">تعذّر فتح دفتر</string>
     <string name="auth_unavailable_hardware">هذا الجهاز لا يدعم الحماية المطلوبة.</string>
     <string name="auth_unavailable_key">مفتاح الحماية على هذا الجهاز غير متاح.</string>

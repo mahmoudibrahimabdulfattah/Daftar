@@ -96,7 +96,7 @@ private class StartupProbes {
     val module: Module = module {
         single<VaultSecurity> { ProbedSecurity(this@StartupProbes) }
         single<DaftarDatabaseBuilderProvider> {
-            DaftarDatabaseBuilderProvider {
+            DaftarDatabaseBuilderProvider { _ ->
                 databaseBuilds++
                 error("startup must not open the database")
             }

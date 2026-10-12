@@ -14,10 +14,10 @@ import platform.Foundation.NSURLIsExcludedFromBackupKey
 import platform.Foundation.NSUserDomainMask
 
 /**
- * The database path under Application Support. The directory is excluded from backup, so the database and its WAL and
- * SHM siblings are never backed up, and it carries file protection for the first unlock after boot.
+ * The Daftar directory under Application Support. It is excluded from backup, so the database and its WAL and SHM
+ * siblings are never backed up, and it carries file protection for the first unlock after boot.
  */
-fun daftarDatabasePath(): String {
+fun daftarDatabaseDirectory(): String {
     val fileManager = NSFileManager.defaultManager
     val support = fileManager.URLForDirectory(
         directory = NSApplicationSupportDirectory,
@@ -34,8 +34,11 @@ fun daftarDatabasePath(): String {
         error = null,
     )
     NSURL.fileURLWithPath(directory).setResourceValue(true, forKey = NSURLIsExcludedFromBackupKey, error = null)
-    return "$directory/$DAFTAR_DATABASE_FILE_NAME"
+    return directory
 }
+
+/** The legacy database path: the first release's file in the Daftar directory. */
+fun daftarDatabasePath(): String = "${daftarDatabaseDirectory()}/$DAFTAR_DATABASE_FILE_NAME"
 
 /** Room's builder for the database at [path]. */
 fun daftarDatabaseBuilder(path: String): RoomDatabase.Builder<DaftarDatabase> =

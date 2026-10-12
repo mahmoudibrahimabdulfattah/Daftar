@@ -12,6 +12,7 @@ import com.mk.daftar.core.database.dao.GoldHoldingDao
 import com.mk.daftar.core.database.dao.ManualQuoteDao
 import com.mk.daftar.core.database.dao.PersonalNoteDao
 import com.mk.daftar.core.database.dao.RemoteQuoteDao
+import com.mk.daftar.core.database.dao.RestoreWriteDao
 import com.mk.daftar.core.database.dao.ZakatPaymentDao
 import com.mk.daftar.core.database.entity.BankAccountEntity
 import com.mk.daftar.core.database.entity.BankEntity
@@ -56,6 +57,8 @@ abstract class DaftarDatabase : RoomDatabase() {
     abstract fun manualQuoteDao(): ManualQuoteDao
 
     abstract fun backupSnapshotDao(): BackupSnapshotDao
+
+    abstract fun restoreWriteDao(): RestoreWriteDao
 }
 
 /** Room generates the implementation for each platform. */

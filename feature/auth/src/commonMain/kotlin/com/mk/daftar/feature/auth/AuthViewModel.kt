@@ -65,6 +65,7 @@ class AuthViewModel(
             AuthIntent.LeaveRecovery -> leaveRecovery()
             AuthIntent.Recheck -> refreshStatus()
             AuthIntent.PrivacyInvalidated -> invalidate()
+            AuthIntent.OpenRestore -> Unit
         }
     }
 

@@ -4,10 +4,13 @@ import androidx.test.platform.app.InstrumentationRegistry
 import com.mk.daftar.core.common.Outcome
 import com.mk.daftar.core.data.ids.UuidV4Generator
 import com.mk.daftar.core.data.repository.GoldRecordRepository
+import com.mk.daftar.core.data.restore.AndroidGenerationFiles
+import com.mk.daftar.core.data.restore.RestorePreferencesInstaller
 import com.mk.daftar.core.data.session.DaftarDatabaseBuilderProvider
 import com.mk.daftar.core.data.session.DaftarVaultSession
 import com.mk.daftar.core.data.session.VaultAuthenticator
 import com.mk.daftar.core.data.session.VaultOpenFailure
+import com.mk.daftar.core.data.session.activeGeneration
 import com.mk.daftar.core.database.daftarDatabaseBuilder
 import com.mk.daftar.core.database.daftarDatabaseFile
 import com.mk.daftar.core.domain.repository.AppLanguage
@@ -25,9 +28,12 @@ import com.mk.daftar.core.model.GoldForm
 import com.mk.daftar.core.model.GoldKarat
 import com.mk.daftar.core.model.GoldWeight
 import com.mk.daftar.core.security.AndroidSecurityConfiguration
+import com.mk.daftar.core.security.GenerationFiles
 import com.mk.daftar.core.security.PinNormalizer
+import com.mk.daftar.core.security.PostCommitInstaller
 import com.mk.daftar.core.security.SecretBytes
 import com.mk.daftar.core.security.SecurityError
+import com.mk.daftar.core.security.VaultGenerations
 import com.mk.daftar.core.security.VaultSecurity
 import com.mk.daftar.core.security.androidSecurityConfigurationModule
 import com.mk.daftar.core.security.di.securityModule
@@ -43,6 +49,7 @@ import kotlinx.coroutines.flow.flowOf
 import kotlinx.coroutines.test.runTest
 import org.koin.android.ext.koin.androidContext
 import org.koin.dsl.koinApplication
+import org.koin.dsl.module
 
 /**
  * The production session on the emulator: the real VaultSecurity over the Keystore (the software-backed policy is
@@ -55,17 +62,28 @@ class KeystoreSessionDeviceTest {
 
     @Test
     fun aRecordWrittenThroughTheKeystoreVaultSurvivesLockAndReopen() = runTest {
-        val koin = koinApplication {
+        val app = koinApplication {
             androidContext(context)
             modules(
                 securityModule,
                 androidSecurityConfigurationModule(AndroidSecurityConfiguration.AllowSoftwareForDebug),
+                module {
+                    single<GenerationFiles> { AndroidGenerationFiles(context) }
+                    single<PostCommitInstaller> { RestorePreferencesInstaller(MemoryPreferences) }
+                },
             )
-        }.koin
+        }
+        val koin = app.koin
         val security: VaultSecurity = koin.get()
         val databaseFile = daftarDatabaseFile(context)
-        val provider = DaftarDatabaseBuilderProvider { daftarDatabaseBuilder(context, databaseFile) }
-        val session = DaftarVaultSession(security, provider, Clock.System, UuidV4Generator())
+        val provider = DaftarDatabaseBuilderProvider { _ -> daftarDatabaseBuilder(context, databaseFile) }
+        val session = DaftarVaultSession(
+            security,
+            { koin.get<VaultGenerations>().activeGeneration() },
+            provider,
+            Clock.System,
+            UuidV4Generator(),
+        )
         val authenticator = VaultAuthenticator(security, session, MemoryPreferences)
         val gold = GoldRecordRepository(session.host)
         try {
@@ -92,6 +110,8 @@ class KeystoreSessionDeviceTest {
             assertTrue(session.state.value is VaultSessionState.Open)
         } finally {
             session.lock()
+            // Closing the graph ends this test's VaultGenerations, so it cannot act on the shared pointer later.
+            app.close()
             File(context.noBackupFilesDir, "daftar-security").deleteRecursively()
             checkNotNull(databaseFile.parentFile).deleteRecursively()
         }

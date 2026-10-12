@@ -22,6 +22,7 @@ import com.mk.daftar.core.network.FxFetchFailure
 import com.mk.daftar.core.network.FxNetworkDataSource
 import com.mk.daftar.core.network.GoldFetch
 import com.mk.daftar.core.network.GoldNetworkDataSource
+import com.mk.daftar.core.security.VaultGeneration
 import kotlin.test.assertIs
 import kotlin.time.Clock
 import kotlin.time.Duration.Companion.seconds
@@ -43,7 +44,7 @@ internal fun storageEngine(provider: DaftarDatabaseBuilderProvider): VaultSessio
             val access = object : DatabaseKeyAccess {
                 override fun <R> useKey(block: (ByteArray) -> R): R = block(key.bytes.copyOf())
             }
-            val database = buildDaftarDatabase(provider.builder(), createSqlCipherDriver(access))
+            val database = buildDaftarDatabase(provider.builder(VaultGeneration.LEGACY), createSqlCipherDriver(access))
             try {
                 database.manualQuoteDao().get("USD_EGP")
                 database

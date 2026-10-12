@@ -30,4 +30,71 @@
     <string name="backup_choose_other">Choose another location</string>
     <string name="backup_cancel">Cancel</string>
     <string name="backup_back">Back</string>
+    <string name="restore_title">Import backup</string>
+    <string name="restore_choose_heading">Open your encrypted backup</string>
+    <string name="restore_choose_action">Choose file</string>
+    <string name="restore_choose_note">Only encrypted Daftar files are accepted. Current data stays unchanged until verification and replacement confirmation.</string>
+    <string name="restore_forgot_note">If you forgot your PIN, you will create a new one before replacing the database.</string>
+    <string name="restore_password_heading">This is the export password, not your Daftar PIN.</string>
+    <string name="restore_password_label">Backup password</string>
+    <string name="restore_password_action">Decrypt &amp; verify</string>
+    <string name="restore_decrypting_message">Checking the backup. Nothing is changed.</string>
+    <string name="restore_review_heading">Replace Daftar data?</string>
+    <string name="restore_review_validated">The backup has been validated.</string>
+    <string name="restore_review_date">Exported ⁦%1$s⁩</string>
+    <string name="restore_review_no_merge">No automatic merging</string>
+    <string name="restore_review_warning">All current data will be replaced. Export a copy first if you want to keep it.</string>
+    <string name="restore_review_continue">Set a restore PIN</string>
+    <string name="restore_cancel">Cancel</string>
+    <plurals name="restore_gold_count">
+        <item quantity="one">1 gold holding</item>
+        <item quantity="other">%1$d gold holdings</item>
+    </plurals>
+    <plurals name="restore_bank_count">
+        <item quantity="one">1 bank</item>
+        <item quantity="other">%1$d banks</item>
+    </plurals>
+    <plurals name="restore_account_count">
+        <item quantity="one">1 account</item>
+        <item quantity="other">%1$d accounts</item>
+    </plurals>
+    <plurals name="restore_cash_count">
+        <item quantity="one">1 cash or wallet balance</item>
+        <item quantity="other">%1$d cash or wallet balances</item>
+    </plurals>
+    <plurals name="restore_zakat_count">
+        <item quantity="one">1 zakat entry</item>
+        <item quantity="other">%1$d zakat entries</item>
+    </plurals>
+    <plurals name="restore_note_count">
+        <item quantity="one">1 note</item>
+        <item quantity="other">%1$d notes</item>
+    </plurals>
+    <string name="restore_pin_heading">A PIN for your restored notebook</string>
+    <string name="restore_pin_new_label">New PIN · 6 or more digits</string>
+    <string name="restore_pin_confirm_label">Confirm PIN</string>
+    <string name="restore_pin_note">After confirmation, a new encrypted database is written and atomically replaces the old one. The backup password is unchanged.</string>
+    <string name="restore_pin_mismatch">The PINs do not match. Enter the new PIN again.</string>
+    <string name="restore_pin_continue">Continue</string>
+    <string name="restore_pin_confirm">Confirm</string>
+    <string name="restore_confirm_heading">Replace Daftar data?</string>
+    <string name="restore_confirm_body">All current data will be replaced. Export a copy first if you want to keep it.</string>
+    <string name="restore_confirm_action">Confirm replace &amp; restore</string>
+    <string name="restore_preparing_heading">Preparing the restore</string>
+    <string name="restore_preparing_message">A new encrypted database is written and verified before anything is replaced.</string>
+    <string name="restore_committing_heading">Restoring</string>
+    <string name="restore_committing_message">The database is replaced in one step. This step cannot be stopped.</string>
+    <string name="restore_complete_heading">Your notebook is ready</string>
+    <string name="restore_complete_message">Your data has been restored. Open Daftar with your new PIN.</string>
+    <string name="restore_complete_biometrics">Enable biometrics again. Restored prices retain their original timestamps until a refresh succeeds.</string>
+    <string name="restore_complete_action">Open Daftar</string>
+    <string name="restore_failed_heading">The restore did not finish</string>
+    <string name="restore_failed_unreadable">The password is incorrect or the file is damaged. Your data is unchanged.</string>
+    <string name="restore_failed_newer">Update Daftar to open this backup.</string>
+    <string name="restore_failed_file">The file could not be opened. Your data is unchanged.</string>
+    <string name="restore_failed_not_replaced">The restore could not finish. Your data is unchanged.</string>
+    <string name="restore_failed_recovery">The restore result could not be confirmed. Restart Daftar to finish verification.</string>
+    <string name="restore_failed_choose_other">Choose another file</string>
+    <string name="restore_close">Close</string>
+    <string name="restore_erase_digit">Delete digit</string>
 </resources>

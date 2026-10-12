@@ -11,24 +11,23 @@ import org.koin.dsl.module
 class SecurityModuleTest {
 
     @Test
-    fun securityCoreModuleResolvesTheVaultAsASingletonOverPlatformBindings() {
-        val harness = VaultHarness()
+    fun securityCoreModuleResolvesTheVaultAsASingletonOverTheActiveGeneration() {
+        val pointers = FakePointerStore()
+        val storage = FakeStorageFactory(pointers)
         val app = koinApplication {
             modules(
                 securityCoreModule,
                 module {
-                    single<PlatformEnvelopeProtector> { harness.protector }
-                    single<SecurityRecordStore> { harness.records }
-                    single<BackoffStore> { harness.backoff }
-                    single<MonotonicClock> { harness.clock }
-                    single<BiometricKeyStore> { harness.biometricKeys }
-                    single<BiometricSlotStore> { harness.biometricSlots }
+                    single<PlatformVaultStorageFactory> { storage }
+                    single<GenerationFiles> { FakeGenerationFiles() }
+                    single<PostCommitInstaller> { FakePostCommitInstaller() }
+                    single<MonotonicClock> { FakeClock() }
                 },
             )
         }
         try {
             val koin = app.koin
-            assertIs<DefaultVaultSecurity>(koin.get<VaultSecurity>())
+            assertIs<VaultGenerations>(koin.get<VaultGenerations>())
             assertSame(koin.get<VaultSecurity>(), koin.get<VaultSecurity>())
         } finally {
             stopKoin()
