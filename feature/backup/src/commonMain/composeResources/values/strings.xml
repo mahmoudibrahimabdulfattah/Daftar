@@ -1,0 +1,33 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <string name="backup_title">Encrypted export</string>
+    <string name="backup_intro_heading">A copy to keep</string>
+    <string name="backup_intro_message">Contains assets, journal and preferences. Excludes the Daftar PIN and biometric keys.</string>
+    <string name="backup_intro_continue">Continue</string>
+    <string name="backup_password_heading">Choose a strong, separate password. You will need it to restore this backup.</string>
+    <string name="backup_password_label">Backup password</string>
+    <string name="backup_confirm_label">Confirm password</string>
+    <string name="backup_password_hint">At least 12 characters · different from your Daftar PIN</string>
+    <string name="backup_password_too_short">Use at least 12 characters.</string>
+    <string name="backup_password_too_long">This password is too long. The limit is 256 characters.</string>
+    <string name="backup_password_invalid">The password contains characters that cannot be saved.</string>
+    <string name="backup_confirm_mismatch">The passwords do not match.</string>
+    <string name="backup_password_warning">A lost password means the backup cannot be restored. Keep it somewhere safe and separate.</string>
+    <string name="backup_submit">Create &amp; choose save location</string>
+    <string name="backup_picker_note_android">Android’s file picker chooses the save location. No broad storage permission is requested.</string>
+    <string name="backup_picker_note_ios">The iOS document picker chooses the save location. No broad storage permission is requested.</string>
+    <string name="backup_busy_heading">Preparing the backup</string>
+    <string name="backup_busy_message">Your data is encrypted before you choose a location. No unencrypted temporary file is written.</string>
+    <string name="backup_writing_heading">Saving the backup</string>
+    <string name="backup_writing_message">Writing the encrypted file to the chosen location.</string>
+    <string name="backup_success_heading">Backup saved</string>
+    <string name="backup_success_message">Encrypted backup · excludes the Daftar PIN and biometric keys.</string>
+    <string name="backup_success_done">Back to settings</string>
+    <string name="backup_failed_heading">Backup was not saved</string>
+    <string name="backup_failed_write">Could not write to the selected location. Choose another location or check available storage.</string>
+    <string name="backup_failed_other">Something went wrong while preparing the backup.</string>
+    <string name="backup_failed_safe">Your database is unchanged. “Export complete” appears only after the file is fully written.</string>
+    <string name="backup_choose_other">Choose another location</string>
+    <string name="backup_cancel">Cancel</string>
+    <string name="backup_back">Back</string>
+</resources>

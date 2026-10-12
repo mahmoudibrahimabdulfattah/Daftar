@@ -5,6 +5,7 @@ plugins {
 kotlin {
     sourceSets {
         commonMain.dependencies {
+            implementation(projects.core.backup)
             implementation(projects.core.designsystem)
             implementation(projects.core.domain)
             implementation(projects.core.data)
@@ -20,6 +21,7 @@ kotlin {
             implementation(projects.feature.gold)
 
             implementation(projects.feature.banks)
+            implementation(projects.feature.backup)
             implementation(projects.feature.journal)
             implementation(projects.feature.prices)
             implementation(projects.feature.settings)
@@ -33,6 +35,7 @@ kotlin {
             implementation(libs.androidx.navigation3.ui)
             implementation(libs.androidx.lifecycle.viewmodel.navigation3)
             implementation(libs.compose.material3.adaptive.navigation3)
+            implementation(libs.kotlinx.datetime)
         }
         commonTest.dependencies {
             // The graph probes name the database builder and preferences types, so their signatures must resolve.

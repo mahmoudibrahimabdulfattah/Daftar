@@ -17,6 +17,7 @@ kotlin {
     sourceSets {
         commonMain.dependencies {
             api(projects.core.domain)
+            implementation(projects.core.backup)
             implementation(projects.core.database)
             implementation(projects.core.databaseDriver)
             implementation(projects.core.datastore)

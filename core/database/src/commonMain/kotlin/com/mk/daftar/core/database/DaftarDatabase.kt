@@ -4,6 +4,7 @@ import androidx.room.ConstructedBy
 import androidx.room.Database
 import androidx.room.RoomDatabase
 import androidx.room.RoomDatabaseConstructor
+import com.mk.daftar.core.database.dao.BackupSnapshotDao
 import com.mk.daftar.core.database.dao.BankAccountDao
 import com.mk.daftar.core.database.dao.BankDao
 import com.mk.daftar.core.database.dao.CashBalanceDao
@@ -53,6 +54,8 @@ abstract class DaftarDatabase : RoomDatabase() {
     abstract fun remoteQuoteDao(): RemoteQuoteDao
 
     abstract fun manualQuoteDao(): ManualQuoteDao
+
+    abstract fun backupSnapshotDao(): BackupSnapshotDao
 }
 
 /** Room generates the implementation for each platform. */
