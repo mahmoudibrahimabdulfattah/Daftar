@@ -17,21 +17,4 @@
     <string name="assets_banks">Banks</string>
     <string name="assets_cash">Cash &amp; wallets</string>
     <string name="unit_egp_short">EGP</string>
-    <string name="assets_banks_summary">%1$s · %2$s</string>
-    <string name="assets_holdings_one">1 holding</string>
-    <string name="assets_holdings_two">2 holdings</string>
-    <string name="assets_holdings_few">holdings</string>
-    <string name="assets_holdings_other">holdings</string>
-    <string name="assets_banks_count_one">1 bank</string>
-    <string name="assets_banks_count_two">2 banks</string>
-    <string name="assets_banks_count_few">banks</string>
-    <string name="assets_banks_count_other">banks</string>
-    <string name="assets_accounts_count_one">1 account</string>
-    <string name="assets_accounts_count_two">2 accounts</string>
-    <string name="assets_accounts_count_few">accounts</string>
-    <string name="assets_accounts_count_other">accounts</string>
-    <string name="assets_balances_count_one">1 balance</string>
-    <string name="assets_balances_count_two">2 balances</string>
-    <string name="assets_balances_count_few">balances</string>
-    <string name="assets_balances_count_other">balances</string>
 </resources>

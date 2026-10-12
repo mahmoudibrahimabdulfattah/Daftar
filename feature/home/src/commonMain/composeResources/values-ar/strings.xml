@@ -18,11 +18,10 @@
     <string name="home_available_subtotal">المتاح</string>
     <string name="home_missing_karat">سعر عيار %1$s غير متاح</string>
     <string name="home_missing_usd">سعر الدولار غير متاح</string>
-    <string name="home_allocation">ذهب %1$s%%، بنوك %2$s%%، نقد %3$s%%</string>
+    <string name="home_allocation">ذهب %1$s، بنوك %2$s، نقد %3$s</string>
     <string name="home_gold">الذهب</string>
     <string name="home_banks">البنوك</string>
     <string name="home_cash">النقد والمحافظ</string>
-    <string name="home_banks_summary">%1$s · %2$s</string>
     <string name="home_quote_caption">بيع الصائغ · ج.م / جرام</string>
     <string name="home_quote_details">التفاصيل</string>
     <string name="home_quote_refreshing">جارٍ تحديث الأسعار</string>
@@ -51,20 +50,4 @@
     <string name="home_month_10">أكتوبر</string>
     <string name="home_month_11">نوفمبر</string>
     <string name="home_month_12">ديسمبر</string>
-    <string name="home_holdings_one">مقتنى واحد</string>
-    <string name="home_holdings_two">مقتنيان</string>
-    <string name="home_holdings_few">مقتنيات</string>
-    <string name="home_holdings_other">مقتنى</string>
-    <string name="home_banks_count_one">بنك واحد</string>
-    <string name="home_banks_count_two">بنكان</string>
-    <string name="home_banks_count_few">بنوك</string>
-    <string name="home_banks_count_other">بنكًا</string>
-    <string name="home_accounts_count_one">حساب واحد</string>
-    <string name="home_accounts_count_two">حسابان</string>
-    <string name="home_accounts_count_few">حسابات</string>
-    <string name="home_accounts_count_other">حسابًا</string>
-    <string name="home_balances_count_one">رصيد واحد</string>
-    <string name="home_balances_count_two">رصيدان</string>
-    <string name="home_balances_count_few">أرصدة</string>
-    <string name="home_balances_count_other">رصيدًا</string>
 </resources>

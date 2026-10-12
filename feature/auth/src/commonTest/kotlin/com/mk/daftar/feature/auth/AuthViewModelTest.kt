@@ -594,4 +594,84 @@ class AuthViewModelTest {
         assertNull(vm.state.value.notice)
         assertNull(vm.state.value.busy)
     }
+
+    /** Types a PIN, confirms it, and leaves the vault at the optional biometric offer. */
+    private fun AuthViewModel.reachBiometricOffer(pin: String = "123456") {
+        type(pin)
+        onIntent(AuthIntent.Submit)
+        type(pin)
+        onIntent(AuthIntent.Submit)
+    }
+
+    @Test
+    fun unsupportedHardwareOnCreateShowsItsStateAndSurvivesAStatusRecheck() = runTest(dispatcher) {
+        val gateway = FakeGateway()
+        gateway.onCreate = { AuthResult.Security(SecurityError.UnsupportedHardware) }
+        val (vm, _) = rig(gateway)
+        advanceUntilIdle()
+        vm.reachBiometricOffer()
+
+        vm.onIntent(AuthIntent.SkipBiometrics)
+        advanceUntilIdle()
+        assertEquals(AuthPhase.Unavailable(AuthUnavailableReason.UnsupportedHardware), vm.state.value.phase)
+
+        // The gate rechecks after the failed create. The status still says "not initialized", and the reason stays.
+        assertEquals(SecurityStatus.NotInitialized, gateway.status)
+        vm.onIntent(AuthIntent.Recheck)
+        advanceUntilIdle()
+        assertEquals(AuthPhase.Unavailable(AuthUnavailableReason.UnsupportedHardware), vm.state.value.phase)
+        assertEquals(1, gateway.createCalls, "a failed create is never repeated")
+    }
+
+    @Test
+    fun everyPermanentCreateFailureIsShownInsteadOfReturningToStepOne() = runTest(dispatcher) {
+        val cases = listOf(
+            SecurityError.UnsupportedHardware to AuthUnavailableReason.UnsupportedHardware,
+            SecurityError.DeviceKeyUnavailable to AuthUnavailableReason.DeviceKeyUnavailable,
+            SecurityError.CorruptState to AuthUnavailableReason.CorruptState,
+            SecurityError.UnsupportedFormat to AuthUnavailableReason.UnsupportedFormat,
+        )
+        for ((error, reason) in cases) {
+            val gateway = FakeGateway()
+            gateway.onCreate = { AuthResult.Security(error) }
+            val (vm, _) = rig(gateway)
+            advanceUntilIdle()
+            vm.reachBiometricOffer()
+            vm.onIntent(AuthIntent.SkipBiometrics)
+            advanceUntilIdle()
+            vm.onIntent(AuthIntent.Recheck)
+            advanceUntilIdle()
+            assertEquals(AuthPhase.Unavailable(reason), vm.state.value.phase, "for $error")
+            assertNull(vm.state.value.error, "for $error")
+        }
+    }
+
+    @Test
+    fun aTransientCreateFailureReturnsToTheStartWithItsMessage() = runTest(dispatcher) {
+        val gateway = FakeGateway()
+        gateway.onCreate = { AuthResult.Security(SecurityError.ResourceUnavailable) }
+        val (vm, _) = rig(gateway)
+        advanceUntilIdle()
+        vm.reachBiometricOffer()
+        vm.onIntent(AuthIntent.SkipBiometrics)
+        advanceUntilIdle()
+
+        assertEquals(AuthPhase.Create, vm.state.value.phase)
+        assertEquals(AuthError.OpenFailed, vm.state.value.error)
+        assertEquals(1, gateway.createCalls)
+    }
+
+    @Test
+    fun aStorageFailureOnCreateReturnsToTheStartWithItsMessage() = runTest(dispatcher) {
+        val gateway = FakeGateway()
+        gateway.onCreate = { AuthResult.Storage(StorageError.Conflict) }
+        val (vm, _) = rig(gateway)
+        advanceUntilIdle()
+        vm.reachBiometricOffer()
+        vm.onIntent(AuthIntent.SkipBiometrics)
+        advanceUntilIdle()
+
+        assertEquals(AuthPhase.Create, vm.state.value.phase)
+        assertEquals(AuthError.OpenFailed, vm.state.value.error)
+    }
 }

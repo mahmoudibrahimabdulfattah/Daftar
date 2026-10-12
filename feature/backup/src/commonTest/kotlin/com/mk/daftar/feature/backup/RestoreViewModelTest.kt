@@ -30,6 +30,7 @@ import kotlin.test.AfterTest
 import kotlin.test.BeforeTest
 import kotlin.test.Test
 import kotlin.test.assertEquals
+import kotlin.test.assertFalse
 import kotlin.test.assertNull
 import kotlin.test.assertTrue
 import kotlin.time.Instant
@@ -443,5 +444,99 @@ class RestoreViewModelTest {
         unregister()
         drafts.invalidateAll()
         assertEquals(1, invalidated)
+    }
+
+    /** A picker whose answer the test releases, and which records whether the wait was cancelled. */
+    private class GatedPicker : RestoreFilePicker {
+        val answer = CompletableDeferred<Outcome<StagedCiphertext?, BackupError>>()
+        var cancelled = false
+
+        override suspend fun pick(): Outcome<StagedCiphertext?, BackupError> = try {
+            answer.await()
+        } catch (stop: CancellationException) {
+            cancelled = true
+            throw stop
+        }
+    }
+
+    private fun gatedWizard(picker: GatedPicker, drafts: RestoreDraftRegistry = RestoreDraftRegistry()) =
+        RestoreViewModel(
+            picker = picker,
+            decryptor = FakeDecryptor(Outcome.Success(backup())),
+            engine = FakeEngine(),
+            drafts = drafts,
+            decodeDispatcher = dispatcher,
+        )
+
+    @Test
+    fun aPrivacyEventWhilePickingKeepsThePickAndDeliversAFreshPasswordStep() = runTest(dispatcher) {
+        val picker = GatedPicker()
+        val drafts = RestoreDraftRegistry()
+        val vm = gatedWizard(picker, drafts)
+        vm.onIntent(RestoreIntent.ChooseFile)
+        settle()
+
+        // The app is paused and stopped while the system picker is open.
+        drafts.invalidateAll()
+        settle()
+        assertEquals(RestorePhase.ChooseFile, vm.phase())
+        assertFalse(picker.cancelled)
+
+        // The user picks a file after resuming: the copy arrives as a password step with nothing typed.
+        val file = FakeCiphertext()
+        picker.answer.complete(Outcome.Success(file))
+        settle()
+        assertEquals(RestorePhase.Password, vm.phase())
+        assertEquals("", vm.state.value.password)
+        assertEquals(0, file.discards)
+    }
+
+    @Test
+    fun aPickedFileIsNotResurrectedAfterPrivacyDropsThePasswordStep() = runTest(dispatcher) {
+        val picker = GatedPicker()
+        val drafts = RestoreDraftRegistry()
+        val vm = gatedWizard(picker, drafts)
+        vm.onIntent(RestoreIntent.ChooseFile)
+        settle()
+        val file = FakeCiphertext()
+        picker.answer.complete(Outcome.Success(file))
+        settle()
+        vm.typePassword("typed before the pause")
+
+        drafts.invalidateAll()
+        settle()
+
+        // The password step's draft is gone, and the file of that step is discarded with it; nothing reappears.
+        assertEquals(RestorePhase.ChooseFile, vm.phase())
+        assertEquals("", vm.state.value.password)
+        assertEquals(1, file.discards)
+    }
+
+    @Test
+    fun aCancelledPickerAfterPrivacyLeavesTheWizardAtTheStart() = runTest(dispatcher) {
+        val picker = GatedPicker()
+        val drafts = RestoreDraftRegistry()
+        val vm = gatedWizard(picker, drafts)
+        vm.onIntent(RestoreIntent.ChooseFile)
+        settle()
+        drafts.invalidateAll()
+        settle()
+
+        picker.answer.complete(Outcome.Success(null))
+        settle()
+        assertEquals(RestorePhase.ChooseFile, vm.phase())
+    }
+
+    @Test
+    fun closingWhilePickingEndsTheWaitSoTheOperationIsAbandoned() = runTest(dispatcher) {
+        val picker = GatedPicker()
+        val vm = gatedWizard(picker)
+        vm.onIntent(RestoreIntent.ChooseFile)
+        settle()
+
+        vm.onIntent(RestoreIntent.Close)
+        settle()
+        assertTrue(picker.cancelled)
+        assertEquals(RestoreEffect.Close, vm.effects.first())
     }
 }

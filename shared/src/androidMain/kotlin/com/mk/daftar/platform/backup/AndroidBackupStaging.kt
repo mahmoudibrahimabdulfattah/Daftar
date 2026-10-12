@@ -11,13 +11,13 @@ import com.mk.daftar.core.backup.BackupError
 import com.mk.daftar.core.backup.BackupFormat
 import com.mk.daftar.core.backup.BackupStaging
 import com.mk.daftar.core.backup.PickedDestination
+import com.mk.daftar.core.backup.PickerOperationCoordinator
 import com.mk.daftar.core.backup.StagedBackup
 import com.mk.daftar.core.common.Outcome
 import java.io.File
 import java.io.FileOutputStream
 import java.io.IOException
 import java.util.UUID
-import kotlinx.coroutines.CompletableDeferred
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.withContext
 
@@ -74,7 +74,7 @@ internal class AndroidPickedDestination(val uri: Uri) : PickedDestination
 internal class AndroidBackupDocuments(private val context: Context) : BackupDocuments {
 
     override suspend fun choose(staged: StagedBackup, suggestedName: String): Outcome<PickedDestination?, BackupError> {
-        val uri = AndroidBackupPicker.pick(suggestedName) ?: return Outcome.Success(null)
+        val uri = AndroidBackupPicker.pick(staged, suggestedName) ?: return Outcome.Success(null)
         return Outcome.Success(AndroidPickedDestination(uri))
     }
 
@@ -118,16 +118,18 @@ internal fun deleteQuietly(context: Context, uri: Uri) {
 
 /**
  * The bridge between the app's activity and the save picker. The activity registers [contract] once and calls [deliver]
- * with the result. A waiting [pick] resumes with the URI; if no one is waiting any more, the document the picker
- * created is removed so no empty file is left behind.
+ * with the result. The wait is an operation of [operations], which owns the encrypted staging while the picker is open.
+ * A lock or a pause never cancels it. Its answer is accepted once, within the lifetime; a late answer is refused, and
+ * the document the picker created is removed so no empty file is left behind.
  */
 object AndroidBackupPicker {
     /** The system save picker for one binary file. It creates the document only when the user confirms. */
     val contract: ActivityResultContract<String, Uri?> = ActivityResultContracts.CreateDocument(BackupFormat.MIME_TYPE)
 
+    private val operations = PickerOperationCoordinator<Uri>(scope = androidPickerScope)
+
     private var launcher: ActivityResultLauncher<String>? = null
     private var appContext: Context? = null
-    private var pending: CompletableDeferred<Uri?>? = null
 
     fun attach(context: Context, launcher: ActivityResultLauncher<String>) {
         this.appContext = context.applicationContext
@@ -138,24 +140,19 @@ object AndroidBackupPicker {
         if (this.launcher === launcher) this.launcher = null
     }
 
-    /** Called with the picker's result. Runs on the main thread. */
+    /** Called with the picker's result on the main thread. A null [uri] is the user's cancellation. */
     fun deliver(uri: Uri?) {
-        val waiting = pending
-        pending = null
-        if (waiting == null || waiting.isCancelled) {
-            val context = appContext
-            if (uri != null && context != null) deleteQuietly(context, uri)
-            return
-        }
-        waiting.complete(uri)
+        if (operations.completePending(uri)) return
+        val context = appContext
+        if (uri != null && context != null) deleteQuietly(context, uri)
     }
 
-    /** Opens the picker and suspends until the user answers. Returns null when the user cancels. */
-    internal suspend fun pick(suggestedName: String): Uri? = withContext(Dispatchers.Main.immediate) {
-        val active = checkNotNull(launcher) { "no save picker is attached" }
-        val waiting = CompletableDeferred<Uri?>()
-        pending = waiting
-        active.launch(suggestedName)
-        waiting.await()
-    }
+    /** Opens the picker and suspends until the user answers. Returns null when the user cancels or the operation ends. */
+    internal suspend fun pick(staging: StagedBackup, suggestedName: String): Uri? =
+        withContext(Dispatchers.Main.immediate) {
+            val active = checkNotNull(launcher) { "no save picker is attached" }
+            val token = operations.begin(staging)
+            active.launch(suggestedName)
+            operations.awaitResult(token)
+        }
 }

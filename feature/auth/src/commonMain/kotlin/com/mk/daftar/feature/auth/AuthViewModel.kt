@@ -40,6 +40,13 @@ class AuthViewModel(
     /** The PIN the user chose. Owned here until creation takes it. */
     private var candidate: SecretBytes? = null
 
+    /**
+     * A permanent fault that a failed open reported. A later status read cannot replace it: the gate rechecks the status
+     * on every state change and resume, and a failed create leaves the status "not initialized", which would otherwise
+     * hide the reason. The state is shown until the view model ends.
+     */
+    private var pinnedUnavailable: AuthUnavailableReason? = null
+
     private var work: Job? = null
     private var workToken = 0
     private var statusJob: Job? = null
@@ -334,6 +341,7 @@ class AuthViewModel(
     private suspend fun afterFailedOpen(error: SecurityError, failure: AuthError) {
         val reason = error.unavailableReasonOrNull()
         if (reason != null) {
+            pinnedUnavailable = reason
             wipeDrafts()
             reduce { copy(phase = AuthPhase.Unavailable(reason), error = null, retrySeconds = null) }
         } else {
@@ -354,6 +362,20 @@ class AuthViewModel(
     private suspend fun refreshNow(failure: AuthError? = null, notice: AuthNotice? = null) {
         val status = gateway.status()
         coroutineContext.ensureActive()
+        val pinned = pinnedUnavailable
+        if (pinned != null && status !is SecurityStatus.Unlocked) {
+            wipeDrafts()
+            reduce {
+                copy(
+                    phase = AuthPhase.Unavailable(pinned),
+                    error = null,
+                    retrySeconds = null,
+                    biometricReady = false,
+                    notice = null,
+                )
+            }
+            return
+        }
         val ready = if (status is SecurityStatus.Locked) gateway.biometricReady() else false
         applyStatus(status, failure, notice, ready)
     }

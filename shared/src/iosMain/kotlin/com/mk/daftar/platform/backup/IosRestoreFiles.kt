@@ -4,18 +4,19 @@ package com.mk.daftar.platform.backup
 
 import com.mk.daftar.core.backup.BackupError
 import com.mk.daftar.core.backup.BackupFormat
+import com.mk.daftar.core.backup.PickerOperationCoordinator
 import com.mk.daftar.core.backup.RestoreFilePicker
 import com.mk.daftar.core.backup.StagedCiphertext
 import com.mk.daftar.core.common.Outcome
-import kotlin.coroutines.resume
 import kotlinx.cinterop.ExperimentalForeignApi
 import kotlinx.cinterop.UByteVar
 import kotlinx.cinterop.addressOf
 import kotlinx.cinterop.convert
 import kotlinx.cinterop.reinterpret
 import kotlinx.cinterop.usePinned
+import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
-import kotlinx.coroutines.suspendCancellableCoroutine
+import kotlinx.coroutines.SupervisorJob
 import kotlinx.coroutines.withContext
 import platform.Foundation.NSApplicationSupportDirectory
 import platform.Foundation.NSFileManager
@@ -177,21 +178,31 @@ private class OpenPickerDelegate(private val onResult: (NSURL?) -> Unit) :
     }
 }
 
-/** Presents the open picker for data files and suspends until the user answers. Null means cancelled. */
-private suspend fun presentOpenPicker(): NSURL? = withContext(Dispatchers.Main) {
-    suspendCancellableCoroutine { continuation ->
+/** Main-thread scope for the picker operations. Shared with the export picker. */
+internal val iosPickerScope: CoroutineScope = CoroutineScope(SupervisorJob() + Dispatchers.Main)
+
+/** The open picker's answers. One operation at a time, owned here rather than by the restore screen. */
+private val openOperations = PickerOperationCoordinator<NSURL>(scope = iosPickerScope)
+
+/**
+ * Presents the open picker for data files and suspends until the user answers. Null means cancelled, expired or
+ * abandoned. Only the coordinator's token ends the wait, so a privacy cover never cancels a picker that is on screen.
+ */
+private suspend fun presentOpenPicker(): NSURL? {
+    val token = openOperations.begin()
+    withContext(Dispatchers.Main) {
         val presenter = topViewController()
         if (presenter == null) {
-            continuation.resume(null)
-            return@suspendCancellableCoroutine
+            openOperations.complete(token, null)
+            return@withContext
         }
-        val delegate = OpenPickerDelegate { picked -> if (continuation.isActive) continuation.resume(picked) }
+        val delegate = OpenPickerDelegate { picked -> openOperations.complete(token, picked) }
         activeOpenDelegate = delegate
         val picker = UIDocumentPickerViewController(forOpeningContentTypes = listOf(UTTypeData))
         picker.delegate = delegate
-        continuation.invokeOnCancellation { activeOpenDelegate = null }
         presenter.presentViewController(picker, animated = true, completion = null)
     }
+    return openOperations.awaitResult(token)
 }
 
 private fun topViewController(): UIViewController? {

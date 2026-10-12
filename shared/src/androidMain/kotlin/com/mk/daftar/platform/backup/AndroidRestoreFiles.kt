@@ -7,6 +7,7 @@ import androidx.activity.result.contract.ActivityResultContract
 import androidx.activity.result.contract.ActivityResultContracts
 import com.mk.daftar.core.backup.BackupError
 import com.mk.daftar.core.backup.BackupFormat
+import com.mk.daftar.core.backup.PickerOperationCoordinator
 import com.mk.daftar.core.backup.RestoreFilePicker
 import com.mk.daftar.core.backup.StagedCiphertext
 import com.mk.daftar.core.common.Outcome
@@ -14,8 +15,9 @@ import java.io.File
 import java.io.FileOutputStream
 import java.io.IOException
 import java.util.UUID
-import kotlinx.coroutines.CompletableDeferred
+import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.SupervisorJob
 import kotlinx.coroutines.withContext
 
 /**
@@ -92,9 +94,10 @@ internal class AndroidStagedCiphertext(private val file: File) : StagedCiphertex
 }
 
 /**
- * The bridge between the activity and the open picker, as for the export picker. The activity registers [contract]
- * before it starts and calls [deliver] with the result. A picker result that nobody waits for is simply dropped: nothing
- * was created, so nothing is removed.
+ * The bridge between the activity and the open picker. The activity registers [contract] before it starts and calls
+ * [deliver] with the result. The wait belongs to [operations], not to the restore screen: a lock or a pause never
+ * cancels it, and the answer is accepted once, within the operation's lifetime. An answer nobody is waiting for is
+ * dropped, which is harmless because an open picker creates nothing.
  */
 object AndroidRestorePicker {
     /** The system open picker. Any document may be chosen, because the file is validated by its bytes, not its name. */
@@ -102,8 +105,9 @@ object AndroidRestorePicker {
 
     private val accepted = arrayOf("*/*")
 
+    private val operations = PickerOperationCoordinator<Uri>(scope = androidPickerScope)
+
     private var launcher: ActivityResultLauncher<Array<String>>? = null
-    private var pending: CompletableDeferred<Uri?>? = null
 
     fun attach(launcher: ActivityResultLauncher<Array<String>>) {
         this.launcher = launcher
@@ -113,19 +117,22 @@ object AndroidRestorePicker {
         if (this.launcher === launcher) this.launcher = null
     }
 
-    /** Called with the picker's result on the main thread. */
+    /** Called with the picker's result on the main thread. A null [uri] is the user's cancellation. */
     fun deliver(uri: Uri?) {
-        val waiting = pending
-        pending = null
-        waiting?.complete(uri)
+        operations.completePending(uri)
     }
 
-    /** Opens the picker and suspends until the user answers. Returns null when the user cancels. */
+    /**
+     * Opens the picker and suspends until the user answers. Returns null when the user cancels, when the operation
+     * expires, or when the waiting coroutine is cancelled.
+     */
     internal suspend fun pick(): Uri? = withContext(Dispatchers.Main.immediate) {
         val active = checkNotNull(launcher) { "no open picker is attached" }
-        val waiting = CompletableDeferred<Uri?>()
-        pending = waiting
+        val token = operations.begin()
         active.launch(accepted)
-        waiting.await()
+        operations.awaitResult(token)
     }
 }
+
+/** Main-thread scope for the picker operations: their lifetime timers run here, and they outlive every activity. */
+internal val androidPickerScope: CoroutineScope = CoroutineScope(SupervisorJob() + Dispatchers.Main.immediate)

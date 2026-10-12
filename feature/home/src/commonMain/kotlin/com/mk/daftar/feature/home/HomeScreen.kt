@@ -49,9 +49,10 @@ import com.mk.daftar.core.domain.valuation.AssetCategory
 import com.mk.daftar.core.model.QuoteKey
 import com.mk.daftar.core.navigation.LocalNavigator
 import com.mk.daftar.core.ui.mvi.CollectEffects
-import com.mk.daftar.core.ui.presentation.QuantityForm
+import com.mk.daftar.core.ui.presentation.CountNoun
+import com.mk.daftar.core.ui.presentation.bankAndAccountLabel
+import com.mk.daftar.core.ui.presentation.countLabel
 import com.mk.daftar.core.ui.presentation.moneyText
-import com.mk.daftar.core.ui.presentation.quantityFormOf
 import com.mk.daftar.core.ui.shell.ShellScreen
 import com.mk.daftar.feature.home.resources.Res
 import com.mk.daftar.feature.home.resources.badge_cached
@@ -59,23 +60,10 @@ import com.mk.daftar.feature.home.resources.badge_clock
 import com.mk.daftar.feature.home.resources.badge_live
 import com.mk.daftar.feature.home.resources.badge_manual
 import com.mk.daftar.feature.home.resources.badge_stale
-import com.mk.daftar.feature.home.resources.home_accounts_count_few
-import com.mk.daftar.feature.home.resources.home_accounts_count_one
-import com.mk.daftar.feature.home.resources.home_accounts_count_other
-import com.mk.daftar.feature.home.resources.home_accounts_count_two
 import com.mk.daftar.feature.home.resources.home_allocation
 import com.mk.daftar.feature.home.resources.home_attribution
 import com.mk.daftar.feature.home.resources.home_available_subtotal
-import com.mk.daftar.feature.home.resources.home_balances_count_few
-import com.mk.daftar.feature.home.resources.home_balances_count_one
-import com.mk.daftar.feature.home.resources.home_balances_count_other
-import com.mk.daftar.feature.home.resources.home_balances_count_two
 import com.mk.daftar.feature.home.resources.home_banks
-import com.mk.daftar.feature.home.resources.home_banks_count_few
-import com.mk.daftar.feature.home.resources.home_banks_count_one
-import com.mk.daftar.feature.home.resources.home_banks_count_other
-import com.mk.daftar.feature.home.resources.home_banks_count_two
-import com.mk.daftar.feature.home.resources.home_banks_summary
 import com.mk.daftar.feature.home.resources.home_brand
 import com.mk.daftar.feature.home.resources.home_cash
 import com.mk.daftar.feature.home.resources.home_empty_action
@@ -86,10 +74,6 @@ import com.mk.daftar.feature.home.resources.home_gold
 import com.mk.daftar.feature.home.resources.home_greeting
 import com.mk.daftar.feature.home.resources.home_hidden_note
 import com.mk.daftar.feature.home.resources.home_hide_values
-import com.mk.daftar.feature.home.resources.home_holdings_few
-import com.mk.daftar.feature.home.resources.home_holdings_one
-import com.mk.daftar.feature.home.resources.home_holdings_other
-import com.mk.daftar.feature.home.resources.home_holdings_two
 import com.mk.daftar.feature.home.resources.home_incomplete
 import com.mk.daftar.feature.home.resources.home_masked_value
 import com.mk.daftar.feature.home.resources.home_missing_karat
@@ -257,13 +241,18 @@ private fun Total(figures: HomeFigures, hidden: Boolean, refreshing: Boolean) {
             )
         }
     }
+    // The bar draws nothing while hidden, and its description carries no value then.
     val summary = allocation?.let { parts ->
-        stringResource(
-            Res.string.home_allocation,
-            parts.percentOf(AssetCategory.GOLD).toString(),
-            parts.percentOf(AssetCategory.BANKS).toString(),
-            parts.percentOf(AssetCategory.CASH).toString(),
-        )
+        if (hidden) {
+            ""
+        } else {
+            stringResource(
+                Res.string.home_allocation,
+                percentText(parts.percentOf(AssetCategory.GOLD)),
+                percentText(parts.percentOf(AssetCategory.BANKS)),
+                percentText(parts.percentOf(AssetCategory.CASH)),
+            )
+        }
     }
     DaftarBalanceSummary(
         label = stringResource(if (refreshing) Res.string.home_total_previous else Res.string.home_total),
@@ -342,7 +331,7 @@ private fun Categories(figures: HomeFigures, hidden: Boolean, onIntent: (HomeInt
     val cash = figures.categoryOf(AssetCategory.CASH)
     CategoryRow(
         title = stringResource(Res.string.home_gold),
-        subtitle = countText(gold.count, HOME_HOLDINGS_FORMS),
+        subtitle = countLabel(gold.count, CountNoun.HOLDINGS),
         icon = DaftarIcons.Gold,
         tone = DaftarTileTone.Gold,
         amount = gold.total?.moneyText(),
@@ -354,11 +343,7 @@ private fun Categories(figures: HomeFigures, hidden: Boolean, onIntent: (HomeInt
     )
     CategoryRow(
         title = stringResource(Res.string.home_banks),
-        subtitle = stringResource(
-            Res.string.home_banks_summary,
-            countText(figures.bankCount, HOME_BANKS_COUNT_FORMS),
-            countText(banks.count, HOME_ACCOUNTS_COUNT_FORMS),
-        ),
+        subtitle = bankAndAccountLabel(banks = figures.bankCount, accounts = banks.count),
         icon = DaftarIcons.Bank,
         tone = DaftarTileTone.Default,
         amount = banks.total?.moneyText(),
@@ -370,7 +355,7 @@ private fun Categories(figures: HomeFigures, hidden: Boolean, onIntent: (HomeInt
     )
     CategoryRow(
         title = stringResource(Res.string.home_cash),
-        subtitle = countText(cash.count, HOME_BALANCES_COUNT_FORMS),
+        subtitle = countLabel(cash.count, CountNoun.BALANCES),
         icon = DaftarIcons.Wallet,
         tone = DaftarTileTone.Default,
         amount = cash.total?.moneyText(),
@@ -509,6 +494,9 @@ private fun HomeFigures.categoryOf(category: AssetCategory): CategoryFigures =
 
 private fun List<AllocationPart>.percentOf(category: AssetCategory): Int = first { it.category == category }.percent
 
+/** The one place a percentage gets its sign, so the allocation text never doubles or drops it. */
+private fun percentText(percent: Int): String = "$percent%"
+
 @Composable
 private fun categoryColor(category: AssetCategory): Color = when (category) {
     AssetCategory.GOLD -> DaftarTheme.colors.gold
@@ -532,55 +520,3 @@ private val MONTHS: List<StringResource> = listOf(
     Res.string.home_month_11,
     Res.string.home_month_12,
 )
-
-/** The count's word for its quantity form, with the count itself as the argument. */
-@Composable
-private fun countText(count: Int, forms: CountForms): String = when (quantityFormOf(count)) {
-    QuantityForm.ONE -> stringResource(forms.one)
-    QuantityForm.TWO -> stringResource(forms.two)
-    QuantityForm.FEW -> "$count ${stringResource(forms.few)}"
-    QuantityForm.OTHER -> "$count ${stringResource(forms.other)}"
-}
-
-private class CountForms(
-    val one: StringResource,
-    val two: StringResource,
-    val few: StringResource,
-    val other: StringResource,
-) {
-    fun of(form: QuantityForm): StringResource = when (form) {
-        QuantityForm.ONE -> one
-        QuantityForm.TWO -> two
-        QuantityForm.FEW -> few
-        QuantityForm.OTHER -> other
-    }
-}
-
-private val HOME_ACCOUNTS_COUNT_FORMS =
-    CountForms(
-        Res.string.home_accounts_count_one,
-        Res.string.home_accounts_count_two,
-        Res.string.home_accounts_count_few,
-        Res.string.home_accounts_count_other,
-    )
-private val HOME_BALANCES_COUNT_FORMS =
-    CountForms(
-        Res.string.home_balances_count_one,
-        Res.string.home_balances_count_two,
-        Res.string.home_balances_count_few,
-        Res.string.home_balances_count_other,
-    )
-private val HOME_BANKS_COUNT_FORMS =
-    CountForms(
-        Res.string.home_banks_count_one,
-        Res.string.home_banks_count_two,
-        Res.string.home_banks_count_few,
-        Res.string.home_banks_count_other,
-    )
-private val HOME_HOLDINGS_FORMS =
-    CountForms(
-        Res.string.home_holdings_one,
-        Res.string.home_holdings_two,
-        Res.string.home_holdings_few,
-        Res.string.home_holdings_other,
-    )

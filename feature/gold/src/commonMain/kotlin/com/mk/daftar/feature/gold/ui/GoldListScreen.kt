@@ -55,6 +55,8 @@ import com.mk.daftar.feature.gold.list.GoldListUiState
 import com.mk.daftar.feature.gold.list.GoldListViewModel
 import com.mk.daftar.feature.gold.list.GoldQuoteLine
 import com.mk.daftar.feature.gold.list.GoldSummary
+import com.mk.daftar.feature.gold.list.GoldWeightNotice
+import com.mk.daftar.feature.gold.list.goldWeightNoticeOf
 import com.mk.daftar.feature.gold.resources.Res
 import com.mk.daftar.feature.gold.resources.gold_add
 import com.mk.daftar.feature.gold.resources.gold_bars
@@ -319,16 +321,29 @@ private fun QuoteWarnings(lines: List<GoldQuoteLine>) {
     }
 }
 
-/** The total weight. Karats are never mixed into one fine-gold figure, and while hidden the weight is not read out. */
+/**
+ * The total weight. Karats are never mixed into one fine-gold figure: one karat is stated, and mixed karats say the total
+ * is not pure gold. While hidden the weight is not read out.
+ */
 @Composable
 private fun WeightNotice(state: GoldListUiState, summary: GoldSummary) {
-    val distinctKarats = state.rows.map { it.karat }.distinct().size
+    val notice = goldWeightNoticeOf(
+        hidden = state.hidden,
+        karats = state.rows.map { it.karat },
+        totalWeight = summary.totalWeight,
+    ) ?: return
     DaftarNotePanel(tone = DaftarNoteTone.Context) {
         Text(
-            text = when {
-                state.hidden -> stringResource(Res.string.gold_weight_notice_hidden)
-                distinctKarats > 1 -> stringResource(Res.string.gold_weight_notice, summary.totalWeight.toPlainString())
-                else -> stringResource(Res.string.gold_weight_notice_single, summary.totalWeight.toPlainString())
+            text = when (notice) {
+                GoldWeightNotice.Hidden -> stringResource(Res.string.gold_weight_notice_hidden)
+
+                is GoldWeightNotice.Single -> stringResource(
+                    Res.string.gold_weight_notice_single,
+                    notice.totalWeight.toPlainString(),
+                    notice.karat.carats,
+                )
+
+                is GoldWeightNotice.Mixed -> stringResource(Res.string.gold_weight_notice)
             },
         )
     }

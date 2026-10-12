@@ -64,6 +64,10 @@ sealed interface BackupExportState {
     data class Failed(val error: BackupError) : BackupExportState
 }
 
+/** A finished export, held until it is acknowledged. It may finish while the vault is locked, so it is shown after unlock. */
+val BackupExportState.awaitsAcknowledgment: Boolean
+    get() = this is BackupExportState.Complete || this is BackupExportState.Failed
+
 /**
  * Runs one export at a time, independent of any screen. It owns the snapshot, the staged file and the picker wait, so
  * a locked vault or a destroyed screen cannot strand a half-written file. The vault is not needed after staging: the

@@ -155,4 +155,32 @@
     <string name="catalog_auth_format">حدّث دفتر لفتح هذه البيانات.</string>
     <string name="catalog_auth_transient">تعذّر فتح دفتر الآن. حاول مرة أخرى.</string>
     <string name="catalog_auth_busy">جارٍ الفتح…</string>
+
+    <!-- Counts. Each noun has its six Arabic forms; the number is isolated so it reads correctly in both directions. -->
+    <string name="count_holdings_zero">لا توجد مقتنيات</string>
+    <string name="count_holdings_one">مقتنى واحد</string>
+    <string name="count_holdings_two">مقتنيان</string>
+    <string name="count_holdings_few">⁦%1$d⁩ مقتنيات</string>
+    <string name="count_holdings_many">⁦%1$d⁩ مقتنى</string>
+    <string name="count_holdings_other">⁦%1$d⁩ مقتنى</string>
+    <string name="count_banks_zero">لا توجد بنوك</string>
+    <string name="count_banks_one">بنك واحد</string>
+    <string name="count_banks_two">بنكان</string>
+    <string name="count_banks_few">⁦%1$d⁩ بنوك</string>
+    <string name="count_banks_many">⁦%1$d⁩ بنكًا</string>
+    <string name="count_banks_other">⁦%1$d⁩ بنك</string>
+    <string name="count_accounts_zero">لا توجد حسابات</string>
+    <string name="count_accounts_one">حساب واحد</string>
+    <string name="count_accounts_two">حسابان</string>
+    <string name="count_accounts_few">⁦%1$d⁩ حسابات</string>
+    <string name="count_accounts_many">⁦%1$d⁩ حسابًا</string>
+    <string name="count_accounts_other">⁦%1$d⁩ حساب</string>
+    <string name="count_balances_zero">لا توجد أرصدة</string>
+    <string name="count_balances_one">رصيد واحد</string>
+    <string name="count_balances_two">رصيدان</string>
+    <string name="count_balances_few">⁦%1$d⁩ أرصدة</string>
+    <string name="count_balances_many">⁦%1$d⁩ رصيدًا</string>
+    <string name="count_balances_other">⁦%1$d⁩ رصيد</string>
+    <string name="count_banks_accounts_none">لا توجد بنوك أو حسابات</string>
+    <string name="count_banks_accounts_summary">%1$s · %2$s</string>
 </resources>

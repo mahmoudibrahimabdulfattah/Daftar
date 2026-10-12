@@ -18,11 +18,10 @@
     <string name="home_available_subtotal">Available subtotal</string>
     <string name="home_missing_karat">%1$s price is unavailable</string>
     <string name="home_missing_usd">USD rate is unavailable</string>
-    <string name="home_allocation">Gold %1$s%%, banks %2$s%%, cash %3$s%%</string>
+    <string name="home_allocation">Gold %1$s, banks %2$s, cash %3$s</string>
     <string name="home_gold">Gold</string>
     <string name="home_banks">Banks</string>
     <string name="home_cash">Cash &amp; wallets</string>
-    <string name="home_banks_summary">%1$s · %2$s</string>
     <string name="home_quote_caption">Merchant sell · EGP / gram</string>
     <string name="home_quote_details">Details</string>
     <string name="home_quote_refreshing">Refreshing prices</string>
@@ -51,20 +50,4 @@
     <string name="home_month_10">Oct</string>
     <string name="home_month_11">Nov</string>
     <string name="home_month_12">Dec</string>
-    <string name="home_holdings_one">1 holding</string>
-    <string name="home_holdings_two">2 holdings</string>
-    <string name="home_holdings_few">holdings</string>
-    <string name="home_holdings_other">holdings</string>
-    <string name="home_banks_count_one">1 bank</string>
-    <string name="home_banks_count_two">2 banks</string>
-    <string name="home_banks_count_few">banks</string>
-    <string name="home_banks_count_other">banks</string>
-    <string name="home_accounts_count_one">1 account</string>
-    <string name="home_accounts_count_two">2 accounts</string>
-    <string name="home_accounts_count_few">accounts</string>
-    <string name="home_accounts_count_other">accounts</string>
-    <string name="home_balances_count_one">1 balance</string>
-    <string name="home_balances_count_two">2 balances</string>
-    <string name="home_balances_count_few">balances</string>
-    <string name="home_balances_count_other">balances</string>
 </resources>
