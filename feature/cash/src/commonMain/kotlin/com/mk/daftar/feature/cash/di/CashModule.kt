@@ -17,7 +17,7 @@ import org.koin.dsl.navigation3.navigation
 
 /**
  * The cash and wallet feature: the list and its editor. Their use cases come from the application graph, so nothing
- * here reaches the data layer. It replaces the Assets placeholder that used to answer [CashRoute].
+ * here reaches the data layer.
  */
 @OptIn(KoinExperimentalAPI::class)
 val cashModule: Module = module {

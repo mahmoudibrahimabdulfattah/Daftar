@@ -92,6 +92,8 @@
     <string name="about_build">Build</string>
     <string name="about_version_value">⁦%1$s⁩</string>
     <string name="about_licenses">Licenses</string>
+    <string name="about_license_texts">License texts</string>
+    <string name="about_notices_title">Third-party notices</string>
     <string name="about_font_alexandria">Alexandria · Arabic typeface · SIL Open Font License 1.1</string>
     <string name="about_font_rubik">Rubik · Latin and numeric typeface · SIL Open Font License 1.1</string>
     <string name="about_source">Source</string>

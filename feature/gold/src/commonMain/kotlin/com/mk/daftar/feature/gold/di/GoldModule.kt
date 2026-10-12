@@ -16,9 +16,8 @@ import org.koin.dsl.module
 import org.koin.dsl.navigation3.navigation
 
 /**
- * The Gold feature: the holdings list with its category valuation, and the add and edit editor. It replaces the Assets
- * placeholder under [GoldRoute]. Its use cases and privacy state come from the application graph; nothing here reaches
- * the data layer.
+ * The Gold feature: the holdings list with its category valuation, and the add and edit editor. Its use cases and
+ * privacy state come from the application graph; nothing here reaches the data layer.
  */
 @OptIn(KoinExperimentalAPI::class)
 val goldModule: Module = module {

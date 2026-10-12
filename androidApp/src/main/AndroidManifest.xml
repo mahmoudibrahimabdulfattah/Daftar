@@ -6,6 +6,7 @@
     <uses-permission android:name="android.permission.INTERNET" />
     <!-- Strong biometrics only, for the optional unlock. No device credential or other grant. -->
     <uses-permission android:name="android.permission.USE_BIOMETRIC" />
+    <!-- androidx.biometric also merges the legacy USE_FINGERPRINT permission, which it needs on API 26-27. -->
 
     <!--
         Merged from dependencies, but unused here: the app registers no dynamic receivers, so the custom

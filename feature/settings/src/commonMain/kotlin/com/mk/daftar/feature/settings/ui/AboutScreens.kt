@@ -7,6 +7,8 @@ import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.size
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.getValue
+import androidx.compose.runtime.produceState
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.platform.LocalUriHandler
@@ -22,8 +24,10 @@ import com.mk.daftar.feature.settings.resources.Res
 import com.mk.daftar.feature.settings.resources.about_build
 import com.mk.daftar.feature.settings.resources.about_font_alexandria
 import com.mk.daftar.feature.settings.resources.about_font_rubik
+import com.mk.daftar.feature.settings.resources.about_license_texts
 import com.mk.daftar.feature.settings.resources.about_licenses
 import com.mk.daftar.feature.settings.resources.about_local
+import com.mk.daftar.feature.settings.resources.about_notices_title
 import com.mk.daftar.feature.settings.resources.about_source
 import com.mk.daftar.feature.settings.resources.about_source_alexandria
 import com.mk.daftar.feature.settings.resources.about_source_rubik
@@ -36,14 +40,26 @@ import org.koin.compose.koinInject
 private const val ALEXANDRIA_SOURCE: String = "https://github.com/Gue3bara/Alexandria"
 private const val RUBIK_SOURCE: String = "https://github.com/googlefonts/rubik"
 
+/** A bundled license or notice file, read from the app's resources, for display in full. */
+data class LicenseText(val title: String, val text: String)
+
 /** The version and build the app was built with, the bundled font licenses, and their sources. */
 @Composable
 fun AboutScreen(modifier: Modifier = Modifier) {
     val navigator = LocalNavigator.current
     val info: AppBuildInfo = koinInject()
     val uriHandler = LocalUriHandler.current
+    val documents = listOf(
+        stringResource(Res.string.about_font_alexandria) to "files/licenses/Alexandria-OFL.txt",
+        stringResource(Res.string.about_font_rubik) to "files/licenses/Rubik-OFL.txt",
+        stringResource(Res.string.about_notices_title) to "files/licenses/THIRD-PARTY-NOTICES.txt",
+    )
+    val licenseTexts by produceState(emptyList<LicenseText>(), documents) {
+        value = documents.map { (title, path) -> LicenseText(title, Res.readBytes(path).decodeToString()) }
+    }
     AboutContent(
         info = info,
+        licenseTexts = licenseTexts,
         onBack = { navigator.requestLeave(LeaveRequest.Back) },
         onOpenSource = { url -> uriHandler.openUri(url) },
         modifier = modifier,
@@ -57,6 +73,7 @@ fun AboutContent(
     onBack: () -> Unit,
     onOpenSource: (String) -> Unit,
     modifier: Modifier = Modifier,
+    licenseTexts: List<LicenseText> = emptyList(),
 ) {
     SettingsPage(title = stringResource(Res.string.about_title), modifier = modifier, onBack = onBack) {
         Column(
@@ -87,6 +104,19 @@ fun AboutContent(
             sourceName = stringResource(Res.string.about_source_rubik),
             onOpen = { onOpenSource(RUBIK_SOURCE) },
         )
+
+        if (licenseTexts.isNotEmpty()) {
+            SectionTitle(stringResource(Res.string.about_license_texts))
+            licenseTexts.forEach { LicenseTextBlock(it) }
+        }
+    }
+}
+
+@Composable
+private fun LicenseTextBlock(license: LicenseText) {
+    Column(verticalArrangement = Arrangement.spacedBy(DaftarSpacing.xs)) {
+        Text(license.title, style = DaftarTheme.typography.supportingBody, color = DaftarTheme.colors.ink)
+        Text(license.text, style = DaftarTheme.typography.fineText, color = DaftarTheme.colors.muted)
     }
 }
 

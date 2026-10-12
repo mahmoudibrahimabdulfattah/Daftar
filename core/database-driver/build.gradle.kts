@@ -16,12 +16,21 @@ plugins {
  *
  * The source is staged under the Gradle user home, not the project build directory: SQLCipher's configure script
  * rejects source paths that contain spaces, and this checkout lives under "Mobile App Projects".
+ *
+ * Each checkout stages into its own directory, keyed by its absolute path. Two checkouts building at once never
+ * download, extract or delete the same files.
  */
 val sqlcipherVersion = "4.19.0"
 val sqlcipherArchiveSha256 = "7075f96cbabe45b4ecfc2e6b1745a625f856f695b0827a5506ce9ed85b906aa0"
 val sqlcipherIosMinVersion = "16.0"
 
-val sqlcipherStaging: File = gradle.gradleUserHomeDir.resolve("caches/daftar-sqlcipher/$sqlcipherVersion")
+val sqlcipherCheckoutKey: String = MessageDigest.getInstance("SHA-256")
+    .digest(rootProject.projectDir.absolutePath.toByteArray())
+    .take(8)
+    .joinToString("") { "%02x".format(it) }
+val sqlcipherStaging: File = gradle.gradleUserHomeDir.resolve(
+    "caches/daftar-sqlcipher/$sqlcipherVersion-$sqlcipherCheckoutKey",
+)
 val sqlcipherArchiveFile: File = sqlcipherStaging.resolve("sqlcipher-v$sqlcipherVersion.tar.gz")
 val sqlcipherSourceDir: File = sqlcipherStaging.resolve("sqlcipher-$sqlcipherVersion")
 val sqlcipherIosDir: File = layout.buildDirectory.dir("sqlcipher/ios").get().asFile
@@ -80,10 +89,14 @@ val generateSqlCipherAmalgamation = tasks.register<Exec>("generateSqlCipherAmalg
     }
     environment("CFLAGS", "-DSQLITE_HAS_CODEC -DSQLCIPHER_CRYPTO_CC -DSQLITE_TEMP_STORE=3")
     environment("LDFLAGS", "-framework Security -framework Foundation")
+    // Host tools need the macOS SDK explicitly: the Xcode run has no SDKROOT here, and configure's compiler probe
+    // otherwise fails to find stdlib.h.
     commandLine(
         "/bin/bash",
         "-c",
-        "./configure --with-tempstore=yes --disable-tcl --disable-shared >configure.log 2>&1 && make sqlite3.c >make.log 2>&1",
+        "export SDKROOT=\"\$(/usr/bin/xcrun --sdk macosx --show-sdk-path)\" && " +
+            "./configure --with-tempstore=yes --disable-tcl --disable-shared >configure.log 2>&1 && " +
+            "make sqlite3.c >make.log 2>&1",
     )
 }
 

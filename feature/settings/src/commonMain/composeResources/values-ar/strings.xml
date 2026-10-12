@@ -95,6 +95,8 @@
     <string name="about_build">رقم البناء</string>
     <string name="about_version_value">⁦%1$s⁩</string>
     <string name="about_licenses">التراخيص</string>
+    <string name="about_license_texts">نصوص التراخيص</string>
+    <string name="about_notices_title">إشعارات الأطراف الأخرى</string>
     <string name="about_font_alexandria">Alexandria · خط عربي · رخصة SIL Open Font 1.1</string>
     <string name="about_font_rubik">Rubik · خط للإنجليزية والأرقام · رخصة SIL Open Font 1.1</string>
     <string name="about_source">المصدر</string>
