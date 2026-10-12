@@ -51,8 +51,6 @@
     <string name="home_month_10">Oct</string>
     <string name="home_month_11">Nov</string>
     <string name="home_month_12">Dec</string>
-    <string name="prices_title">Prices</string>
-    <string name="prices_message">Quote details will appear here in a later phase.</string>
     <string name="home_holdings_one">1 holding</string>
     <string name="home_holdings_two">2 holdings</string>
     <string name="home_holdings_few">holdings</string>

@@ -20,8 +20,16 @@ sealed interface PriceRefreshStatus {
 
     data class Refreshing(override val generation: Long) : PriceRefreshStatus
 
-    /** The last refresh of [generation] has finished with [outcome]. Last-success times are never changed by a failure. */
-    data class Finished(override val generation: Long, val outcome: RefreshOutcome) : PriceRefreshStatus
+    /**
+     * The last refresh of [generation] has finished with [outcome]. Last-success times are never changed by a failure.
+     * [rejections] are the reasons of the failed steps, so a rate limit, an invalid payload and an unreachable source
+     * can be told apart. Empty when nothing failed, or when the refresh could not be stored at all.
+     */
+    data class Finished(
+        override val generation: Long,
+        val outcome: RefreshOutcome,
+        val rejections: Set<RefreshRejection> = emptySet(),
+    ) : PriceRefreshStatus
 }
 
 enum class RefreshOutcome {
@@ -48,6 +56,12 @@ fun RefreshReport.outcome(): RefreshOutcome {
         else -> RefreshOutcome.PartiallyFailed
     }
 }
+
+/** The reasons of every failed step in [RefreshReport], without the steps that are merely older than what is stored. */
+fun RefreshReport.rejections(): Set<RefreshRejection> = (gold.values + fx.values)
+    .filter { it.isFailure() }
+    .mapNotNull { (it as? RefreshStepResult.Kept)?.reason }
+    .toSet()
 
 /** Whether a step failed to refresh: kept at its cached value for any reason but being older than what is stored. */
 fun RefreshStepResult.isFailure(): Boolean =

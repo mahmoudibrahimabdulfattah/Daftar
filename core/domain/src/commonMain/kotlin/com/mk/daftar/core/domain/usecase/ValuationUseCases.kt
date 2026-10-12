@@ -4,6 +4,7 @@ import com.mk.daftar.core.domain.repository.BankRepository
 import com.mk.daftar.core.domain.repository.CashRepository
 import com.mk.daftar.core.domain.repository.GoldRepository
 import com.mk.daftar.core.domain.repository.PriceRepository
+import com.mk.daftar.core.domain.repository.QuoteSnapshot
 import com.mk.daftar.core.domain.session.VaultSession
 import com.mk.daftar.core.domain.storage.VaultRead
 import com.mk.daftar.core.domain.valuation.PortfolioInput
@@ -14,6 +15,7 @@ import com.mk.daftar.core.domain.valuation.valuePortfolio
 import kotlin.time.Clock
 import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.combine
+import kotlinx.coroutines.flow.map
 
 /** Selected quotes, re-evaluated for age while collected. Emits only for the open session's generation. */
 class ObserveSelectedQuotesUseCase(
@@ -28,6 +30,26 @@ class ObserveSelectedQuotesUseCase(
 
                 is VaultRead.Ready -> read.valueOf(generation)
                     ?.let { snapshot -> VaultRead.Ready(generation, selectQuotes(snapshot, now)) }
+                    ?: VaultRead.Loading
+
+                VaultRead.Loading, VaultRead.Locked -> VaultRead.Loading
+            }
+        }
+    }
+}
+
+/**
+ * The raw quote snapshot of the open generation: remote candidates with provenance, and manual slots with their
+ * revisions. Editing needs these, because a selected quote alone cannot show the source beneath an override or the
+ * revision a save must match. Emits only for the open session's generation; a lock yields Locked-equivalent Loading.
+ */
+class ObserveQuoteSnapshotUseCase(private val session: VaultSession, private val prices: PriceRepository) {
+    operator fun invoke(): Flow<VaultRead<QuoteSnapshot>> = observeInSession(session) { generation ->
+        prices.observeQuotes().map { read ->
+            when (read) {
+                is VaultRead.Failed -> read
+
+                is VaultRead.Ready -> read.valueOf(generation)?.let { VaultRead.Ready(generation, it) }
                     ?: VaultRead.Loading
 
                 VaultRead.Loading, VaultRead.Locked -> VaultRead.Loading

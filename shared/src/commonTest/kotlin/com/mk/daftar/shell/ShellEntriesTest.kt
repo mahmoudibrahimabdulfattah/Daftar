@@ -11,9 +11,11 @@ import com.mk.daftar.core.navigation.BankDetailRoute
 import com.mk.daftar.core.navigation.BanksRoute
 import com.mk.daftar.core.navigation.HomeRoute
 import com.mk.daftar.core.navigation.JournalRoute
+import com.mk.daftar.core.navigation.ManualQuoteRoute
 import com.mk.daftar.core.navigation.NoteAddRoute
 import com.mk.daftar.core.navigation.NoteEditRoute
 import com.mk.daftar.core.navigation.NotesRoute
+import com.mk.daftar.core.navigation.PricesRoute
 import com.mk.daftar.core.navigation.SettingsRoute
 import com.mk.daftar.core.navigation.ZakatAddRoute
 import com.mk.daftar.core.navigation.ZakatEditRoute
@@ -21,6 +23,7 @@ import com.mk.daftar.core.navigation.ZakatRoute
 import com.mk.daftar.feature.assets.di.assetsModule
 import com.mk.daftar.feature.home.di.homeModule
 import com.mk.daftar.feature.journal.di.journalModule
+import com.mk.daftar.feature.prices.di.pricesModule
 import com.mk.daftar.feature.settings.di.settingsModule
 import kotlin.test.Test
 import kotlin.test.assertEquals
@@ -37,7 +40,7 @@ import org.koin.dsl.koinApplication
 class ShellEntriesTest {
 
     private val koin = koinApplication {
-        modules(homeModule, assetsModule, journalModule, settingsModule)
+        modules(homeModule, assetsModule, journalModule, settingsModule, pricesModule)
     }.koin
 
     /**
@@ -66,6 +69,9 @@ class ShellEntriesTest {
             NotesRoute,
             NoteAddRoute,
             NoteEditRoute("sample-note"),
+            PricesRoute,
+            ManualQuoteRoute(null),
+            ManualQuoteRoute("gold-21-sell"),
         )
         routes.forEach { route ->
             assertNotNull(provider(route), "$route resolves to an entry")
