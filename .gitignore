@@ -19,3 +19,7 @@ xcuserdata/
 iosApp/build/
 *.xcworkspace/xcuserdata/
 **/xcshareddata/WorkspaceSettings.xcsettings
+
+# Firebase config lives outside the repository.
+androidApp/google-services.json
+iosApp/iosApp/GoogleService-Info.plist
