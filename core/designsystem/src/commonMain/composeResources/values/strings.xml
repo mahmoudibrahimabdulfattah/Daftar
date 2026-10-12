@@ -143,4 +143,16 @@
     <string name="confirm_blocked_title">This bank has accounts</string>
     <string name="confirm_blocked_message">Remove its accounts before deleting the bank.</string>
     <string name="confirm_ok">OK</string>
+    <string name="section_auth_states">Auth states</string>
+    <string name="catalog_auth_mismatch">The PINs do not match. Re-enter the PIN you chose.</string>
+    <string name="catalog_auth_wrong_pin">Incorrect PIN. Try again.</string>
+    <string name="catalog_auth_backoff">Incorrect PIN. Try again in 30 seconds.</string>
+    <string name="catalog_auth_paused">Keypad temporarily disabled</string>
+    <string name="catalog_auth_recovery">Restoring a backup requires its password. Without your PIN, biometrics or a valid backup, your data cannot be opened. Nothing is deleted automatically.</string>
+    <string name="catalog_auth_hardware">This device does not support the required protection.</string>
+    <string name="catalog_auth_key">The protection key on this device is unavailable.</string>
+    <string name="catalog_auth_corrupt">Daftar could not verify its data. No data was deleted.</string>
+    <string name="catalog_auth_format">Update Daftar to open this data.</string>
+    <string name="catalog_auth_transient">Daftar could not open now. Try again.</string>
+    <string name="catalog_auth_busy">Unlocking…</string>
 </resources>

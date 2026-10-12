@@ -99,6 +99,17 @@ import com.mk.daftar.core.designsystem.resources.btn_why
 import com.mk.daftar.core.designsystem.resources.card_body
 import com.mk.daftar.core.designsystem.resources.card_time
 import com.mk.daftar.core.designsystem.resources.card_title
+import com.mk.daftar.core.designsystem.resources.catalog_auth_backoff
+import com.mk.daftar.core.designsystem.resources.catalog_auth_busy
+import com.mk.daftar.core.designsystem.resources.catalog_auth_corrupt
+import com.mk.daftar.core.designsystem.resources.catalog_auth_format
+import com.mk.daftar.core.designsystem.resources.catalog_auth_hardware
+import com.mk.daftar.core.designsystem.resources.catalog_auth_key
+import com.mk.daftar.core.designsystem.resources.catalog_auth_mismatch
+import com.mk.daftar.core.designsystem.resources.catalog_auth_paused
+import com.mk.daftar.core.designsystem.resources.catalog_auth_recovery
+import com.mk.daftar.core.designsystem.resources.catalog_auth_transient
+import com.mk.daftar.core.designsystem.resources.catalog_auth_wrong_pin
 import com.mk.daftar.core.designsystem.resources.catalog_brand
 import com.mk.daftar.core.designsystem.resources.catalog_intro
 import com.mk.daftar.core.designsystem.resources.catalog_lang_ar
@@ -168,6 +179,7 @@ import com.mk.daftar.core.designsystem.resources.result_error_title
 import com.mk.daftar.core.designsystem.resources.result_retry
 import com.mk.daftar.core.designsystem.resources.result_saved_message
 import com.mk.daftar.core.designsystem.resources.result_saved_title
+import com.mk.daftar.core.designsystem.resources.section_auth_states
 import com.mk.daftar.core.designsystem.resources.section_balance
 import com.mk.daftar.core.designsystem.resources.section_brand
 import com.mk.daftar.core.designsystem.resources.section_buttons
@@ -273,6 +285,7 @@ fun DesignCatalog(modifier: Modifier = Modifier) {
                 CatalogSection(Res.string.section_balance) { BalanceSection() }
                 CatalogSection(Res.string.section_quotes) { QuoteSection() }
                 CatalogSection(Res.string.section_pin) { PinSection() }
+                CatalogSection(Res.string.section_auth_states) { AuthStatesSection() }
                 CatalogSection(Res.string.section_states) { StateSection() }
                 CatalogSection(Res.string.section_confirm) { ConfirmSection() }
                 CatalogSection(Res.string.section_privacy) { PrivacySection() }
@@ -917,6 +930,47 @@ private fun QuoteSection() {
             sellLabel = stringResource(Res.string.quote_sell),
             buyLabel = stringResource(Res.string.quote_buy),
         )
+    }
+}
+
+@Composable
+private fun AuthStatesSection() {
+    Column(verticalArrangement = Arrangement.spacedBy(DaftarSpacing.sm)) {
+        DaftarNotePanel(tone = DaftarNoteTone.Error, icon = DaftarIcons.Alert) {
+            Text(stringResource(Res.string.catalog_auth_mismatch))
+        }
+        DaftarNotePanel(tone = DaftarNoteTone.Error, icon = DaftarIcons.Alert) {
+            Text(stringResource(Res.string.catalog_auth_wrong_pin))
+        }
+        DaftarNotePanel(tone = DaftarNoteTone.Error, icon = DaftarIcons.Clock) {
+            Text(stringResource(Res.string.catalog_auth_backoff))
+        }
+        Text(
+            text = stringResource(Res.string.catalog_auth_paused),
+            style = DaftarTheme.typography.fineText,
+            color = DaftarTheme.colors.muted,
+        )
+        DaftarNotePanel(tone = DaftarNoteTone.Warning) {
+            Text(stringResource(Res.string.catalog_auth_recovery))
+        }
+        DaftarNotePanel(tone = DaftarNoteTone.Error, icon = DaftarIcons.Alert) {
+            Text(stringResource(Res.string.catalog_auth_hardware))
+        }
+        DaftarNotePanel(tone = DaftarNoteTone.Error, icon = DaftarIcons.Alert) {
+            Text(stringResource(Res.string.catalog_auth_key))
+        }
+        DaftarNotePanel(tone = DaftarNoteTone.Error, icon = DaftarIcons.Alert) {
+            Text(stringResource(Res.string.catalog_auth_corrupt))
+        }
+        DaftarNotePanel(tone = DaftarNoteTone.Error, icon = DaftarIcons.Alert) {
+            Text(stringResource(Res.string.catalog_auth_format))
+        }
+        DaftarNotePanel(tone = DaftarNoteTone.Error, icon = DaftarIcons.Alert) {
+            Text(stringResource(Res.string.catalog_auth_transient))
+        }
+        PrimaryButton(onClick = {}, loading = true, fullWidth = true) {
+            Text(stringResource(Res.string.catalog_auth_busy))
+        }
     }
 }
 

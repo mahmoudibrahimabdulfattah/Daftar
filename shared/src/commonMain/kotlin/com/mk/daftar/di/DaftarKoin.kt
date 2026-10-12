@@ -5,6 +5,7 @@ import com.mk.daftar.core.datastore.di.datastoreModule
 import com.mk.daftar.core.network.di.networkModule
 import com.mk.daftar.core.security.di.securityModule
 import com.mk.daftar.feature.assets.di.assetsModule
+import com.mk.daftar.feature.auth.di.authModule
 import com.mk.daftar.feature.home.di.homeModule
 import com.mk.daftar.feature.journal.di.journalModule
 import com.mk.daftar.feature.settings.di.settingsModule
@@ -20,6 +21,7 @@ val daftarModules: List<Module> = listOf(
     dataModule,
     domainModule,
     platformServicesModule,
+    authModule,
     homeModule,
     assetsModule,
     journalModule,

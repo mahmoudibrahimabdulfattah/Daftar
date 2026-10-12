@@ -1,0 +1,56 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <string name="auth_step_1">Step 1 of 3</string>
+    <string name="auth_step_2">Step 2 of 3</string>
+    <string name="auth_step_3">Step 3 of 3</string>
+    <string name="auth_create_heading">A PIN for your notebook</string>
+    <string name="auth_create_body">Choose 6 or more digits, different from your phone PIN.</string>
+    <string name="auth_create_action">Continue</string>
+    <string name="auth_security_footnote">Your PIN protects your encrypted data. It cannot be recovered if forgotten.</string>
+    <string name="auth_confirm_heading">Confirm your PIN</string>
+    <string name="auth_confirm_body">Enter the same PIN again.</string>
+    <string name="auth_confirm_action">Confirm</string>
+    <string name="auth_mismatch_heading">Try confirming again</string>
+    <string name="auth_mismatch_error">The PINs do not match. Re-enter the PIN you chose.</string>
+    <string name="auth_restart_creation">Choose another PIN</string>
+    <string name="auth_unlock_heading">Open Daftar</string>
+    <string name="auth_unlock_body">Enter your Daftar PIN to continue.</string>
+    <string name="auth_unlock_action">Unlock</string>
+    <string name="auth_field_label">Daftar PIN</string>
+    <string name="auth_field_state">%1$s, %2$s</string>
+    <string name="auth_forgot_pin">Forgot PIN?</string>
+    <string name="auth_incorrect_pin">Incorrect PIN. Try again.</string>
+    <string name="auth_keypad_paused">Keypad temporarily disabled</string>
+    <string name="auth_open_failed">Daftar could not open now. Try again.</string>
+    <string name="auth_busy_creating">Creating Daftar…</string>
+    <string name="auth_busy_unlocking">Unlocking…</string>
+    <string name="auth_biometric_heading">Open with a touch</string>
+    <string name="auth_biometric_body">Use your device biometrics to open Daftar quickly. Your Daftar PIN remains available.</string>
+    <string name="auth_biometric_enable">Enable biometrics</string>
+    <string name="auth_biometric_later">Not now</string>
+    <string name="auth_biometric_unavailable">Biometrics will be available in a later update.</string>
+    <string name="auth_recovery_heading">Your PIN cannot be recovered</string>
+    <string name="auth_recovery_body">If biometrics are enabled, you can open Daftar with them. Changing your PIN requires the current PIN.</string>
+    <string name="auth_recovery_backup_warning">Restoring a backup requires its password. Without your PIN, biometrics or a valid backup, your data cannot be opened. Nothing is deleted automatically.</string>
+    <string name="auth_try_pin_again">Try PIN again</string>
+    <string name="auth_restore_backup">Restore encrypted backup</string>
+    <string name="auth_restore_later">Available in a later update</string>
+    <string name="auth_unavailable_heading">Daftar cannot open</string>
+    <string name="auth_unavailable_hardware">This device does not support the required protection.</string>
+    <string name="auth_unavailable_key">The protection key on this device is unavailable.</string>
+    <string name="auth_unavailable_corrupt">Daftar could not verify its data. No data was deleted.</string>
+    <string name="auth_unavailable_format">Update Daftar to open this data.</string>
+    <string name="auth_unavailable_transient">Daftar could not open now. Try again.</string>
+    <string name="auth_retry">Retry</string>
+    <string name="auth_erase_digit">Delete digit</string>
+    <string name="auth_checking">Opening…</string>
+    <plurals name="auth_entered_digits">
+        <item quantity="zero">No digits entered</item>
+        <item quantity="one">%1$d digit entered</item>
+        <item quantity="other">%1$d digits entered</item>
+    </plurals>
+    <plurals name="auth_backoff_seconds">
+        <item quantity="one">Incorrect PIN. Try again in ⁦%1$d⁩ second.</item>
+        <item quantity="other">Incorrect PIN. Try again in ⁦%1$d⁩ seconds.</item>
+    </plurals>
+</resources>

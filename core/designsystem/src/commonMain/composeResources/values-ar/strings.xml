@@ -143,4 +143,16 @@
     <string name="confirm_blocked_title">هذا البنك يحوي حسابات</string>
     <string name="confirm_blocked_message">احذف حساباته قبل حذف البنك.</string>
     <string name="confirm_ok">حسنًا</string>
+    <string name="section_auth_states">حالات المصادقة</string>
+    <string name="catalog_auth_mismatch">الرمزان غير متطابقين. أعد إدخال الرمز الذي اخترته.</string>
+    <string name="catalog_auth_wrong_pin">الرمز غير صحيح. حاول مرة أخرى.</string>
+    <string name="catalog_auth_backoff">الرمز غير صحيح. حاول بعد 30 ثانية.</string>
+    <string name="catalog_auth_paused">لوحة الأرقام متوقفة مؤقتًا</string>
+    <string name="catalog_auth_recovery">استعادة نسخة احتياطية تحتاج كلمة مرور النسخة. بدون الرمز أو البصمة أو نسخة صالحة، لن تتمكن من فتح بياناتك. لا نحذف شيئًا تلقائيًا.</string>
+    <string name="catalog_auth_hardware">هذا الجهاز لا يدعم الحماية المطلوبة.</string>
+    <string name="catalog_auth_key">مفتاح الحماية على هذا الجهاز غير متاح.</string>
+    <string name="catalog_auth_corrupt">تعذّر التحقق من بيانات دفتر. لم نحذف أي بيانات.</string>
+    <string name="catalog_auth_format">حدّث دفتر لفتح هذه البيانات.</string>
+    <string name="catalog_auth_transient">تعذّر فتح دفتر الآن. حاول مرة أخرى.</string>
+    <string name="catalog_auth_busy">جارٍ الفتح…</string>
 </resources>

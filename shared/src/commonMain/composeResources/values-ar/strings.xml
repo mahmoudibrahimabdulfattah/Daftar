@@ -1,12 +1,8 @@
 <resources>
     <string name="app_name">دفتر</string>
-    <string name="locked_title">Locked / مقفل</string>
-    <string name="locked_body">يبقى «دفتر» مقفلًا. يصل الإعداد وفتح القفل في تحديث لاحق.</string>
     <string name="dev_heading">المطوّر</string>
     <string name="dev_catalog">كتالوج التصميم</string>
     <string name="dev_preview">معاينة الهيكل</string>
     <string name="progress_opening">جارٍ الفتح…</string>
     <string name="progress_closing">جارٍ القفل…</string>
-    <string name="unavailable_title">التخزين غير متاح</string>
-    <string name="unavailable_body">تعذّر على «دفتر» فتح التخزين الآن.</string>
 </resources>
