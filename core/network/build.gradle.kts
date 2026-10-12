@@ -85,4 +85,10 @@ val generateTestFixtures = tasks.register("generateTestFixtures") {
 // Registering the task itself as a source directory gives every test compilation (JVM and native) the dependency.
 kotlin.sourceSets.getByName("commonTest").kotlin.srcDir(generateTestFixtures)
 
+// Lint (model and analysis) reads the generated test sources, so it runs after the fixture generator. Declared
+// explicitly: the source-directory link above is not seen as a dependency by Gradle's lint tasks.
+tasks.matching { it.name.contains("lint", ignoreCase = true) && it.name.contains("HostTest") }.configureEach {
+    dependsOn(generateTestFixtures)
+}
+
 apply(from = rootProject.file("core/architecture-guard.gradle.kts"))
