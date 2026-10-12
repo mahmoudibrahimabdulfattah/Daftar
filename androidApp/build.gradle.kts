@@ -26,9 +26,13 @@ android {
 
 dependencies {
     implementation(projects.shared)
+    // The theme callback names the domain's ThemeMode, so the shell needs the domain module on its own classpath.
+    implementation(projects.core.domain)
     // The build variant selects the Android key policy; the policy type lives in core:security.
     implementation(projects.core.security)
     implementation(libs.androidx.activity.compose)
+    // The activity is an AppCompat activity, so the in-app language choice applies on every API level.
+    implementation(libs.androidx.appcompat)
     implementation(libs.androidx.lifecycle.process)
     implementation(project.dependencies.platform(libs.koin.bom))
     implementation(libs.koin.android)

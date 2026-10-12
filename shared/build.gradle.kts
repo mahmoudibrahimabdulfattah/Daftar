@@ -11,8 +11,21 @@ kotlin {
             implementation(projects.core.datastore)
             implementation(projects.core.network)
             implementation(projects.core.security)
+            implementation(projects.core.navigation)
+            implementation(projects.core.ui)
+            implementation(projects.feature.home)
+            implementation(projects.feature.assets)
+            implementation(projects.feature.journal)
+            implementation(projects.feature.settings)
             implementation(project.dependencies.platform(libs.koin.bom))
             implementation(libs.koin.core)
+            implementation(libs.koin.compose)
+            implementation(libs.koin.compose.navigation3)
+            implementation(libs.androidx.lifecycle.viewmodel.compose)
+            implementation(libs.androidx.lifecycle.runtime.compose)
+            implementation(libs.androidx.navigation3.ui)
+            implementation(libs.androidx.lifecycle.viewmodel.navigation3)
+            implementation(libs.compose.material3.adaptive.navigation3)
         }
         commonTest.dependencies {
             // The graph probes name the database builder and preferences types, so their signatures must resolve.
@@ -25,6 +38,7 @@ kotlin {
         androidMain.dependencies {
             implementation(libs.koin.android)
             implementation(libs.kotlinx.coroutines.android)
+            implementation(libs.androidx.appcompat)
         }
     }
 

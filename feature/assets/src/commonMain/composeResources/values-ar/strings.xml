@@ -1,0 +1,15 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <string name="assets_title">الأصول</string>
+    <string name="assets_message">تُسجَّل هنا أرصدة الذهب والحسابات البنكية والنقد. تصل السجلات في تحديث لاحق.</string>
+    <string name="banks_title">البنوك</string>
+    <string name="banks_message">الحسابات التي تملكها في البنوك، مرتبة بالاسم.</string>
+    <string name="bank_select">اختر بنكًا</string>
+    <string name="bank_detail_title">تفاصيل البنك</string>
+    <string name="bank_detail_message">تظهر تفاصيل الحساب هنا عند توفر السجلات.</string>
+    <string name="bank_placeholder_note">بند تجريبي. لا يظهر أي رصيد.</string>
+    <string name="bank_sample_a">بنك تجريبي أ</string>
+    <string name="bank_sample_b">بنك تجريبي ب</string>
+    <string name="bank_sample_c">بنك تجريبي ج</string>
+    <string name="bank_sample_unknown">بنك</string>
+</resources>

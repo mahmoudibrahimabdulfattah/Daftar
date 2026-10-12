@@ -1,3 +1,12 @@
 <resources>
     <string name="app_name">Daftar</string>
+    <string name="locked_title">Locked / مقفل</string>
+    <string name="locked_body">Daftar stays locked. Setup and unlocking arrive in a later update.</string>
+    <string name="dev_heading">Developer</string>
+    <string name="dev_catalog">Design catalog</string>
+    <string name="dev_preview">Shell preview</string>
+    <string name="progress_opening">Opening…</string>
+    <string name="progress_closing">Locking…</string>
+    <string name="unavailable_title">Storage unavailable</string>
+    <string name="unavailable_body">Daftar cannot open its storage right now.</string>
 </resources>

@@ -4,6 +4,10 @@ import com.mk.daftar.core.data.di.dataModule
 import com.mk.daftar.core.datastore.di.datastoreModule
 import com.mk.daftar.core.network.di.networkModule
 import com.mk.daftar.core.security.di.securityModule
+import com.mk.daftar.feature.assets.di.assetsModule
+import com.mk.daftar.feature.home.di.homeModule
+import com.mk.daftar.feature.journal.di.journalModule
+import com.mk.daftar.feature.settings.di.settingsModule
 import org.koin.core.context.startKoin
 import org.koin.core.module.Module
 import org.koin.dsl.KoinAppDeclaration
@@ -16,6 +20,10 @@ val daftarModules: List<Module> = listOf(
     dataModule,
     domainModule,
     platformServicesModule,
+    homeModule,
+    assetsModule,
+    journalModule,
+    settingsModule,
 )
 
 /**

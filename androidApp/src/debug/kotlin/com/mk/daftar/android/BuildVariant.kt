@@ -11,4 +11,7 @@ internal object BuildVariant {
 
     /** The debug shell renders "Debug build — software Keystore permitted. Demo data only." when this is true. */
     val showsDebugBanner: Boolean = true
+
+    /** Debug builds offer the developer entries on the locked surface: the design catalog and the shell preview. */
+    val developerTools: Boolean = true
 }
