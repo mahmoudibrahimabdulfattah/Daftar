@@ -71,6 +71,19 @@ class Navigator(private val start: TopLevelDestination = TopLevelDestination.HOM
         }
     }
 
+    /**
+     * Pops the current stack back to its last entry that [keep] accepts, dropping everything above it. When no entry is
+     * kept, it behaves like [goBack]. Used when a deleted record's screens must all leave the stack.
+     */
+    fun returnTo(keep: (NavKey) -> Boolean): Boolean {
+        if (isDisposed) return false
+        val stack = stacks.getValue(topLevel)
+        val index = stack.indexOfLast(keep)
+        if (index < 0) return goBack()
+        while (stack.lastIndex > index) stack.removeAt(stack.lastIndex)
+        return true
+    }
+
     /** Returns false when nothing is left to pop, so the platform can close the app. */
     fun goBack(): Boolean {
         if (isDisposed) return false

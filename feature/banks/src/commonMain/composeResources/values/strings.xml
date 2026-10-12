@@ -1,0 +1,93 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <string name="banks_title">Banks</string>
+    <string name="banks_account_value">Account value</string>
+    <string name="banks_add">Add bank</string>
+    <string name="banks_empty_title">Start with a bank</string>
+    <string name="banks_empty_message">Add a bank, then record its accounts in their own currencies.</string>
+    <string name="banks_select">Select a bank</string>
+    <string name="banks_available_subtotal">Available subtotal</string>
+    <string name="banks_unavailable">Value unavailable</string>
+    <string name="banks_stale_note">Some rates in this value are manual or stale.</string>
+    <string name="banks_row_summary">%1$s · %2$s</string>
+    <plurals name="banks_accounts_count">
+        <item quantity="one">%1$d account</item>
+        <item quantity="other">%1$d accounts</item>
+    </plurals>
+    <string name="banks_failed_title">Records could not be loaded</string>
+    <string name="banks_failed_message">Your records are still saved. Return and open Banks again.</string>
+    <string name="banks_detail_empty_title">No accounts in this bank</string>
+    <string name="banks_detail_empty_message">Add an EGP or USD account.</string>
+    <string name="banks_add_account">Add account</string>
+    <string name="banks_edit_bank">Edit bank</string>
+    <string name="banks_account_balance">Account balance</string>
+    <string name="banks_conversion_note">Display conversion only. The balance remains recorded in USD.</string>
+    <string name="banks_egp_unit">EGP</string>
+    <string name="banks_missing_title">This bank no longer exists</string>
+    <string name="banks_missing_message">It may have been deleted elsewhere. Return to the list.</string>
+    <string name="banks_reveal_message">Values are hidden. Show them to open this record.</string>
+    <string name="banks_reveal_action">Show values</string>
+    <string name="banks_cancel">Cancel</string>
+
+    <string name="bank_add_title">Add bank</string>
+    <string name="bank_edit_title">Edit bank</string>
+    <string name="bank_form_heading">Just the bank name</string>
+    <string name="bank_form_message">Add accounts and balances inside this bank.</string>
+    <string name="bank_name_label">Bank name</string>
+    <string name="bank_name_preview">Name preview</string>
+    <string name="bank_name_empty_preview">Enter a name</string>
+    <string name="bank_no_numbers">No account numbers or login credentials are needed.</string>
+    <string name="bank_name_required">Enter the bank name.</string>
+    <string name="bank_name_long">Use at most 120 characters.</string>
+    <string name="bank_save">Save</string>
+    <string name="bank_delete">Delete bank</string>
+    <string name="bank_blocked_title">%1$s cannot be deleted yet</string>
+    <plurals name="bank_blocked_message">
+        <item quantity="one">It contains one account. Review its balance and delete the account first if you want to remove the bank entirely.</item>
+        <item quantity="other">It contains %1$d accounts. Review balances and delete the accounts first if you want to remove it entirely.</item>
+    </plurals>
+    <string name="bank_review_accounts">Review accounts</string>
+
+    <string name="account_add_title">New account</string>
+    <string name="account_edit_title">Edit account</string>
+    <string name="account_bank_label">Bank</string>
+    <string name="account_name_label">Account name</string>
+    <string name="account_currency_label">Currency</string>
+    <string name="account_balance_label">Balance</string>
+    <string name="account_note_label">Note · optional</string>
+    <string name="account_balance_helper">Zero or a positive amount</string>
+    <string name="account_name_required">Enter the account name.</string>
+    <string name="account_name_long">Use at most 120 characters.</string>
+    <string name="account_bank_required">Choose an existing bank.</string>
+    <string name="account_balance_required">Enter the balance. Use zero for an empty account.</string>
+    <string name="account_balance_invalid">Use zero or a positive amount with at most two decimals.</string>
+    <string name="account_note_long">Notes can have at most 4,000 characters.</string>
+    <string name="account_currency_warning">Changing currency relabels the balance; it does not convert it. Check the amount before saving.</string>
+    <string name="account_ack_label">I checked the amount after changing currency</string>
+    <string name="account_ack_required">Confirm the amount after changing the currency.</string>
+    <string name="account_add">Add account</string>
+    <string name="account_save">Save</string>
+    <string name="account_delete">Delete account</string>
+    <string name="account_bank_picker_title">Bank</string>
+    <string name="account_bank_none">No banks yet. Add a bank first.</string>
+
+    <string name="confirm_delete_title">Delete this record?</string>
+    <string name="confirm_delete_message">This record will be removed from Daftar. This cannot be undone; recovery requires an earlier backup.</string>
+    <string name="confirm_delete_cancel">Cancel &amp; go back</string>
+    <string name="confirm_delete_action">Delete record</string>
+    <string name="confirm_discard_title">Discard changes?</string>
+    <string name="confirm_discard_message">You have unsaved changes. Keep editing or discard them to return to the list.</string>
+    <string name="confirm_keep">Keep editing</string>
+    <string name="confirm_discard_action">Discard changes</string>
+    <string name="conflict_message">This record changed. Reload it before saving.</string>
+    <string name="conflict_reload">Reload</string>
+    <string name="failed_save_title">Changes were not saved</string>
+    <string name="failed_save_message">Saving failed. Retry; your previous records are unchanged.</string>
+    <string name="failed_storage_message">Not enough storage. Free some space and retry; your previous records are unchanged.</string>
+    <string name="failed_uncertain_message">The result is unknown because the notebook locked during saving. Unlock Daftar to check the record.</string>
+    <string name="failed_input_kept">Your input is still here</string>
+    <string name="failed_delete_message">Deletion failed. The record is still saved.</string>
+    <string name="failed_retry">Retry</string>
+    <string name="failed_back_to_editing">Back to editing</string>
+    <string name="load_failed_title">Records could not be loaded</string>
+</resources>
