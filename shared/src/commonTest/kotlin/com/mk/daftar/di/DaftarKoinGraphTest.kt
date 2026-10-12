@@ -14,6 +14,11 @@ import com.mk.daftar.core.domain.repository.PriceRepository
 import com.mk.daftar.core.domain.repository.UserPreferencesRepository
 import com.mk.daftar.core.domain.session.VaultSession
 import com.mk.daftar.core.domain.session.VaultSessionState
+import com.mk.daftar.core.domain.usecase.CreatePersonalNoteUseCase
+import com.mk.daftar.core.domain.usecase.CreateZakatPaymentUseCase
+import com.mk.daftar.core.domain.usecase.ObservePortfolioValuationUseCase
+import com.mk.daftar.core.domain.usecase.ObserveSelectedQuotesUseCase
+import com.mk.daftar.core.domain.usecase.RefreshPricesUseCase
 import com.mk.daftar.core.security.KeyLease
 import com.mk.daftar.core.security.SecretBytes
 import com.mk.daftar.core.security.SecurityError
@@ -54,6 +59,11 @@ class DaftarKoinGraphTest {
             koin.get<PriceRepository>()
             koin.get<UserPreferencesRepository>()
             koin.get<VaultAuthenticator>()
+            koin.get<ObservePortfolioValuationUseCase>()
+            koin.get<ObserveSelectedQuotesUseCase>()
+            koin.get<CreateZakatPaymentUseCase>()
+            koin.get<CreatePersonalNoteUseCase>()
+            koin.get<RefreshPricesUseCase>()
 
             val session = koin.get<VaultSession>()
             assertSame(koin.get<DaftarVaultSession>(), session, "the session is one singleton")
