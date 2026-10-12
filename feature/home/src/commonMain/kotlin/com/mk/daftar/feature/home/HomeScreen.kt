@@ -1,19 +1,586 @@
 package com.mk.daftar.feature.home
 
+import androidx.compose.foundation.layout.Arrangement
+import androidx.compose.foundation.layout.Column
+import androidx.compose.foundation.layout.ColumnScope
+import androidx.compose.foundation.layout.Row
+import androidx.compose.foundation.layout.Spacer
+import androidx.compose.foundation.layout.fillMaxSize
+import androidx.compose.foundation.layout.fillMaxWidth
+import androidx.compose.foundation.layout.height
+import androidx.compose.foundation.layout.padding
+import androidx.compose.foundation.rememberScrollState
+import androidx.compose.foundation.verticalScroll
+import androidx.compose.material3.ExperimentalMaterial3Api
+import androidx.compose.material3.Text
+import androidx.compose.material3.pulltorefresh.PullToRefreshBox
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.getValue
+import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
-import com.mk.daftar.core.ui.shell.PlaceholderScreen
+import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.graphics.vector.ImageVector
+import androidx.compose.ui.platform.LocalUriHandler
+import androidx.compose.ui.semantics.semantics
+import androidx.compose.ui.semantics.stateDescription
+import androidx.compose.ui.unit.dp
+import androidx.lifecycle.compose.collectAsStateWithLifecycle
+import com.mk.daftar.core.designsystem.component.DaftarAllocationBar
+import com.mk.daftar.core.designsystem.component.DaftarAllocationSegment
+import com.mk.daftar.core.designsystem.component.DaftarAmount
+import com.mk.daftar.core.designsystem.component.DaftarBalanceSummary
+import com.mk.daftar.core.designsystem.component.DaftarEmptyState
+import com.mk.daftar.core.designsystem.component.DaftarIconButton
+import com.mk.daftar.core.designsystem.component.DaftarLedgerRow
+import com.mk.daftar.core.designsystem.component.DaftarNotePanel
+import com.mk.daftar.core.designsystem.component.DaftarNoteTone
+import com.mk.daftar.core.designsystem.component.DaftarQuote
+import com.mk.daftar.core.designsystem.component.DaftarQuoteStrip
+import com.mk.daftar.core.designsystem.component.DaftarSkeleton
+import com.mk.daftar.core.designsystem.component.DaftarStatusTag
+import com.mk.daftar.core.designsystem.component.DaftarStatusTone
+import com.mk.daftar.core.designsystem.component.DaftarTextButton
+import com.mk.daftar.core.designsystem.component.DaftarTileTone
+import com.mk.daftar.core.designsystem.component.DaftarTopBar
+import com.mk.daftar.core.designsystem.icon.DaftarIcons
+import com.mk.daftar.core.designsystem.theme.DaftarSpacing
+import com.mk.daftar.core.designsystem.theme.DaftarTheme
+import com.mk.daftar.core.domain.valuation.AssetCategory
+import com.mk.daftar.core.model.QuoteKey
+import com.mk.daftar.core.navigation.LocalNavigator
+import com.mk.daftar.core.ui.mvi.CollectEffects
+import com.mk.daftar.core.ui.presentation.QuantityForm
+import com.mk.daftar.core.ui.presentation.moneyText
+import com.mk.daftar.core.ui.presentation.quantityFormOf
+import com.mk.daftar.core.ui.shell.ShellScreen
 import com.mk.daftar.feature.home.resources.Res
-import com.mk.daftar.feature.home.resources.home_message
-import com.mk.daftar.feature.home.resources.home_title
+import com.mk.daftar.feature.home.resources.badge_cached
+import com.mk.daftar.feature.home.resources.badge_clock
+import com.mk.daftar.feature.home.resources.badge_live
+import com.mk.daftar.feature.home.resources.badge_manual
+import com.mk.daftar.feature.home.resources.badge_stale
+import com.mk.daftar.feature.home.resources.home_accounts_count_few
+import com.mk.daftar.feature.home.resources.home_accounts_count_one
+import com.mk.daftar.feature.home.resources.home_accounts_count_other
+import com.mk.daftar.feature.home.resources.home_accounts_count_two
+import com.mk.daftar.feature.home.resources.home_allocation
+import com.mk.daftar.feature.home.resources.home_attribution
+import com.mk.daftar.feature.home.resources.home_available_subtotal
+import com.mk.daftar.feature.home.resources.home_balances_count_few
+import com.mk.daftar.feature.home.resources.home_balances_count_one
+import com.mk.daftar.feature.home.resources.home_balances_count_other
+import com.mk.daftar.feature.home.resources.home_balances_count_two
+import com.mk.daftar.feature.home.resources.home_banks
+import com.mk.daftar.feature.home.resources.home_banks_count_few
+import com.mk.daftar.feature.home.resources.home_banks_count_one
+import com.mk.daftar.feature.home.resources.home_banks_count_other
+import com.mk.daftar.feature.home.resources.home_banks_count_two
+import com.mk.daftar.feature.home.resources.home_banks_summary
+import com.mk.daftar.feature.home.resources.home_brand
+import com.mk.daftar.feature.home.resources.home_cash
+import com.mk.daftar.feature.home.resources.home_empty_action
+import com.mk.daftar.feature.home.resources.home_empty_message
+import com.mk.daftar.feature.home.resources.home_empty_title
+import com.mk.daftar.feature.home.resources.home_failed
+import com.mk.daftar.feature.home.resources.home_gold
+import com.mk.daftar.feature.home.resources.home_greeting
+import com.mk.daftar.feature.home.resources.home_hidden_note
+import com.mk.daftar.feature.home.resources.home_hide_values
+import com.mk.daftar.feature.home.resources.home_holdings_few
+import com.mk.daftar.feature.home.resources.home_holdings_one
+import com.mk.daftar.feature.home.resources.home_holdings_other
+import com.mk.daftar.feature.home.resources.home_holdings_two
+import com.mk.daftar.feature.home.resources.home_incomplete
+import com.mk.daftar.feature.home.resources.home_masked_value
+import com.mk.daftar.feature.home.resources.home_missing_karat
+import com.mk.daftar.feature.home.resources.home_missing_usd
+import com.mk.daftar.feature.home.resources.home_month_1
+import com.mk.daftar.feature.home.resources.home_month_10
+import com.mk.daftar.feature.home.resources.home_month_11
+import com.mk.daftar.feature.home.resources.home_month_12
+import com.mk.daftar.feature.home.resources.home_month_2
+import com.mk.daftar.feature.home.resources.home_month_3
+import com.mk.daftar.feature.home.resources.home_month_4
+import com.mk.daftar.feature.home.resources.home_month_5
+import com.mk.daftar.feature.home.resources.home_month_6
+import com.mk.daftar.feature.home.resources.home_month_7
+import com.mk.daftar.feature.home.resources.home_month_8
+import com.mk.daftar.feature.home.resources.home_month_9
+import com.mk.daftar.feature.home.resources.home_quote_caption
+import com.mk.daftar.feature.home.resources.home_quote_details
+import com.mk.daftar.feature.home.resources.home_quote_refreshing
+import com.mk.daftar.feature.home.resources.home_refresh
+import com.mk.daftar.feature.home.resources.home_refresh_failed
+import com.mk.daftar.feature.home.resources.home_show_values
+import com.mk.daftar.feature.home.resources.home_stamp
+import com.mk.daftar.feature.home.resources.home_state_hidden
+import com.mk.daftar.feature.home.resources.home_state_visible
+import com.mk.daftar.feature.home.resources.home_total
+import com.mk.daftar.feature.home.resources.home_total_basis
+import com.mk.daftar.feature.home.resources.home_total_previous
+import com.mk.daftar.feature.home.resources.home_unavailable
+import com.mk.daftar.feature.home.resources.home_unit_egp
+import com.mk.daftar.feature.home.resources.home_unit_short
+import kotlin.time.Instant
+import kotlinx.datetime.TimeZone
+import kotlinx.datetime.toLocalDateTime
+import org.jetbrains.compose.resources.StringResource
 import org.jetbrains.compose.resources.stringResource
+import org.koin.compose.viewmodel.koinViewModel
 
-/** A placeholder: a heading and neutral copy. It has no repository and shows no figures. */
+/** The Home screen: the view model's state, with the navigator performing its effects. */
 @Composable
 fun HomeScreen(modifier: Modifier = Modifier) {
-    PlaceholderScreen(
-        title = stringResource(Res.string.home_title),
-        message = stringResource(Res.string.home_message),
-        modifier = modifier,
+    val viewModel: HomeViewModel = koinViewModel()
+    val state by viewModel.state.collectAsStateWithLifecycle()
+    val navigator = LocalNavigator.current
+    CollectEffects(viewModel.effects) { effect ->
+        when (effect) {
+            is HomeEffect.Open -> navigator.goTo(effect.route)
+        }
+    }
+    HomeContent(state = state, onIntent = viewModel::onIntent, modifier = modifier)
+}
+
+/**
+ * The approved Home layout: the greeting with the privacy eye, the total, the allocation strip, the three category
+ * rows, then the quote strip. It renders [state] only, so the screenshot host can show every state.
+ */
+@OptIn(ExperimentalMaterial3Api::class)
+@Composable
+fun HomeContent(state: HomeUiState, onIntent: (HomeIntent) -> Unit, modifier: Modifier = Modifier) {
+    val refreshLabel = stringResource(Res.string.home_refresh)
+    ShellScreen(modifier = modifier) {
+        Column(modifier = Modifier.fillMaxSize()) {
+            DaftarTopBar(
+                title = stringResource(Res.string.home_brand),
+                actions = {
+                    DaftarIconButton(
+                        onClick = { onIntent(HomeIntent.Refresh) },
+                        icon = DaftarIcons.Refresh,
+                        contentDescription = refreshLabel,
+                        enabled = !state.refreshing,
+                    )
+                },
+            )
+            PullToRefreshBox(
+                isRefreshing = state.refreshing,
+                onRefresh = { onIntent(HomeIntent.Refresh) },
+                modifier = Modifier.weight(1f).fillMaxWidth(),
+            ) {
+                Column(
+                    modifier = Modifier
+                        .fillMaxSize()
+                        .verticalScroll(rememberScrollState())
+                        .padding(horizontal = DaftarSpacing.md)
+                        .padding(bottom = DaftarSpacing.xl),
+                ) {
+                    Greeting(hidden = state.valuesHidden, onIntent = onIntent)
+                    when (val load = state.load) {
+                        HomeLoad.Loading -> DaftarSkeleton()
+
+                        is HomeLoad.Failed -> DaftarNotePanel(tone = DaftarNoteTone.Error) {
+                            Text(stringResource(Res.string.home_failed))
+                        }
+
+                        is HomeLoad.Ready -> ReadyBody(figures = load.figures, state = state, onIntent = onIntent)
+                    }
+                }
+            }
+        }
+    }
+}
+
+@Composable
+private fun Greeting(hidden: Boolean, onIntent: (HomeIntent) -> Unit) {
+    val colors = DaftarTheme.colors
+    val label = stringResource(if (hidden) Res.string.home_show_values else Res.string.home_hide_values)
+    val state = stringResource(if (hidden) Res.string.home_state_hidden else Res.string.home_state_visible)
+    Row(
+        modifier = Modifier.fillMaxWidth().padding(top = DaftarSpacing.sm),
+        verticalAlignment = Alignment.CenterVertically,
+        horizontalArrangement = Arrangement.SpaceBetween,
+    ) {
+        Text(
+            stringResource(Res.string.home_greeting),
+            style = DaftarTheme.typography.supportingBody,
+            color = colors.muted,
+        )
+        DaftarIconButton(
+            onClick = { onIntent(HomeIntent.ToggleValues) },
+            icon = if (hidden) DaftarIcons.EyeOff else DaftarIcons.Eye,
+            contentDescription = label,
+            modifier = Modifier.semantics { stateDescription = state },
+        )
+    }
+}
+
+@Composable
+private fun ReadyBody(figures: HomeFigures, state: HomeUiState, onIntent: (HomeIntent) -> Unit) {
+    if (figures.isEmpty) {
+        DaftarEmptyState(
+            title = stringResource(Res.string.home_empty_title),
+            message = stringResource(Res.string.home_empty_message),
+            actionLabel = stringResource(Res.string.home_empty_action),
+            onAction = { onIntent(HomeIntent.AddFirstAsset) },
+            icon = DaftarIcons.Book,
+        )
+    } else {
+        Total(figures = figures, hidden = state.valuesHidden, refreshing = state.refreshing)
+        Categories(figures = figures, hidden = state.valuesHidden, onIntent = onIntent)
+    }
+    QuoteSection(
+        quotes = figures.quotes,
+        refreshing = state.refreshing,
+        refreshFailed = state.refreshFailed,
+        attributionUrl = figures.fxAttributionUrl,
+        onIntent = onIntent,
+    )
+    if (state.valuesHidden) {
+        Spacer(Modifier.height(DaftarSpacing.md))
+        DaftarNotePanel(tone = DaftarNoteTone.Context) {
+            Text(stringResource(Res.string.home_hidden_note))
+        }
+    }
+}
+
+@Composable
+private fun Total(figures: HomeFigures, hidden: Boolean, refreshing: Boolean) {
+    val colors = DaftarTheme.colors
+    val allocation = figures.allocation
+    val segments = allocation?.let { parts ->
+        val whole = parts.sumOf { it.exact.toPlainString().toDouble() }.toFloat()
+        parts.map { part ->
+            DaftarAllocationSegment(
+                weight = part.exact.toPlainString().toFloat() / whole,
+                color = categoryColor(part.category),
+            )
+        }
+    }
+    val summary = allocation?.let { parts ->
+        stringResource(
+            Res.string.home_allocation,
+            parts.percentOf(AssetCategory.GOLD).toString(),
+            parts.percentOf(AssetCategory.BANKS).toString(),
+            parts.percentOf(AssetCategory.CASH).toString(),
+        )
+    }
+    DaftarBalanceSummary(
+        label = stringResource(if (refreshing) Res.string.home_total_previous else Res.string.home_total),
+        amount = figures.total?.moneyText(),
+        // The unit sits on its own line under the amount, as in the approved design, so it never wraps mid-figure.
+        unit = "",
+        provenance = {
+            Text(
+                stringResource(Res.string.home_unit_egp),
+                style = DaftarTheme.typography.fineText,
+                color = colors.muted,
+            )
+        },
+        masked = hidden,
+        maskedDescription = stringResource(Res.string.home_masked_value),
+        unavailableDescription = stringResource(Res.string.home_unavailable),
+        allocation = if (segments != null && summary != null) {
+            { DaftarAllocationBar(segments = segments, summary = summary, masked = hidden) }
+        } else {
+            null
+        },
+        footer = if (figures.incomplete) {
+            { IncompleteFooter(figures = figures, hidden = hidden) }
+        } else {
+            {
+                Text(
+                    stringResource(Res.string.home_total_basis),
+                    style = DaftarTheme.typography.fineText,
+                    color = colors.muted,
+                )
+            }
+        },
     )
 }
+
+@Composable
+private fun ColumnScope.IncompleteFooter(figures: HomeFigures, hidden: Boolean) {
+    val colors = DaftarTheme.colors
+    Text(
+        stringResource(Res.string.home_incomplete),
+        style = DaftarTheme.typography.fineText,
+        color = colors.warning,
+    )
+    Row(
+        modifier = Modifier.fillMaxWidth(),
+        verticalAlignment = Alignment.CenterVertically,
+        horizontalArrangement = Arrangement.SpaceBetween,
+    ) {
+        Text(
+            stringResource(Res.string.home_available_subtotal),
+            style = DaftarTheme.typography.fineText,
+            color = colors.muted,
+        )
+        DaftarAmount(
+            amount = figures.subtotal.moneyText(),
+            unit = stringResource(Res.string.home_unit_short),
+            masked = hidden,
+            maskedDescription = stringResource(Res.string.home_masked_value),
+            style = DaftarTheme.typography.ledgerValue,
+        )
+    }
+    figures.missingQuotes.forEach { key ->
+        DaftarNotePanel(tone = DaftarNoteTone.Warning) {
+            Text(missingQuoteText(key))
+        }
+    }
+}
+
+@Composable
+private fun Categories(figures: HomeFigures, hidden: Boolean, onIntent: (HomeIntent) -> Unit) {
+    val unavailable = stringResource(Res.string.home_unavailable)
+    val masked = stringResource(Res.string.home_masked_value)
+    val unit = stringResource(Res.string.home_unit_short)
+    val gold = figures.categoryOf(AssetCategory.GOLD)
+    val banks = figures.categoryOf(AssetCategory.BANKS)
+    val cash = figures.categoryOf(AssetCategory.CASH)
+    CategoryRow(
+        title = stringResource(Res.string.home_gold),
+        subtitle = countText(gold.count, HOME_HOLDINGS_FORMS),
+        icon = DaftarIcons.Gold,
+        tone = DaftarTileTone.Gold,
+        amount = gold.total?.moneyText(),
+        hidden = hidden,
+        maskedDescription = masked,
+        unavailableDescription = unavailable,
+        unit = unit,
+        onClick = { onIntent(HomeIntent.OpenCategory(HomeCategory.GOLD)) },
+    )
+    CategoryRow(
+        title = stringResource(Res.string.home_banks),
+        subtitle = stringResource(
+            Res.string.home_banks_summary,
+            countText(figures.bankCount, HOME_BANKS_COUNT_FORMS),
+            countText(banks.count, HOME_ACCOUNTS_COUNT_FORMS),
+        ),
+        icon = DaftarIcons.Bank,
+        tone = DaftarTileTone.Default,
+        amount = banks.total?.moneyText(),
+        hidden = hidden,
+        maskedDescription = masked,
+        unavailableDescription = unavailable,
+        unit = unit,
+        onClick = { onIntent(HomeIntent.OpenCategory(HomeCategory.BANKS)) },
+    )
+    CategoryRow(
+        title = stringResource(Res.string.home_cash),
+        subtitle = countText(cash.count, HOME_BALANCES_COUNT_FORMS),
+        icon = DaftarIcons.Wallet,
+        tone = DaftarTileTone.Default,
+        amount = cash.total?.moneyText(),
+        hidden = hidden,
+        maskedDescription = masked,
+        unavailableDescription = unavailable,
+        unit = unit,
+        onClick = { onIntent(HomeIntent.OpenCategory(HomeCategory.CASH)) },
+    )
+}
+
+@Composable
+private fun CategoryRow(
+    title: String,
+    subtitle: String,
+    icon: ImageVector,
+    tone: DaftarTileTone,
+    amount: String?,
+    hidden: Boolean,
+    maskedDescription: String,
+    unavailableDescription: String,
+    unit: String,
+    onClick: () -> Unit,
+) {
+    DaftarLedgerRow(
+        title = title,
+        subtitle = subtitle,
+        icon = icon,
+        tone = tone,
+        onClick = onClick,
+        value = {
+            DaftarAmount(
+                amount = amount,
+                unit = unit,
+                masked = hidden,
+                maskedDescription = maskedDescription,
+                unavailableDescription = unavailableDescription,
+                style = DaftarTheme.typography.ledgerValue,
+            )
+        },
+    )
+}
+
+@Composable
+private fun QuoteSection(
+    quotes: QuoteStripFigures,
+    refreshing: Boolean,
+    refreshFailed: Boolean,
+    attributionUrl: String?,
+    onIntent: (HomeIntent) -> Unit,
+) {
+    val uriHandler = LocalUriHandler.current
+    Column(modifier = Modifier.fillMaxWidth().padding(top = DaftarSpacing.lg)) {
+        Row(
+            modifier = Modifier.fillMaxWidth(),
+            verticalAlignment = Alignment.CenterVertically,
+            horizontalArrangement = Arrangement.spacedBy(DaftarSpacing.xs),
+        ) {
+            Text(
+                stringResource(Res.string.home_quote_caption),
+                style = DaftarTheme.typography.caption,
+                color = DaftarTheme.colors.muted,
+                modifier = Modifier.weight(1f),
+            )
+            if (refreshing) {
+                DaftarStatusTag(label = stringResource(Res.string.home_quote_refreshing))
+            } else {
+                quotes.badge?.let { badge ->
+                    DaftarStatusTag(
+                        label = stringResource(badge.labelResource()),
+                        tone = if (badge == QuoteBadge.LIVE || badge == QuoteBadge.CACHED) {
+                            DaftarStatusTone.Positive
+                        } else {
+                            DaftarStatusTone.Warning
+                        },
+                    )
+                }
+            }
+        }
+        Spacer(Modifier.height(DaftarSpacing.xs))
+        DaftarQuoteStrip(
+            quotes = quotes.quotes.map { figure ->
+                DaftarQuote(label = quoteLabel(figure.key), value = figure.value?.moneyText())
+            },
+            provenance = quotes.referenceAt?.let { stampText(it) } ?: "",
+            status = {
+                DaftarTextButton(onClick = { onIntent(HomeIntent.OpenPrices) }) {
+                    Text(stringResource(Res.string.home_quote_details))
+                }
+            },
+        )
+        if (refreshFailed) {
+            Spacer(Modifier.height(DaftarSpacing.xs))
+            DaftarNotePanel(tone = DaftarNoteTone.Warning) {
+                Text(stringResource(Res.string.home_refresh_failed))
+            }
+        }
+        if (attributionUrl != null) {
+            DaftarTextButton(onClick = { uriHandler.openUri(attributionUrl) }) {
+                Text(stringResource(Res.string.home_attribution), style = DaftarTheme.typography.caption)
+            }
+        }
+    }
+}
+
+@Composable
+private fun missingQuoteText(key: QuoteKey): String = when (key) {
+    is QuoteKey.Gold -> stringResource(Res.string.home_missing_karat, quoteLabel(key))
+    QuoteKey.UsdEgp -> stringResource(Res.string.home_missing_usd)
+}
+
+@Composable
+private fun stampText(at: Instant): String {
+    val local = at.toLocalDateTime(CAIRO)
+    val month = stringResource(MONTHS[local.month.ordinal])
+    val time = "${local.hour.toString().padStart(2, '0')}:${local.minute.toString().padStart(2, '0')}"
+    return stringResource(Res.string.home_stamp, local.day, month, time)
+}
+
+@Composable
+private fun QuoteBadge.labelResource(): StringResource = when (this) {
+    QuoteBadge.LIVE -> Res.string.badge_live
+    QuoteBadge.CACHED -> Res.string.badge_cached
+    QuoteBadge.MANUAL -> Res.string.badge_manual
+    QuoteBadge.STALE -> Res.string.badge_stale
+    QuoteBadge.CLOCK_UNCERTAIN -> Res.string.badge_clock
+}
+
+private fun quoteLabel(key: QuoteKey): String = when (key) {
+    is QuoteKey.Gold -> "${key.karat.carats}K"
+    QuoteKey.UsdEgp -> "USD"
+}
+
+private fun HomeFigures.categoryOf(category: AssetCategory): CategoryFigures =
+    categories.first { it.category == category }
+
+private fun List<AllocationPart>.percentOf(category: AssetCategory): Int = first { it.category == category }.percent
+
+@Composable
+private fun categoryColor(category: AssetCategory): Color = when (category) {
+    AssetCategory.GOLD -> DaftarTheme.colors.gold
+    AssetCategory.BANKS -> DaftarTheme.colors.primary
+    AssetCategory.CASH -> DaftarTheme.colors.muted
+}
+
+private val CAIRO: TimeZone = TimeZone.of("Africa/Cairo")
+
+private val MONTHS: List<StringResource> = listOf(
+    Res.string.home_month_1,
+    Res.string.home_month_2,
+    Res.string.home_month_3,
+    Res.string.home_month_4,
+    Res.string.home_month_5,
+    Res.string.home_month_6,
+    Res.string.home_month_7,
+    Res.string.home_month_8,
+    Res.string.home_month_9,
+    Res.string.home_month_10,
+    Res.string.home_month_11,
+    Res.string.home_month_12,
+)
+
+/** The count's word for its quantity form, with the count itself as the argument. */
+@Composable
+private fun countText(count: Int, forms: CountForms): String = when (quantityFormOf(count)) {
+    QuantityForm.ONE -> stringResource(forms.one)
+    QuantityForm.TWO -> stringResource(forms.two)
+    QuantityForm.FEW -> "$count ${stringResource(forms.few)}"
+    QuantityForm.OTHER -> "$count ${stringResource(forms.other)}"
+}
+
+private class CountForms(
+    val one: StringResource,
+    val two: StringResource,
+    val few: StringResource,
+    val other: StringResource,
+) {
+    fun of(form: QuantityForm): StringResource = when (form) {
+        QuantityForm.ONE -> one
+        QuantityForm.TWO -> two
+        QuantityForm.FEW -> few
+        QuantityForm.OTHER -> other
+    }
+}
+
+private val HOME_ACCOUNTS_COUNT_FORMS =
+    CountForms(
+        Res.string.home_accounts_count_one,
+        Res.string.home_accounts_count_two,
+        Res.string.home_accounts_count_few,
+        Res.string.home_accounts_count_other,
+    )
+private val HOME_BALANCES_COUNT_FORMS =
+    CountForms(
+        Res.string.home_balances_count_one,
+        Res.string.home_balances_count_two,
+        Res.string.home_balances_count_few,
+        Res.string.home_balances_count_other,
+    )
+private val HOME_BANKS_COUNT_FORMS =
+    CountForms(
+        Res.string.home_banks_count_one,
+        Res.string.home_banks_count_two,
+        Res.string.home_banks_count_few,
+        Res.string.home_banks_count_other,
+    )
+private val HOME_HOLDINGS_FORMS =
+    CountForms(
+        Res.string.home_holdings_one,
+        Res.string.home_holdings_two,
+        Res.string.home_holdings_few,
+        Res.string.home_holdings_other,
+    )

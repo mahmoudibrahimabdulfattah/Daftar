@@ -1,7 +1,27 @@
 <?xml version="1.0" encoding="utf-8"?>
 <resources>
     <string name="assets_title">Assets</string>
-    <string name="assets_message">Gold, bank accounts and cash are recorded here. Records arrive in a later update.</string>
+    <string name="assets_subtitle">Every balance in its place.</string>
+    <string name="assets_note_manual">Manually recorded balances. Daftar does not connect to your bank accounts.</string>
+    <string name="assets_hidden_note">Values, weights and notes are hidden. Tap the eye to reveal.</string>
+    <string name="assets_show_values">Show values</string>
+    <string name="assets_hide_values">Hide values</string>
+    <string name="assets_state_visible">Visible</string>
+    <string name="assets_state_hidden">Hidden</string>
+    <string name="assets_masked_value">Hidden</string>
+    <string name="assets_no_records">No records</string>
+    <string name="assets_incomplete">Valuation incomplete. Categories without a price show a dash.</string>
+    <string name="assets_failed">Your records could not be read. Nothing was changed.</string>
+    <string name="assets_fx_attribution">Rates By Exchange Rate API</string>
+    <string name="assets_gold">Gold</string>
+    <string name="assets_banks">Banks</string>
+    <string name="assets_cash">Cash &amp; wallets</string>
+    <string name="unit_egp_short">EGP</string>
+    <string name="assets_banks_summary">%1$s · %2$s</string>
+    <string name="gold_title">Gold</string>
+    <string name="gold_message">Gold holdings are recorded in a later update.</string>
+    <string name="cash_title">Cash &amp; wallets</string>
+    <string name="cash_message">Cash and wallet balances are recorded in a later update.</string>
     <string name="banks_title">Banks</string>
     <string name="banks_message">Accounts you hold at banks, listed by name.</string>
     <string name="bank_select">Select a bank</string>
@@ -12,4 +32,20 @@
     <string name="bank_sample_b">Sample bank B</string>
     <string name="bank_sample_c">Sample bank C</string>
     <string name="bank_sample_unknown">Bank</string>
+    <string name="assets_holdings_one">1 holding</string>
+    <string name="assets_holdings_two">2 holdings</string>
+    <string name="assets_holdings_few">holdings</string>
+    <string name="assets_holdings_other">holdings</string>
+    <string name="assets_banks_count_one">1 bank</string>
+    <string name="assets_banks_count_two">2 banks</string>
+    <string name="assets_banks_count_few">banks</string>
+    <string name="assets_banks_count_other">banks</string>
+    <string name="assets_accounts_count_one">1 account</string>
+    <string name="assets_accounts_count_two">2 accounts</string>
+    <string name="assets_accounts_count_few">accounts</string>
+    <string name="assets_accounts_count_other">accounts</string>
+    <string name="assets_balances_count_one">1 balance</string>
+    <string name="assets_balances_count_two">2 balances</string>
+    <string name="assets_balances_count_few">balances</string>
+    <string name="assets_balances_count_other">balances</string>
 </resources>

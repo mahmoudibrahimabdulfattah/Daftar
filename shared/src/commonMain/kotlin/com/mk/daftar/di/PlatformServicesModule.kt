@@ -3,15 +3,18 @@ package com.mk.daftar.di
 import com.mk.daftar.core.common.MonotonicTime
 import com.mk.daftar.core.common.SystemMonotonicTime
 import com.mk.daftar.core.data.session.VaultAuthenticator
+import com.mk.daftar.core.domain.refresh.PriceRefreshController
 import com.mk.daftar.core.domain.repository.UserPreferencesRepository
 import com.mk.daftar.core.domain.session.VaultSession
 import com.mk.daftar.core.security.BiometricPrompter
 import com.mk.daftar.core.security.VaultSecurity
+import com.mk.daftar.core.ui.presentation.ValuesVisibility
 import com.mk.daftar.feature.auth.AuthDraftRegistry
 import com.mk.daftar.feature.auth.AuthGateway
 import com.mk.daftar.gate.VaultAuthGateway
 import com.mk.daftar.lifecycle.InactivityMonitor
 import com.mk.daftar.lifecycle.VaultLifecycleCoordinator
+import com.mk.daftar.refresh.SessionPriceRefresh
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.SupervisorJob
@@ -38,6 +41,15 @@ val platformServicesModule: Module = module {
             mainDispatcher = Dispatchers.Main,
             // Auth drafts are dropped on the synchronous privacy signal, even when the vault is already locked.
             onPrivacyObscured = { get<AuthDraftRegistry>().invalidateAll() },
+        )
+    }
+    // The privacy eye: one per open generation, visible again whenever the vault locks.
+    single { ValuesVisibility() }
+    single<PriceRefreshController> {
+        SessionPriceRefresh(
+            session = get<VaultSession>(),
+            refreshPrices = get(),
+            scope = CoroutineScope(SupervisorJob() + Dispatchers.Main),
         )
     }
     single {

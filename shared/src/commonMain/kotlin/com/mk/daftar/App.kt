@@ -36,6 +36,7 @@ import androidx.lifecycle.viewmodel.viewModelFactory
 import com.mk.daftar.core.designsystem.component.DaftarPrivacyCover
 import com.mk.daftar.core.designsystem.theme.DaftarSpacing
 import com.mk.daftar.core.designsystem.theme.DaftarTheme
+import com.mk.daftar.core.domain.refresh.PriceRefreshController
 import com.mk.daftar.core.domain.repository.AppLanguage
 import com.mk.daftar.core.domain.repository.PreferencesRead
 import com.mk.daftar.core.domain.repository.ThemeMode
@@ -71,6 +72,8 @@ fun App(
 ) {
     val inactivity: InactivityMonitor = koinInject()
     LaunchedEffect(inactivity) { inactivity.start() }
+    val refresh: PriceRefreshController = koinInject()
+    LaunchedEffect(refresh) { refresh.start() }
     val preferences = rememberUserPreferences()
     val mode = preferences?.themeMode ?: ThemeMode.SYSTEM
     val dark = when (mode) {

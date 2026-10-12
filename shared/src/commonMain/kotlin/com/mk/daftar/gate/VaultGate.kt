@@ -40,6 +40,7 @@ import com.mk.daftar.core.designsystem.resources.btn_back
 import com.mk.daftar.core.designsystem.theme.DaftarSpacing
 import com.mk.daftar.core.designsystem.theme.DaftarTheme
 import com.mk.daftar.core.domain.session.VaultSessionState
+import com.mk.daftar.core.ui.presentation.ValuesVisibility
 import com.mk.daftar.feature.auth.AuthIntent
 import com.mk.daftar.feature.auth.AuthUiState
 import com.mk.daftar.feature.auth.AuthViewModel
@@ -54,6 +55,7 @@ import com.mk.daftar.shared.resources.progress_opening
 import com.mk.daftar.shell.DaftarAppShell
 import com.mk.daftar.shell.ShellStateOwner
 import org.jetbrains.compose.resources.stringResource
+import org.koin.compose.koinInject
 import org.koin.compose.viewmodel.koinViewModel
 
 /**
@@ -73,10 +75,15 @@ fun VaultGate(
     modifier: Modifier = Modifier,
 ) {
     val auth: AuthViewModel = koinViewModel()
+    val visibility: ValuesVisibility = koinInject()
     val authState by auth.state.collectAsStateWithLifecycle()
     val onAuthIntent: (AuthIntent) -> Unit = remember(auth) { { intent -> auth.onIntent(intent) } }
     LaunchedEffect(state) {
-        if (state !is VaultSessionState.Open) shell.release()
+        if (state !is VaultSessionState.Open) {
+            shell.release()
+            // Locking destroys the privacy choice: the next generation starts with values shown.
+            visibility.reset()
+        }
         if (state == VaultSessionState.Locked || state == VaultSessionState.Unavailable) {
             onAuthIntent(AuthIntent.Recheck)
         }
