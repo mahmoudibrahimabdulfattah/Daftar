@@ -1,0 +1,62 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <string name="auth_step_1">الخطوة 1 من 3</string>
+    <string name="auth_step_2">الخطوة 2 من 3</string>
+    <string name="auth_step_3">الخطوة 3 من 3</string>
+    <string name="auth_create_heading">رمز خاص بدفترك</string>
+    <string name="auth_create_body">اختر 6 أرقام أو أكثر، مختلفة عن رمز هاتفك.</string>
+    <string name="auth_create_action">متابعة</string>
+    <string name="auth_security_footnote">الرمز يحمي بياناتك المشفّرة. لا يمكن استعادته إذا نسيته.</string>
+    <string name="auth_confirm_heading">أكّد رمزك</string>
+    <string name="auth_confirm_body">أدخل الرمز مرة ثانية.</string>
+    <string name="auth_confirm_action">تأكيد</string>
+    <string name="auth_mismatch_heading">جرّب التأكيد مرة أخرى</string>
+    <string name="auth_mismatch_error">الرمزان غير متطابقين. أعد إدخال الرمز الذي اخترته.</string>
+    <string name="auth_restart_creation">اختيار رمز آخر</string>
+    <string name="auth_unlock_heading">افتح دفتر</string>
+    <string name="auth_unlock_body">أدخل رمز دفتر للمتابعة.</string>
+    <string name="auth_unlock_action">فتح</string>
+    <string name="auth_field_label">رمز دفتر</string>
+    <string name="auth_field_state">%1$s، %2$s</string>
+    <string name="auth_forgot_pin">نسيت الرمز؟</string>
+    <string name="auth_incorrect_pin">الرمز غير صحيح. حاول مرة أخرى.</string>
+    <string name="auth_keypad_paused">لوحة الأرقام متوقفة مؤقتًا</string>
+    <string name="auth_open_failed">تعذّر فتح دفتر الآن. حاول مرة أخرى.</string>
+    <string name="auth_busy_creating">جارٍ إنشاء دفتر…</string>
+    <string name="auth_busy_unlocking">جارٍ الفتح…</string>
+    <string name="auth_biometric_heading">افتحه بلمسة</string>
+    <string name="auth_biometric_body">استخدم بصمة الجهاز لفتح دفتر بسرعة. سيظل رمز دفتر متاحًا دائمًا.</string>
+    <string name="auth_biometric_enable">تفعيل البصمة</string>
+    <string name="auth_biometric_later">لاحقًا</string>
+    <string name="auth_biometric_unavailable">ستتوفر البصمة في تحديث لاحق.</string>
+    <string name="auth_recovery_heading">لا يمكن استعادة الرمز</string>
+    <string name="auth_recovery_body">إذا كانت البصمة مفعّلة، يمكنك فتح دفتر بها. تغيير الرمز يحتاج الرمز الحالي.</string>
+    <string name="auth_recovery_backup_warning">استعادة نسخة احتياطية تحتاج كلمة مرور النسخة. بدون الرمز أو البصمة أو نسخة صالحة، لن تتمكن من فتح بياناتك. لا نحذف شيئًا تلقائيًا.</string>
+    <string name="auth_try_pin_again">المحاولة بالرمز</string>
+    <string name="auth_restore_backup">استعادة نسخة مشفّرة</string>
+    <string name="auth_restore_later">متاح في تحديث لاحق</string>
+    <string name="auth_unavailable_heading">تعذّر فتح دفتر</string>
+    <string name="auth_unavailable_hardware">هذا الجهاز لا يدعم الحماية المطلوبة.</string>
+    <string name="auth_unavailable_key">مفتاح الحماية على هذا الجهاز غير متاح.</string>
+    <string name="auth_unavailable_corrupt">تعذّر التحقق من بيانات دفتر. لم نحذف أي بيانات.</string>
+    <string name="auth_unavailable_format">حدّث دفتر لفتح هذه البيانات.</string>
+    <string name="auth_unavailable_transient">تعذّر فتح دفتر الآن. حاول مرة أخرى.</string>
+    <string name="auth_retry">إعادة المحاولة</string>
+    <string name="auth_erase_digit">حذف رقم</string>
+    <string name="auth_checking">جارٍ الفتح…</string>
+    <plurals name="auth_entered_digits">
+        <item quantity="zero">لم يُدخل أي رقم</item>
+        <item quantity="one">رقم واحد مُدخل</item>
+        <item quantity="two">رقمان مُدخلان</item>
+        <item quantity="few">%1$d أرقام مُدخلة</item>
+        <item quantity="many">%1$d رقمًا مُدخلًا</item>
+        <item quantity="other">%1$d رقم مُدخل</item>
+    </plurals>
+    <plurals name="auth_backoff_seconds">
+        <item quantity="one">الرمز غير صحيح. حاول بعد ثانية واحدة.</item>
+        <item quantity="two">الرمز غير صحيح. حاول بعد ثانيتين.</item>
+        <item quantity="few">الرمز غير صحيح. حاول بعد ⁦%1$d⁩ ثوانٍ.</item>
+        <item quantity="many">الرمز غير صحيح. حاول بعد ⁦%1$d⁩ ثانية.</item>
+        <item quantity="other">الرمز غير صحيح. حاول بعد ⁦%1$d⁩ ثانية.</item>
+    </plurals>
+</resources>

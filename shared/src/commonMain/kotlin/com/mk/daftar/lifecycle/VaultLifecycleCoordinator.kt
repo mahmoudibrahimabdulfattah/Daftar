@@ -30,8 +30,16 @@ class VaultLifecycleCoordinator(
     private val session: VaultSession,
     private val scope: CoroutineScope,
     private val mainDispatcher: CoroutineDispatcher,
+    /** Runs synchronously whenever content is obscured, even when the session is already locked. Wipes auth drafts. */
+    private val onPrivacyObscured: () -> Unit = {},
 ) {
     private val obscuredSurfaces = mutableSetOf<String>()
+
+    /** True while an inactivity lock covers the content. It lifts when that lock finishes. */
+    private var inactivityCover = false
+
+    /** Identifies the in-flight inactivity lock, if any. */
+    private var inactivityToken: Any? = null
 
     /** True from a background request until a return finds no cleanup pending. */
     private var inBackground = false
@@ -72,6 +80,7 @@ class VaultLifecycleCoordinator(
     fun obscure(surface: String) {
         obscuredSurfaces += surface
         revealRequested = false
+        onPrivacyObscured()
         publish()
     }
 
@@ -115,6 +124,7 @@ class VaultLifecycleCoordinator(
     fun enteredBackground(): Job {
         inBackground = true
         revealRequested = false
+        onPrivacyObscured()
         publish()
         lockJob?.let { return it }
         val token = Any()
@@ -131,6 +141,33 @@ class VaultLifecycleCoordinator(
         return job
     }
 
+    /**
+     * The inactivity deadline passed. Covers at once, drops every draft, and locks the session. The cover lifts when the
+     * lock finishes, unless the app has left the foreground meanwhile, which keeps its own cover. Returns null when the
+     * app is already locking in the background.
+     */
+    fun lockForInactivity(): Job? {
+        if (inBackground || inactivityToken != null) return null
+        onPrivacyObscured()
+        inactivityCover = true
+        publish()
+        val token = Any()
+        inactivityToken = token
+        return scope.launch(start = CoroutineStart.UNDISPATCHED) {
+            try {
+                session.lock()
+            } finally {
+                withContext(NonCancellable + mainDispatcher) {
+                    if (inactivityToken === token) {
+                        inactivityToken = null
+                        inactivityCover = false
+                        publish()
+                    }
+                }
+            }
+        }
+    }
+
     private fun lockFinished(token: Any) {
         if (lockToken !== token) return
         lockToken = null
@@ -140,6 +177,6 @@ class VaultLifecycleCoordinator(
     }
 
     private fun publish() {
-        cover.value = obscuredSurfaces.isNotEmpty() || inBackground
+        cover.value = obscuredSurfaces.isNotEmpty() || inBackground || inactivityCover
     }
 }

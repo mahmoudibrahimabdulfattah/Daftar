@@ -51,7 +51,9 @@ class VaultLifecycleDeviceTest {
             val created = gold.create(
                 GoldHoldingInput(GoldKarat.K24, GoldForm.BAR, GoldWeight(Decimal.parseCanonical("2.5")), "demo"),
             )
-            check(created is Outcome.Success) { "the record must be written" }
+            check(created is Outcome.Success) {
+                "the record must be written, got ${(created as Outcome.Failure).error}"
+            }
             val id = created.data.value.id
 
             session.lock()

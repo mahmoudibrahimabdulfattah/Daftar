@@ -22,11 +22,17 @@ import androidx.compose.runtime.key
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.rememberUpdatedState
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.input.key.onPreviewKeyEvent
+import androidx.compose.ui.input.pointer.PointerEventPass
+import androidx.compose.ui.input.pointer.changedToUp
+import androidx.compose.ui.input.pointer.pointerInput
 import androidx.compose.ui.platform.LocalLayoutDirection
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.LayoutDirection
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import androidx.lifecycle.viewmodel.compose.viewModel
+import androidx.lifecycle.viewmodel.initializer
+import androidx.lifecycle.viewmodel.viewModelFactory
 import com.mk.daftar.core.designsystem.component.DaftarPrivacyCover
 import com.mk.daftar.core.designsystem.theme.DaftarSpacing
 import com.mk.daftar.core.designsystem.theme.DaftarTheme
@@ -37,6 +43,7 @@ import com.mk.daftar.core.domain.repository.UserPreferences
 import com.mk.daftar.core.domain.repository.UserPreferencesRepository
 import com.mk.daftar.core.domain.session.VaultSession
 import com.mk.daftar.gate.VaultGate
+import com.mk.daftar.lifecycle.InactivityMonitor
 import com.mk.daftar.platform.applyAppLanguage
 import com.mk.daftar.shared.resources.Res
 import com.mk.daftar.shared.resources.app_name
@@ -62,6 +69,8 @@ fun App(
     covered: Boolean = false,
     onThemeChange: (mode: ThemeMode, dark: Boolean) -> Unit = { _, _ -> },
 ) {
+    val inactivity: InactivityMonitor = koinInject()
+    LaunchedEffect(inactivity) { inactivity.start() }
     val preferences = rememberUserPreferences()
     val mode = preferences?.themeMode ?: ThemeMode.SYSTEM
     val dark = when (mode) {
@@ -73,7 +82,24 @@ fun App(
     LaunchedEffect(mode, dark) { themeChange(mode, dark) }
 
     DaftarTheme(darkTheme = dark, arabic = (preferences?.language ?: AppLanguage.AR) == AppLanguage.AR) {
-        Box(modifier = modifier.fillMaxSize().background(DaftarTheme.colors.paper)) {
+        Box(
+            modifier = modifier
+                .fillMaxSize()
+                .background(DaftarTheme.colors.paper)
+                // Deliberate touches and key presses count toward inactivity. Hover and recomposition never do.
+                .pointerInput(inactivity) {
+                    awaitPointerEventScope {
+                        while (true) {
+                            val event = awaitPointerEvent(PointerEventPass.Initial)
+                            if (event.changes.any { it.pressed || it.changedToUp() }) inactivity.recordInteraction()
+                        }
+                    }
+                }
+                .onPreviewKeyEvent {
+                    inactivity.recordInteraction()
+                    false
+                },
+        ) {
             if (preferences != null) {
                 PreferredContent(
                     preferences = preferences,
@@ -100,7 +126,7 @@ private fun PreferredContent(
     showsDebugBanner: Boolean,
     developerTools: Boolean,
     covered: Boolean,
-    shell: ShellStateOwner = viewModel(),
+    shell: ShellStateOwner = viewModel(factory = shellOwnerFactory),
 ) {
     val language = preferences.language
     remember(language) { applyAppLanguage(language) }
@@ -160,3 +186,6 @@ private fun DebugBanner(topInsets: WindowInsets) {
             .padding(horizontal = DaftarSpacing.md, vertical = DaftarSpacing.xs),
     )
 }
+
+/** Builds the shell owner explicitly: the default factory cannot construct view models by reflection on iOS. */
+private val shellOwnerFactory = viewModelFactory { initializer { ShellStateOwner() } }

@@ -14,7 +14,6 @@ import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.only
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.safeDrawing
-import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.layout.windowInsetsPadding
 import androidx.compose.material3.CircularProgressIndicator
 import androidx.compose.material3.Text
@@ -26,13 +25,14 @@ import androidx.compose.runtime.remember
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
-import androidx.compose.ui.semantics.heading
-import androidx.compose.ui.semantics.semantics
 import androidx.compose.ui.text.style.TextAlign
-import androidx.compose.ui.unit.dp
+import androidx.lifecycle.Lifecycle
+import androidx.lifecycle.compose.LifecycleEventEffect
+import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import androidx.lifecycle.viewmodel.compose.viewModel
+import androidx.lifecycle.viewmodel.initializer
+import androidx.lifecycle.viewmodel.viewModelFactory
 import com.mk.daftar.core.designsystem.catalog.DesignCatalog
-import com.mk.daftar.core.designsystem.component.DaftarMark
 import com.mk.daftar.core.designsystem.component.DaftarTextButton
 import com.mk.daftar.core.designsystem.component.DaftarTopBar
 import com.mk.daftar.core.designsystem.resources.Res as DesignRes
@@ -40,26 +40,29 @@ import com.mk.daftar.core.designsystem.resources.btn_back
 import com.mk.daftar.core.designsystem.theme.DaftarSpacing
 import com.mk.daftar.core.designsystem.theme.DaftarTheme
 import com.mk.daftar.core.domain.session.VaultSessionState
+import com.mk.daftar.feature.auth.AuthIntent
+import com.mk.daftar.feature.auth.AuthUiState
+import com.mk.daftar.feature.auth.AuthViewModel
+import com.mk.daftar.feature.auth.ui.AuthContent
 import com.mk.daftar.platform.PlatformBackHandler
 import com.mk.daftar.shared.resources.Res
-import com.mk.daftar.shared.resources.app_name
 import com.mk.daftar.shared.resources.dev_catalog
 import com.mk.daftar.shared.resources.dev_heading
 import com.mk.daftar.shared.resources.dev_preview
-import com.mk.daftar.shared.resources.locked_body
-import com.mk.daftar.shared.resources.locked_title
 import com.mk.daftar.shared.resources.progress_closing
 import com.mk.daftar.shared.resources.progress_opening
-import com.mk.daftar.shared.resources.unavailable_body
-import com.mk.daftar.shared.resources.unavailable_title
 import com.mk.daftar.shell.DaftarAppShell
 import com.mk.daftar.shell.ShellStateOwner
 import org.jetbrains.compose.resources.stringResource
+import org.koin.compose.viewmodel.koinViewModel
 
 /**
  * The vault gate, outside the shell. Only [VaultSurface.Shell] reaches private navigation, and it exists only for an
  * open generation. When the session leaves Open, the owner releases the generation, so a lock disposes stacks, entry
  * state and drafts; a configuration change keeps them because the session stays Open.
+ *
+ * The auth view model belongs to the activity, not to a surface, so the Opening branch cannot cancel an attempt in
+ * flight. It is asked for a fresh status whenever the vault is locked and whenever the app resumes.
  */
 @Composable
 fun VaultGate(
@@ -69,19 +72,26 @@ fun VaultGate(
     covered: Boolean,
     modifier: Modifier = Modifier,
 ) {
+    val auth: AuthViewModel = koinViewModel()
+    val authState by auth.state.collectAsStateWithLifecycle()
+    val onAuthIntent: (AuthIntent) -> Unit = remember(auth) { { intent -> auth.onIntent(intent) } }
     LaunchedEffect(state) {
         if (state !is VaultSessionState.Open) shell.release()
+        if (state == VaultSessionState.Locked || state == VaultSessionState.Unavailable) {
+            onAuthIntent(AuthIntent.Recheck)
+        }
     }
+    LifecycleEventEffect(Lifecycle.Event.ON_RESUME) { onAuthIntent(AuthIntent.Recheck) }
     when (val surface = vaultSurfaceFor(state)) {
-        VaultSurface.Locked -> LockedSurface(
+        VaultSurface.Locked, VaultSurface.Unavailable -> LockedSurface(
+            authState = authState,
+            onAuthIntent = onAuthIntent,
             developerTools = developerEntriesVisible(state, developerTools),
             covered = covered,
             modifier = modifier,
         )
 
         is VaultSurface.Progress -> ProgressSurface(closing = surface.closing, modifier = modifier)
-
-        VaultSurface.Unavailable -> UnavailableSurface(modifier = modifier)
 
         is VaultSurface.Shell -> DaftarAppShell(
             navigator = shell.navigatorFor(surface.generation),
@@ -91,12 +101,22 @@ fun VaultGate(
     }
 }
 
+/**
+ * The locked surface: the auth screens, with the developer entries under them in a debug build. Developer screens
+ * replace it while open. Opening one wipes the auth drafts; closing one rechecks the vault status.
+ */
 @Composable
-private fun LockedSurface(developerTools: Boolean, covered: Boolean, modifier: Modifier = Modifier) {
+private fun LockedSurface(
+    authState: AuthUiState,
+    onAuthIntent: (AuthIntent) -> Unit,
+    developerTools: Boolean,
+    covered: Boolean,
+    modifier: Modifier = Modifier,
+) {
     var developer by remember { mutableStateOf<DeveloperDestination?>(null) }
     // The preview's navigation lives in a view model, so a configuration change keeps it; closing it, or covering the
     // app, releases it. Developer screens never survive a cover, as they would not survive backgrounding in any view.
-    val preview: ShellStateOwner = viewModel(key = PREVIEW_OWNER_KEY)
+    val preview: ShellStateOwner = viewModel(key = PREVIEW_OWNER_KEY, factory = shellOwnerFactory)
     LaunchedEffect(covered) {
         if (covered) {
             preview.release()
@@ -104,15 +124,23 @@ private fun LockedSurface(developerTools: Boolean, covered: Boolean, modifier: M
         }
     }
     when (developer) {
-        null -> LockedContent(
+        null -> AuthSurface(
+            authState = authState,
+            onAuthIntent = onAuthIntent,
             showsDeveloper = developerTools,
-            onOpen = { developer = it },
+            onOpen = {
+                onAuthIntent(AuthIntent.PrivacyInvalidated)
+                developer = it
+            },
             modifier = modifier,
         )
 
         DeveloperDestination.DESIGN_CATALOG -> DeveloperChrome(
             title = stringResource(Res.string.dev_catalog),
-            onClose = { developer = null },
+            onClose = {
+                developer = null
+                onAuthIntent(AuthIntent.Recheck)
+            },
             modifier = modifier,
         ) {
             DesignCatalog()
@@ -123,6 +151,7 @@ private fun LockedSurface(developerTools: Boolean, covered: Boolean, modifier: M
             onClose = {
                 preview.release()
                 developer = null
+                onAuthIntent(AuthIntent.Recheck)
             },
             modifier = modifier,
         ) {
@@ -131,63 +160,48 @@ private fun LockedSurface(developerTools: Boolean, covered: Boolean, modifier: M
     }
 }
 
-/**
- * The locked surface: the notebook mark, the name, and a brief line. It offers no unlock, creates no vault and holds no
- * figures. The developer entries are present only when [showsDeveloper] is true, which a release build never sets.
- */
+/** The auth screens. The developer entries sit below them and exist only when [showsDeveloper] is true. */
 @Composable
-private fun LockedContent(
+private fun AuthSurface(
+    authState: AuthUiState,
+    onAuthIntent: (AuthIntent) -> Unit,
     showsDeveloper: Boolean,
     onOpen: (DeveloperDestination) -> Unit,
     modifier: Modifier = Modifier,
 ) {
-    val colors = DaftarTheme.colors
-    val typography = DaftarTheme.typography
     Column(
         modifier = modifier
             .fillMaxSize()
-            .background(colors.paper)
-            .windowInsetsPadding(WindowInsets.safeDrawing)
-            .padding(horizontal = DaftarSpacing.md),
-        horizontalAlignment = Alignment.CenterHorizontally,
-        verticalArrangement = Arrangement.Center,
+            .background(DaftarTheme.colors.paper)
+            .windowInsetsPadding(WindowInsets.safeDrawing),
     ) {
-        DaftarMark(Modifier.size(65.dp))
-        Spacer(Modifier.height(DaftarSpacing.sm))
-        Text(
-            text = stringResource(Res.string.app_name),
-            style = typography.sectionHeading,
-            color = colors.ink,
-        )
-        Spacer(Modifier.height(DaftarSpacing.md))
-        Text(
-            text = stringResource(Res.string.locked_title),
-            style = typography.screenHeading,
-            color = colors.ink,
-            textAlign = TextAlign.Center,
-            modifier = Modifier.semantics { heading() },
-        )
-        Spacer(Modifier.height(DaftarSpacing.xs))
-        Text(
-            text = stringResource(Res.string.locked_body),
-            style = typography.supportingBody,
-            color = colors.muted,
-            textAlign = TextAlign.Center,
-            modifier = Modifier.fillMaxWidth(),
+        AuthContent(
+            state = authState,
+            onIntent = onAuthIntent,
+            modifier = Modifier.weight(1f).fillMaxWidth(),
         )
         if (showsDeveloper) {
-            Spacer(Modifier.height(DaftarSpacing.xl))
-            Text(
-                text = stringResource(Res.string.dev_heading),
-                style = typography.fieldLabel,
-                color = colors.muted,
-            )
-            DaftarTextButton(onClick = { onOpen(DeveloperDestination.DESIGN_CATALOG) }) {
-                Text(stringResource(Res.string.dev_catalog))
-            }
-            DaftarTextButton(onClick = { onOpen(DeveloperDestination.SHELL_PREVIEW) }) {
-                Text(stringResource(Res.string.dev_preview))
-            }
+            DeveloperEntries(onOpen = onOpen)
+        }
+    }
+}
+
+@Composable
+private fun DeveloperEntries(onOpen: (DeveloperDestination) -> Unit) {
+    Column(
+        modifier = Modifier.fillMaxWidth().padding(horizontal = DaftarSpacing.md),
+        horizontalAlignment = Alignment.CenterHorizontally,
+    ) {
+        Text(
+            text = stringResource(Res.string.dev_heading),
+            style = DaftarTheme.typography.fieldLabel,
+            color = DaftarTheme.colors.muted,
+        )
+        DaftarTextButton(onClick = { onOpen(DeveloperDestination.DESIGN_CATALOG) }) {
+            Text(stringResource(Res.string.dev_catalog))
+        }
+        DaftarTextButton(onClick = { onOpen(DeveloperDestination.SHELL_PREVIEW) }) {
+            Text(stringResource(Res.string.dev_preview))
         }
     }
 }
@@ -210,37 +224,6 @@ private fun ProgressSurface(closing: Boolean, modifier: Modifier = Modifier) {
             text = stringResource(if (closing) Res.string.progress_closing else Res.string.progress_opening),
             style = DaftarTheme.typography.supportingBody,
             color = colors.muted,
-        )
-    }
-}
-
-@Composable
-private fun UnavailableSurface(modifier: Modifier = Modifier) {
-    val colors = DaftarTheme.colors
-    val typography = DaftarTheme.typography
-    Column(
-        modifier = modifier
-            .fillMaxSize()
-            .background(colors.paper)
-            .windowInsetsPadding(WindowInsets.safeDrawing)
-            .padding(horizontal = DaftarSpacing.md),
-        horizontalAlignment = Alignment.CenterHorizontally,
-        verticalArrangement = Arrangement.Center,
-    ) {
-        DaftarMark(Modifier.size(65.dp))
-        Spacer(Modifier.height(DaftarSpacing.md))
-        Text(
-            text = stringResource(Res.string.unavailable_title),
-            style = typography.screenHeading,
-            color = colors.ink,
-            textAlign = TextAlign.Center,
-        )
-        Spacer(Modifier.height(DaftarSpacing.xs))
-        Text(
-            text = stringResource(Res.string.unavailable_body),
-            style = typography.supportingBody,
-            color = colors.muted,
-            textAlign = TextAlign.Center,
         )
     }
 }
@@ -288,6 +271,8 @@ private fun ShellPreview(owner: ShellStateOwner) {
         modifier = Modifier.fillMaxSize(),
     )
 }
+
+private val shellOwnerFactory = viewModelFactory { initializer { ShellStateOwner() } }
 
 private const val PREVIEW_OWNER_KEY = "developer-shell-preview"
 
