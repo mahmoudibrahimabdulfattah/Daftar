@@ -61,6 +61,7 @@ androidx-lifecycle-viewmodel-compose = { module = "org.jetbrains.androidx.lifecy
 androidx-lifecycle-runtime-compose = { module = "org.jetbrains.androidx.lifecycle:lifecycle-runtime-compose", version.ref = "lifecycle" }
 androidx-navigation3-ui = { module = "org.jetbrains.androidx.navigation3:navigation3-ui", version.ref = "navigation3" }
 androidx-lifecycle-viewmodel-navigation3 = { module = "org.jetbrains.androidx.lifecycle:lifecycle-viewmodel-navigation3", version.ref = "lifecycle" }
+androidx-lifecycle-process = { module = "androidx.lifecycle:lifecycle-process", version.ref = "lifecycle" }
 compose-material3-navigation-suite = { module = "org.jetbrains.compose.material3:material3-adaptive-navigation-suite", version.ref = "material3Adaptive" }
 
 ktor-client-core = { module = "io.ktor:ktor-client-core", version.ref = "ktor" }
@@ -76,6 +77,8 @@ libsodium-bindings = { module = "com.ionspin.kotlin:multiplatform-crypto-libsodi
 libsodium-bindings-jvm = { module = "com.ionspin.kotlin:multiplatform-crypto-libsodium-bindings-jvm", version.ref = "libsodium" }
 androidx-test-runner = { module = "androidx.test:runner", version.ref = "androidxTestRunner" }
 androidx-test-ext-junit = { module = "androidx.test.ext:junit", version.ref = "androidxTestExtJunit" }
+androidx-test-core = { module = "androidx.test:core", version.ref = "androidxTestRunner" }
+androidx-test-uiautomator = { module = "androidx.test.uiautomator:uiautomator", version = "2.3.0" }
 junit = { module = "junit:junit", version.ref = "junit" }
 
 androidx-room-runtime = { module = "androidx.room:room-runtime", version.ref = "room" }

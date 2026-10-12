@@ -1,17 +1,48 @@
 <?xml version="1.0" encoding="utf-8"?>
-<manifest xmlns:android="http://schemas.android.com/apk/res/android">
+<manifest xmlns:android="http://schemas.android.com/apk/res/android"
+    xmlns:tools="http://schemas.android.com/tools">
+
+    <!-- The only permission: the app reaches the price services. No storage, location, notification or runtime grants. -->
+    <uses-permission android:name="android.permission.INTERNET" />
+
+    <!--
+        Merged from dependencies, but unused here: the app registers no dynamic receivers, so the custom
+        signature permission for them is removed. Room's invalidation service runs only with multi-instance
+        invalidation, which the database does not enable.
+    -->
+    <permission
+        android:name="${applicationId}.DYNAMIC_RECEIVER_NOT_EXPORTED_PERMISSION"
+        tools:node="remove" />
+    <uses-permission
+        android:name="${applicationId}.DYNAMIC_RECEIVER_NOT_EXPORTED_PERMISSION"
+        tools:node="remove" />
 
     <application
+        android:name=".DaftarApplication"
         android:allowBackup="false"
         android:dataExtractionRules="@xml/data_extraction_rules"
         android:fullBackupContent="false"
         android:icon="@mipmap/ic_launcher"
         android:label="@string/app_name"
         android:supportsRtl="true"
+        android:usesCleartextTraffic="false"
         android:theme="@android:style/Theme.Material.NoActionBar">
+        <!-- Profile-install receiver: exported and guarded only by DUMP. Not part of this app's surface. -->
+        <!-- The classes are merged out of the app, so they are absent from the lint classpath. -->
+        <receiver
+            android:name="androidx.profileinstaller.ProfileInstallReceiver"
+            tools:node="remove"
+            tools:ignore="MissingClass" />
+        <service
+            android:name="androidx.room.MultiInstanceInvalidationService"
+            tools:node="remove"
+            tools:ignore="MissingClass" />
+
+        <!-- The launcher is the only exported component. -->
         <activity
             android:name=".MainActivity"
-            android:exported="true">
+            android:exported="true"
+            android:windowSoftInputMode="adjustResize">
             <intent-filter>
                 <action android:name="android.intent.action.MAIN" />
                 <category android:name="android.intent.category.LAUNCHER" />
