@@ -255,6 +255,12 @@ class VaultGenerations internal constructor(
                 is Outcome.Success -> target.data.changePin(currentPin, newPin)
             }
 
+        override suspend fun verifyCurrentPin(pin: SecretBytes): Outcome<Unit, SecurityError> =
+            when (val target = target()) {
+                is Outcome.Failure -> target
+                is Outcome.Success -> target.data.verifyCurrentPin(pin)
+            }
+
         override suspend fun lock() {
             lockCurrent()
         }

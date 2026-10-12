@@ -1,0 +1,11 @@
+<?xml version="1.0" encoding="utf-8"?>
+<manifest xmlns:android="http://schemas.android.com/apk/res/android">
+    <!-- Test-only screenshot host. It lives in this library's device-test APK and is never part of the application. -->
+    <application>
+        <activity
+            android:name="com.mk.daftar.feature.settings.SettingsScreenshotHostActivity"
+            android:exported="false"
+            android:label=""
+            android:theme="@android:style/Theme.DeviceDefault.NoActionBar" />
+    </application>
+</manifest>

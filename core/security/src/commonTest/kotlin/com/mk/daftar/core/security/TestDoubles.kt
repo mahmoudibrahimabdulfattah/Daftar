@@ -30,6 +30,10 @@ internal class FakeKdf(private val clock: FakeClock? = null, private val costPer
     var gate: CompletableDeferred<Unit>? = null
     var entered: CompletableDeferred<Unit>? = null
 
+    /** Per-call holds: the call with this index signals [arrivals] and waits for its [holds] gate. */
+    val holds = mutableMapOf<Int, CompletableDeferred<Unit>>()
+    val arrivals = mutableMapOf<Int, CompletableDeferred<Unit>>()
+
     override suspend fun derive(
         pin: ByteArray,
         salt: ByteArray,
@@ -38,8 +42,10 @@ internal class FakeKdf(private val clock: FakeClock? = null, private val costPer
         derivations++
         passesSeen += params.passes
         entered?.complete(Unit)
+        arrivals[derivations]?.complete(Unit)
         failingCalls.remove(derivations)?.let { return Outcome.Failure(it) }
         gate?.await()
+        holds[derivations]?.await()
         clock?.advance(costPerPass * params.passes)
         val key = ByteArray(KEY_BYTES) { index ->
             (pin[index % pin.size].toInt() xor salt[index % salt.size].toInt() xor (index * 7 + params.passes)).toByte()

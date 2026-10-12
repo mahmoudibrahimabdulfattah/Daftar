@@ -136,6 +136,11 @@ private class ProbedSecurity(private val probes: StartupProbes) : VaultSecurity 
         error("startup must not change the PIN")
     }
 
+    override suspend fun verifyCurrentPin(pin: SecretBytes): Outcome<Unit, SecurityError> {
+        probes.securityCalls++
+        error("startup must not verify the PIN")
+    }
+
     override suspend fun lock() {
         probes.securityCalls++
     }
