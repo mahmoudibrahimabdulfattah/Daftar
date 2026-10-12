@@ -99,6 +99,7 @@ import com.mk.daftar.feature.auth.resources.auth_recovery_body
 import com.mk.daftar.feature.auth.resources.auth_recovery_heading
 import com.mk.daftar.feature.auth.resources.auth_restart_creation
 import com.mk.daftar.feature.auth.resources.auth_restore_backup
+import com.mk.daftar.feature.auth.resources.auth_restore_cloud
 import com.mk.daftar.feature.auth.resources.auth_retry
 import com.mk.daftar.feature.auth.resources.auth_security_footnote
 import com.mk.daftar.feature.auth.resources.auth_step_1
@@ -123,7 +124,12 @@ import org.jetbrains.compose.resources.stringResource
  * at large text sizes. The host owns the system insets; the keypad stays left-to-right inside the right-to-left column.
  */
 @Composable
-fun AuthContent(state: AuthUiState, onIntent: (AuthIntent) -> Unit, modifier: Modifier = Modifier) {
+fun AuthContent(
+    state: AuthUiState,
+    onIntent: (AuthIntent) -> Unit,
+    modifier: Modifier = Modifier,
+    cloudRestoreOffered: Boolean = false,
+) {
     val colors = DaftarTheme.colors
     val focus = remember { FocusRequester() }
     LaunchedEffect(Unit) { runCatching { focus.requestFocus() } }
@@ -170,21 +176,21 @@ fun AuthContent(state: AuthUiState, onIntent: (AuthIntent) -> Unit, modifier: Mo
                 horizontalAlignment = Alignment.CenterHorizontally,
                 verticalArrangement = Arrangement.spacedBy(DaftarSpacing.sm),
             ) {
-                AuthPhaseContent(state = state, onIntent = onIntent)
+                AuthPhaseContent(state = state, onIntent = onIntent, cloudRestoreOffered = cloudRestoreOffered)
             }
         }
     }
 }
 
 @Composable
-private fun AuthPhaseContent(state: AuthUiState, onIntent: (AuthIntent) -> Unit) {
+private fun AuthPhaseContent(state: AuthUiState, onIntent: (AuthIntent) -> Unit, cloudRestoreOffered: Boolean) {
     when (val phase = state.phase) {
         AuthPhase.Checking -> CheckingBody()
         AuthPhase.Create -> CreateBody(state, onIntent)
         AuthPhase.Confirm -> ConfirmBody(state, onIntent)
         AuthPhase.Biometric -> BiometricBody(state, onIntent)
         AuthPhase.Unlock -> UnlockBody(state, onIntent)
-        AuthPhase.Recovery -> RecoveryBody(state, onIntent)
+        AuthPhase.Recovery -> RecoveryBody(state, onIntent, cloudRestoreOffered)
         is AuthPhase.Unavailable -> UnavailableBody(phase.reason, state, onIntent)
     }
 }
@@ -418,7 +424,7 @@ private fun UnlockNote(state: AuthUiState) {
 }
 
 @Composable
-private fun RecoveryBody(state: AuthUiState, onIntent: (AuthIntent) -> Unit) {
+private fun RecoveryBody(state: AuthUiState, onIntent: (AuthIntent) -> Unit, cloudRestoreOffered: Boolean) {
     PhaseLayout {
         val colors = DaftarTheme.colors
         val typography = DaftarTheme.typography
@@ -452,6 +458,15 @@ private fun RecoveryBody(state: AuthUiState, onIntent: (AuthIntent) -> Unit) {
             modifier = Modifier.fillMaxWidth(),
         ) {
             Text(stringResource(Res.string.auth_restore_backup))
+        }
+        if (cloudRestoreOffered) {
+            DaftarTextButton(
+                onClick = { onIntent(AuthIntent.OpenCloudRestore) },
+                enabled = state.busy == null,
+                modifier = Modifier.fillMaxWidth(),
+            ) {
+                Text(stringResource(Res.string.auth_restore_cloud))
+            }
         }
     }
 }

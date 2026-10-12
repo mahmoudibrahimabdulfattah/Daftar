@@ -4,6 +4,18 @@ plugins {
     id("daftar.android.application")
 }
 
+// Firebase is optional. The Google Services plugin runs only when the ignored, variant-specific config file is present;
+// without it the app builds, runs everything local, and reports cloud backups as unavailable.
+if (file("google-services.json").exists()) {
+    pluginManager.apply("com.google.gms.google-services")
+    // A variant whose package is not registered in the file (e.g. release before its app exists in Firebase) builds
+    // without Firebase, and the app then reports cloud backups as unavailable.
+    val registered = file("google-services.json").readText()
+    tasks.matching { it.name == "processReleaseGoogleServices" }.configureEach {
+        enabled = "\"package_name\": \"com.mk.daftar\"" in registered
+    }
+}
+
 // The upload key stays out of git. keystore.properties (storeFile, storePassword, keyAlias, keyPassword) sits next to
 // settings.gradle.kts; keystore.properties.example lists the keys. Without the file the release build is left
 // unsigned, and it never falls back to the debug key.
@@ -62,6 +74,12 @@ dependencies {
     implementation(libs.androidx.appcompat)
     implementation(libs.androidx.core.splashscreen)
     implementation(libs.androidx.lifecycle.process)
+    implementation(libs.androidx.credentials)
+    implementation(project.dependencies.platform(libs.firebase.bom))
+    implementation(libs.firebase.appcheck.playintegrity)
+    debugImplementation(libs.firebase.appcheck.debug)
+    implementation(projects.core.account)
+    implementation(projects.core.cloud)
     implementation(project.dependencies.platform(libs.koin.bom))
     implementation(libs.koin.android)
 

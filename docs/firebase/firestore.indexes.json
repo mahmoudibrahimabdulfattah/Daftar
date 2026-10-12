@@ -1,0 +1,30 @@
+{
+  "indexes": [],
+  "fieldOverrides": [
+    {
+      "collectionGroup": "backups",
+      "fieldPath": "ciphertext",
+      "indexes": []
+    },
+    {
+      "collectionGroup": "backups",
+      "fieldPath": "backupId",
+      "indexes": []
+    },
+    {
+      "collectionGroup": "backups",
+      "fieldPath": "sha256",
+      "indexes": []
+    },
+    {
+      "collectionGroup": "backups",
+      "fieldPath": "size",
+      "indexes": []
+    },
+    {
+      "collectionGroup": "backups",
+      "fieldPath": "createdAt",
+      "indexes": []
+    }
+  ]
+}

@@ -103,4 +103,7 @@
     <string name="about_source_alexandria">مشروع Alexandria</string>
     <string name="about_source_rubik">مشروع Rubik</string>
     <string name="about_local">محلي فقط · بدون مزامنة</string>
+    <string name="settings_cloud_title">النسخ السحابية</string>
+    <string name="settings_cloud_subtitle">Google، اختيارية، ومشفّرة</string>
+    <string name="settings_cloud_action">فتح</string>
 </resources>

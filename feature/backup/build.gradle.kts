@@ -18,6 +18,7 @@ kotlin {
         commonMain.dependencies {
             // The export codec, password rules and the process-scoped export controller live in core:backup.
             implementation(projects.core.backup)
+            implementation(libs.kotlinx.datetime)
         }
         commonTest.dependencies {
             implementation(libs.kotlinx.coroutines.test)

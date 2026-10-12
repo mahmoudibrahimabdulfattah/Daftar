@@ -1,5 +1,7 @@
 package com.mk.daftar.di
 
+import com.mk.daftar.core.account.di.accountModule
+import com.mk.daftar.core.cloud.di.cloudModule
 import com.mk.daftar.core.data.di.dataModule
 import com.mk.daftar.core.datastore.di.datastoreModule
 import com.mk.daftar.core.network.di.networkModule
@@ -9,6 +11,7 @@ import com.mk.daftar.feature.auth.di.authModule
 import com.mk.daftar.feature.backup.di.backupFeatureModule
 import com.mk.daftar.feature.banks.di.banksModule
 import com.mk.daftar.feature.cash.di.cashModule
+import com.mk.daftar.feature.cloud.di.cloudFeatureModule
 import com.mk.daftar.feature.gold.di.goldModule
 import com.mk.daftar.feature.home.di.homeModule
 import com.mk.daftar.feature.journal.di.journalModule
@@ -39,6 +42,9 @@ val daftarModules: List<Module> = listOf(
     pricesModule,
     backupModule,
     backupFeatureModule,
+    accountModule,
+    cloudModule(DAFTAR_APP_VERSION),
+    cloudFeatureModule,
     settingsModule,
 )
 

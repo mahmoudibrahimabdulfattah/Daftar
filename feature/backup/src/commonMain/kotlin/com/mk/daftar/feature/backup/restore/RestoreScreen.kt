@@ -15,6 +15,7 @@ import androidx.compose.foundation.verticalScroll
 import androidx.compose.material3.CircularProgressIndicator
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
@@ -90,6 +91,9 @@ import com.mk.daftar.feature.backup.resources.restore_review_validated
 import com.mk.daftar.feature.backup.resources.restore_review_warning
 import com.mk.daftar.feature.backup.resources.restore_title
 import com.mk.daftar.feature.backup.resources.restore_zakat_count
+import kotlin.time.Instant
+import kotlinx.datetime.TimeZone
+import kotlinx.datetime.toLocalDateTime
 import org.jetbrains.compose.resources.pluralStringResource
 import org.jetbrains.compose.resources.stringResource
 import org.koin.compose.viewmodel.koinViewModel
@@ -99,9 +103,13 @@ import org.koin.compose.viewmodel.koinViewModel
  * is finished or closed, and the gate then returns to the locked screen with the vault still locked.
  */
 @Composable
-fun RestoreScreen(onClose: () -> Unit, modifier: Modifier = Modifier) {
+fun RestoreScreen(onClose: () -> Unit, modifier: Modifier = Modifier, autoChooseFile: Boolean = false) {
     val viewModel: RestoreViewModel = koinViewModel()
     val state by viewModel.state.collectAsStateWithLifecycle()
+    // A verified cloud download is already waiting: the picker hands it over without showing the system sheet.
+    LaunchedEffect(autoChooseFile) {
+        if (autoChooseFile) viewModel.onIntent(RestoreIntent.ChooseFile)
+    }
     CollectEffects(viewModel.effects) { effect ->
         when (effect) {
             RestoreEffect.Close -> onClose()
@@ -265,7 +273,7 @@ private fun ReviewBody(state: RestoreUiState, onIntent: (RestoreIntent) -> Unit)
         )
         if (summary != null) {
             Text(
-                text = stringResource(Res.string.restore_review_date, summary.exportedAt.toString().take(DATE_LENGTH)),
+                text = stringResource(Res.string.restore_review_date, summary.exportedAt.localDateText()),
                 style = DaftarTheme.typography.fineText,
                 color = colors.muted,
             )
@@ -418,7 +426,7 @@ private fun FailedBody(problem: RestoreProblem, onIntent: (RestoreIntent) -> Uni
     )
 }
 
-/** The date portion of an ISO instant, as the approved copy shows it. */
-private const val DATE_LENGTH = 10
+/** The export date in the device's time zone, as ISO `yyyy-MM-dd`; the stored instant is UTC. */
+private fun Instant.localDateText(): String = toLocalDateTime(TimeZone.currentSystemDefault()).date.toString()
 
 private val CONTENT_MAX_WIDTH = 560.dp

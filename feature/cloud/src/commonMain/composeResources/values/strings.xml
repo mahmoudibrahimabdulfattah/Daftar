@@ -1,0 +1,40 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <string name="cloud_title">Cloud backups</string>
+    <string name="cloud_intro">Sign-in gives access to your backups. Restoring still requires the backup password.</string>
+    <string name="cloud_sign_in_google">Continue with Google</string>
+    <string name="cloud_sign_in_apple">Continue with Apple</string>
+    <string name="cloud_signing_in">Signing in…</string>
+    <string name="cloud_create">Create and upload backup</string>
+    <string name="cloud_retention">Keeps your latest three cloud backups. Uploading another replaces the oldest.</string>
+    <string name="cloud_manual_note">Uploads are manual only.</string>
+    <string name="cloud_empty_title">No cloud backups yet</string>
+    <string name="cloud_version_title">Backup %1$d</string>
+    <string name="cloud_version_size">⁦%1$s KiB⁩</string>
+    <string name="cloud_download">Download to restore</string>
+    <string name="cloud_downloading">Downloading and verifying…</string>
+    <string name="cloud_delete_version">Delete this backup</string>
+    <string name="cloud_delete_version_confirm">Delete this cloud backup? Other backups stay.</string>
+    <string name="cloud_delete_account">Delete cloud account</string>
+    <string name="cloud_delete_account_confirm">Delete cloud account and all backups? Local data will remain.</string>
+    <string name="cloud_deleting">Deleting…</string>
+    <string name="cloud_deleted_partial">Backups deleted. Finish deleting your account.</string>
+    <string name="cloud_finish_deletion">Finish account deletion</string>
+    <string name="cloud_sign_out">Sign out</string>
+    <string name="cloud_signed_out_note">Signing out keeps your uploaded backups and this device\'s data.</string>
+    <string name="cloud_unavailable">Cloud backups are not available in this build. Local data works as usual.</string>
+    <string name="cloud_loading">Loading…</string>
+    <string name="cloud_refresh">Refresh the list</string>
+    <string name="cloud_offline">No connection. Your local data is unchanged.</string>
+    <string name="cloud_quota">Cloud quota reached. Try again later or export an encrypted file.</string>
+    <string name="cloud_changed">This backup has changed. Refresh the list.</string>
+    <string name="cloud_unknown_outcome">The last change may or may not have been saved. Refresh the list before trying again.</string>
+    <string name="cloud_unverified">The stored backup failed verification. Nothing was restored.</string>
+    <string name="cloud_reauth">Sign in again to confirm this change.</string>
+    <string name="cloud_failed">The cloud request failed. Your local data is unchanged.</string>
+    <string name="cloud_recovery_note">Download a backup, then enter its backup password to restore it.</string>
+    <string name="cloud_confirm">Confirm</string>
+    <string name="cloud_cancel">Cancel</string>
+    <string name="cloud_dismiss">Dismiss</string>
+    <string name="cloud_back">Back</string>
+</resources>

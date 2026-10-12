@@ -97,4 +97,19 @@
     <string name="restore_failed_choose_other">Choose another file</string>
     <string name="restore_close">Close</string>
     <string name="restore_erase_digit">Delete digit</string>
+    <string name="cloud_upload_retention">Keeps your latest three cloud backups. Uploading another replaces the oldest.</string>
+    <string name="cloud_upload_signin_intro">Sign in to upload. Restoring still requires the backup password.</string>
+    <string name="cloud_upload_preparing">Preparing your backup…</string>
+    <string name="cloud_upload_committing">Uploading…</string>
+    <string name="cloud_upload_uploaded">Backup uploaded</string>
+    <string name="cloud_upload_failed">Upload failed</string>
+    <string name="cloud_upload_oversize">This backup exceeds the cloud limit of 768 KiB. Export an encrypted file instead.</string>
+    <string name="cloud_upload_quota">Cloud quota reached. Try again later or export an encrypted file.</string>
+    <string name="cloud_upload_offline">No connection. Your local data is unchanged.</string>
+    <string name="cloud_upload_changed">This backup has changed. Refresh the list.</string>
+    <string name="cloud_upload_unknown">The upload may or may not have been saved. Refresh the cloud list before trying again.</string>
+    <string name="cloud_upload_title">Upload cloud backup</string>
+    <string name="cloud_upload_submit">Encrypt &amp; upload</string>
+    <string name="cloud_sign_in_google">Continue with Google</string>
+    <string name="cloud_sign_in_apple">Continue with Apple</string>
 </resources>

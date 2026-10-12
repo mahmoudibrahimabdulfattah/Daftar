@@ -57,4 +57,5 @@
         <item quantity="one">Incorrect PIN. Try again in ⁦%1$d⁩ second.</item>
         <item quantity="other">Incorrect PIN. Try again in ⁦%1$d⁩ seconds.</item>
     </plurals>
+    <string name="auth_restore_cloud">Restore from cloud backup</string>
 </resources>

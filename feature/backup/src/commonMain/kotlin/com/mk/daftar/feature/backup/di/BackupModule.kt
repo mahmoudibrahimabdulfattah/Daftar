@@ -1,9 +1,15 @@
 package com.mk.daftar.feature.backup.di
 
+import com.mk.daftar.core.backup.RestoreFilePicker
 import com.mk.daftar.core.navigation.BackupExportRoute
+import com.mk.daftar.core.navigation.CloudUploadRoute
 import com.mk.daftar.feature.backup.ExportScreen
 import com.mk.daftar.feature.backup.ExportViewModel
+import com.mk.daftar.feature.backup.cloud.CloudUploadScreen
+import com.mk.daftar.feature.backup.cloud.CloudUploadViewModel
+import com.mk.daftar.feature.backup.restore.HandoffRestoreFilePicker
 import com.mk.daftar.feature.backup.restore.RestoreDraftRegistry
+import com.mk.daftar.feature.backup.restore.RestoreHandoff
 import com.mk.daftar.feature.backup.restore.RestoreViewModel
 import org.koin.core.annotation.KoinExperimentalAPI
 import org.koin.core.module.Module
@@ -20,6 +26,12 @@ import org.koin.dsl.navigation3.navigation
 val backupFeatureModule: Module = module {
     viewModelOf(::ExportViewModel)
     navigation<BackupExportRoute> { ExportScreen() }
+    viewModelOf(::CloudUploadViewModel)
+    navigation<CloudUploadRoute> { CloudUploadScreen() }
     single { RestoreDraftRegistry() }
-    viewModel { RestoreViewModel(picker = get(), decryptor = get(), engine = get(), drafts = get()) }
+    single { RestoreHandoff() }
+    single { HandoffRestoreFilePicker(handoff = get(), delegate = get<RestoreFilePicker>()) }
+    viewModel {
+        RestoreViewModel(picker = get<HandoffRestoreFilePicker>(), decryptor = get(), engine = get(), drafts = get())
+    }
 }

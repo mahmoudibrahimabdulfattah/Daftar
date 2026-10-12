@@ -4,6 +4,7 @@ import android.app.Application
 import androidx.lifecycle.Lifecycle
 import androidx.lifecycle.LifecycleEventObserver
 import androidx.lifecycle.ProcessLifecycleOwner
+import com.google.firebase.FirebaseApp
 import com.mk.daftar.core.security.androidSecurityConfigurationModule
 import com.mk.daftar.di.initKoin
 import com.mk.daftar.lifecycle.VaultLifecycleCoordinator
@@ -27,6 +28,8 @@ class DaftarApplication : Application() {
             modules(androidSecurityConfigurationModule(BuildVariant.securityConfiguration))
         }
         vaultLifecycle = GlobalContext.get().get()
+        // Cloud backups are optional: App Check is installed only when Firebase is configured in this build.
+        if (FirebaseApp.getApps(this).isNotEmpty()) installCloudAppCheck()
         vaultLifecycle.start()
         ProcessLifecycleOwner.get().lifecycle.addObserver(
             LifecycleEventObserver { _, event ->

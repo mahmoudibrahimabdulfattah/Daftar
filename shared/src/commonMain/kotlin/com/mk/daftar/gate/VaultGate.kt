@@ -41,6 +41,9 @@ import com.mk.daftar.core.designsystem.resources.Res as DesignRes
 import com.mk.daftar.core.designsystem.resources.btn_back
 import com.mk.daftar.core.designsystem.theme.DaftarSpacing
 import com.mk.daftar.core.designsystem.theme.DaftarTheme
+import com.mk.daftar.core.domain.cloud.CloudAvailability
+import com.mk.daftar.core.domain.cloud.CloudBackupRepository
+import com.mk.daftar.core.domain.cloud.CloudDownload
 import com.mk.daftar.core.domain.session.VaultSessionState
 import com.mk.daftar.core.navigation.BackupExportRoute
 import com.mk.daftar.core.ui.presentation.ValuesVisibility
@@ -48,7 +51,10 @@ import com.mk.daftar.feature.auth.AuthIntent
 import com.mk.daftar.feature.auth.AuthUiState
 import com.mk.daftar.feature.auth.AuthViewModel
 import com.mk.daftar.feature.auth.ui.AuthContent
+import com.mk.daftar.feature.backup.restore.RestoreHandoff
 import com.mk.daftar.feature.backup.restore.RestoreScreen
+import com.mk.daftar.feature.cloud.CloudMode
+import com.mk.daftar.feature.cloud.CloudScreen
 import com.mk.daftar.platform.PlatformBackHandler
 import com.mk.daftar.shared.resources.Res
 import com.mk.daftar.shared.resources.dev_catalog
@@ -83,9 +89,23 @@ fun VaultGate(
     val authState by auth.state.collectAsStateWithLifecycle()
     // The restore wizard is hosted here, outside the shell. It opens only from the forgotten-PIN screen.
     val restoreOpen = remember { mutableStateOf(false) }
+    // A cloud recovery opens the cloud screen first; a verified download then opens the wizard with the file handed over.
+    val cloudOpen = remember { mutableStateOf(false) }
+    val restoreFromCloud = remember { mutableStateOf(false) }
+    val cloud: CloudBackupRepository = koinInject()
+    val handoff: RestoreHandoff = koinInject()
     val onAuthIntent: (AuthIntent) -> Unit = remember(auth) {
         { intent ->
-            if (intent == AuthIntent.OpenRestore) restoreOpen.value = true else auth.onIntent(intent)
+            when (intent) {
+                AuthIntent.OpenRestore -> {
+                    restoreFromCloud.value = false
+                    restoreOpen.value = true
+                }
+
+                AuthIntent.OpenCloudRestore -> cloudOpen.value = true
+
+                else -> auth.onIntent(intent)
+            }
         }
     }
     LaunchedEffect(state) {
@@ -106,9 +126,21 @@ fun VaultGate(
             developerTools = developerEntriesVisible(state, developerTools),
             covered = covered,
             restoreOpen = restoreOpen.value,
+            restoreFromCloud = restoreFromCloud.value,
             onRestoreClose = {
                 restoreOpen.value = false
+                restoreFromCloud.value = false
+                handoff.clear()
                 onAuthIntent(AuthIntent.Recheck)
+            },
+            cloudOpen = cloudOpen.value,
+            cloudRestoreOffered = cloud.availability == CloudAvailability.AVAILABLE,
+            onCloudClose = { cloudOpen.value = false },
+            onCloudRestore = { download: CloudDownload ->
+                handoff.offer(download.ciphertext)
+                cloudOpen.value = false
+                restoreFromCloud.value = true
+                restoreOpen.value = true
             },
             modifier = modifier,
         )
@@ -127,6 +159,60 @@ fun VaultGate(
     }
 }
 
+/** The cloud recovery screen, opened from the forgotten-PIN surface. A verified download is handed to the wizard. */
+@Composable
+private fun CloudRecoverySurface(
+    onCloudClose: () -> Unit,
+    onCloudRestore: (CloudDownload) -> Unit,
+    modifier: Modifier = Modifier,
+) {
+    PlatformBackHandler(enabled = true, onBack = onCloudClose)
+    Box(
+        modifier = modifier
+            .fillMaxSize()
+            .background(DaftarTheme.colors.paper)
+            .windowInsetsPadding(WindowInsets.safeDrawing),
+    ) {
+        CloudScreen(
+            mode = CloudMode.RECOVERY,
+            onRestore = onCloudRestore,
+            onOpenUpload = {},
+            onBack = onCloudClose,
+            modifier = Modifier.fillMaxSize(),
+        )
+    }
+}
+
+/** The recovery surface: the cloud screen, or the restore wizard once a file is chosen or handed over. */
+@Composable
+private fun RecoverySurface(
+    cloudOpen: Boolean,
+    restoreFromCloud: Boolean,
+    onCloudClose: () -> Unit,
+    onCloudRestore: (CloudDownload) -> Unit,
+    onRestoreClose: () -> Unit,
+    modifier: Modifier = Modifier,
+) {
+    if (cloudOpen) {
+        CloudRecoverySurface(onCloudClose = onCloudClose, onCloudRestore = onCloudRestore, modifier = modifier)
+    } else {
+        // System back leaves the wizard from any step. Leaving drops its drafts, as the view model is cleared.
+        PlatformBackHandler(enabled = true, onBack = onRestoreClose)
+        Box(
+            modifier = modifier
+                .fillMaxSize()
+                .background(DaftarTheme.colors.paper)
+                .windowInsetsPadding(WindowInsets.safeDrawing),
+        ) {
+            RestoreScreen(
+                onClose = onRestoreClose,
+                autoChooseFile = restoreFromCloud,
+                modifier = Modifier.fillMaxSize(),
+            )
+        }
+    }
+}
+
 /**
  * The locked surface: the auth screens, with the developer entries under them in a debug build. Developer screens
  * replace it while open. Opening one wipes the auth drafts; closing one rechecks the vault status.
@@ -138,7 +224,12 @@ private fun LockedSurface(
     developerTools: Boolean,
     covered: Boolean,
     restoreOpen: Boolean,
+    restoreFromCloud: Boolean,
     onRestoreClose: () -> Unit,
+    cloudOpen: Boolean,
+    cloudRestoreOffered: Boolean,
+    onCloudClose: () -> Unit,
+    onCloudRestore: (CloudDownload) -> Unit,
     modifier: Modifier = Modifier,
 ) {
     var developer by remember { mutableStateOf<DeveloperDestination?>(null) }
@@ -151,23 +242,22 @@ private fun LockedSurface(
             developer = null
         }
     }
-    if (restoreOpen) {
-        // System back leaves the wizard from any step. Leaving drops its drafts, as the view model is cleared.
-        PlatformBackHandler(enabled = true, onBack = onRestoreClose)
-        Box(
-            modifier = modifier
-                .fillMaxSize()
-                .background(DaftarTheme.colors.paper)
-                .windowInsetsPadding(WindowInsets.safeDrawing),
-        ) {
-            RestoreScreen(onClose = onRestoreClose, modifier = Modifier.fillMaxSize())
-        }
+    if (cloudOpen || restoreOpen) {
+        RecoverySurface(
+            cloudOpen = cloudOpen,
+            restoreFromCloud = restoreFromCloud,
+            onCloudClose = onCloudClose,
+            onCloudRestore = onCloudRestore,
+            onRestoreClose = onRestoreClose,
+            modifier = modifier,
+        )
         return
     }
     when (developer) {
         null -> AuthSurface(
             authState = authState,
             onAuthIntent = onAuthIntent,
+            cloudRestoreOffered = cloudRestoreOffered,
             showsDeveloper = developerTools,
             onOpen = {
                 onAuthIntent(AuthIntent.PrivacyInvalidated)
@@ -208,6 +298,7 @@ private fun AuthSurface(
     onAuthIntent: (AuthIntent) -> Unit,
     showsDeveloper: Boolean,
     onOpen: (DeveloperDestination) -> Unit,
+    cloudRestoreOffered: Boolean,
     modifier: Modifier = Modifier,
 ) {
     Column(
@@ -220,6 +311,7 @@ private fun AuthSurface(
             state = authState,
             onIntent = onAuthIntent,
             modifier = Modifier.weight(1f).fillMaxWidth(),
+            cloudRestoreOffered = cloudRestoreOffered,
         )
         if (showsDeveloper) {
             DeveloperEntries(onOpen = onOpen)

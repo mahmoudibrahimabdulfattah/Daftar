@@ -31,7 +31,9 @@ dependencyResolutionManagement {
 }
 
 include(":androidApp")
+include(":core:account")
 include(":core:backup")
+include(":core:cloud")
 include(":core:common")
 include(":core:database")
 include(":core:data")
@@ -49,6 +51,7 @@ include(":feature:banks")
 include(":feature:backup")
 include(":feature:auth")
 include(":feature:cash")
+include(":feature:cloud")
 include(":feature:home")
 include(":feature:gold")
 include(":feature:journal")

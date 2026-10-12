@@ -27,10 +27,13 @@ import com.mk.daftar.core.designsystem.component.PrimaryButton
 import com.mk.daftar.core.designsystem.icon.DaftarIcons
 import com.mk.daftar.core.designsystem.theme.DaftarSpacing
 import com.mk.daftar.core.designsystem.theme.DaftarTheme
+import com.mk.daftar.core.domain.cloud.CloudAvailability
+import com.mk.daftar.core.domain.cloud.CloudBackupRepository
 import com.mk.daftar.core.domain.repository.UserPreferences
 import com.mk.daftar.core.navigation.AboutRoute
 import com.mk.daftar.core.navigation.BackupExportRoute
 import com.mk.daftar.core.navigation.ChangePinRoute
+import com.mk.daftar.core.navigation.CloudRoute
 import com.mk.daftar.core.navigation.LocalNavigator
 import com.mk.daftar.core.navigation.PreferencesRoute
 import com.mk.daftar.feature.settings.AppBuildInfo
@@ -58,6 +61,9 @@ import com.mk.daftar.feature.settings.resources.settings_biometrics_not_enrolled
 import com.mk.daftar.feature.settings.resources.settings_biometrics_title
 import com.mk.daftar.feature.settings.resources.settings_biometrics_unavailable
 import com.mk.daftar.feature.settings.resources.settings_cancel
+import com.mk.daftar.feature.settings.resources.settings_cloud_action
+import com.mk.daftar.feature.settings.resources.settings_cloud_subtitle
+import com.mk.daftar.feature.settings.resources.settings_cloud_title
 import com.mk.daftar.feature.settings.resources.settings_footer
 import com.mk.daftar.feature.settings.resources.settings_language_body
 import com.mk.daftar.feature.settings.resources.settings_language_title
@@ -89,6 +95,7 @@ fun SettingsScreen(modifier: Modifier = Modifier) {
     val viewModel: SettingsViewModel = koinViewModel()
     val state by viewModel.state.collectAsStateWithLifecycle()
     val appInfo: AppBuildInfo = koinInject()
+    val cloud: CloudBackupRepository = koinInject()
     // Device settings may have changed biometric enrollment while the app was away: read the platform again.
     LifecycleEventEffect(Lifecycle.Event.ON_RESUME) { viewModel.onIntent(SettingsIntent.Refresh) }
     SettingsContent(
@@ -99,6 +106,8 @@ fun SettingsScreen(modifier: Modifier = Modifier) {
         onOpenPreferences = { navigator.goTo(PreferencesRoute) },
         onOpenAbout = { navigator.goTo(AboutRoute) },
         onOpenExport = { navigator.goTo(BackupExportRoute) },
+        cloudOffered = cloud.availability == CloudAvailability.AVAILABLE,
+        onOpenCloud = { navigator.goTo(CloudRoute) },
         modifier = modifier,
     )
 }
@@ -113,6 +122,8 @@ fun SettingsContent(
     onOpenPreferences: () -> Unit,
     onOpenAbout: () -> Unit,
     onOpenExport: () -> Unit,
+    cloudOffered: Boolean = false,
+    onOpenCloud: () -> Unit = {},
     modifier: Modifier = Modifier,
 ) {
     val prefs = state.preferences ?: UserPreferences()
@@ -153,6 +164,13 @@ fun SettingsContent(
             subtitle = stringResource(Res.string.settings_backup_subtitle),
             trailing = DaftarSettingTrailing.Link(stringResource(Res.string.settings_backup_action), onOpenExport),
         )
+        if (cloudOffered) {
+            DaftarSettingRow(
+                title = stringResource(Res.string.settings_cloud_title),
+                subtitle = stringResource(Res.string.settings_cloud_subtitle),
+                trailing = DaftarSettingTrailing.Link(stringResource(Res.string.settings_cloud_action), onOpenCloud),
+            )
+        }
 
         SectionTitle(stringResource(Res.string.settings_section_about))
         DaftarSettingRow(

@@ -11,6 +11,7 @@ import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
 import androidx.core.splashscreen.SplashScreen.Companion.installSplashScreen
 import com.mk.daftar.App
+import com.mk.daftar.core.account.CloudActivity
 import com.mk.daftar.platform.BiometricPromptHost
 import com.mk.daftar.platform.backup.AndroidBackupPicker
 import com.mk.daftar.platform.backup.AndroidRestorePicker
@@ -58,12 +59,14 @@ class MainActivity : AppCompatActivity() {
     }
 
     override fun onPause() {
+        CloudActivity.detach(this)
         vaultLifecycle.obscure(SURFACE)
         super.onPause()
     }
 
     override fun onResume() {
         super.onResume()
+        CloudActivity.attach(this)
         vaultLifecycle.reveal(SURFACE)
     }
 

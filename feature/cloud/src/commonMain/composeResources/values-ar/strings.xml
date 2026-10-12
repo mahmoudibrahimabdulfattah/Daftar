@@ -1,0 +1,40 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <string name="cloud_title">النسخ السحابية</string>
+    <string name="cloud_intro">تسجيل الدخول يتيح الوصول إلى نسخك. وتظل كلمة مرور النسخة مطلوبة للاستعادة.</string>
+    <string name="cloud_sign_in_google">المتابعة باستخدام Google</string>
+    <string name="cloud_sign_in_apple">المتابعة باستخدام Apple</string>
+    <string name="cloud_signing_in">جارٍ تسجيل الدخول…</string>
+    <string name="cloud_create">إنشاء نسخة ورفعها</string>
+    <string name="cloud_retention">نحتفظ بآخر ثلاث نسخ سحابية. رفع نسخة جديدة يستبدل الأقدم.</string>
+    <string name="cloud_manual_note">الرفع يدوي فقط.</string>
+    <string name="cloud_empty_title">لا توجد نسخ سحابية بعد</string>
+    <string name="cloud_version_title">النسخة ⁦%1$d⁩</string>
+    <string name="cloud_version_size">⁦%1$s KiB⁩</string>
+    <string name="cloud_download">تنزيل للاستعادة</string>
+    <string name="cloud_downloading">جارٍ التنزيل والتحقق…</string>
+    <string name="cloud_delete_version">حذف هذه النسخة</string>
+    <string name="cloud_delete_version_confirm">حذف هذه النسخة السحابية؟ ستبقى النسخ الأخرى.</string>
+    <string name="cloud_delete_account">حذف الحساب السحابي</string>
+    <string name="cloud_delete_account_confirm">حذف الحساب السحابي وجميع نسخه؟ ستبقى بيانات الجهاز.</string>
+    <string name="cloud_deleting">جارٍ الحذف…</string>
+    <string name="cloud_deleted_partial">حُذفت النسخ. أكمل حذف حسابك.</string>
+    <string name="cloud_finish_deletion">إكمال حذف الحساب</string>
+    <string name="cloud_sign_out">تسجيل الخروج</string>
+    <string name="cloud_signed_out_note">تسجيل الخروج يُبقي نسخك المرفوعة وبيانات هذا الجهاز.</string>
+    <string name="cloud_unavailable">النسخ السحابية غير متاحة في هذه النسخة. تعمل بيانات جهازك كالمعتاد.</string>
+    <string name="cloud_loading">جارٍ التحميل…</string>
+    <string name="cloud_refresh">تحديث القائمة</string>
+    <string name="cloud_offline">لا يوجد اتصال. بيانات جهازك لم تتغير.</string>
+    <string name="cloud_quota">تم بلوغ حد الاستخدام السحابي. حاول لاحقًا أو صدّر ملفًا مشفّرًا.</string>
+    <string name="cloud_changed">تغيّرت هذه النسخة. حدّث القائمة.</string>
+    <string name="cloud_unknown_outcome">ربما حُفظ آخر تغيير أو لم يُحفظ. حدّث القائمة قبل المحاولة مرة أخرى.</string>
+    <string name="cloud_unverified">فشل التحقق من النسخة المخزنة. لم تُستعَد أي بيانات.</string>
+    <string name="cloud_reauth">سجّل الدخول مرة أخرى لتأكيد هذا التغيير.</string>
+    <string name="cloud_failed">فشل طلب الخدمة السحابية. بيانات جهازك لم تتغير.</string>
+    <string name="cloud_recovery_note">نزّل نسخة، ثم أدخل كلمة مرور النسخة لاستعادتها.</string>
+    <string name="cloud_confirm">تأكيد</string>
+    <string name="cloud_cancel">إلغاء</string>
+    <string name="cloud_dismiss">إغلاق</string>
+    <string name="cloud_back">رجوع</string>
+</resources>
