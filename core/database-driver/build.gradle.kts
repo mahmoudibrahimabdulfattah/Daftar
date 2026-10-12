@@ -73,6 +73,11 @@ val generateSqlCipherAmalgamation = tasks.register<Exec>("generateSqlCipherAmalg
     outputs.file(source.resolve("sqlite3.c"))
     outputs.file(source.resolve("sqlite3.h"))
     workingDir(source)
+    // The amalgamation step builds host tools (jimsh). An Xcode build exports SDKROOT and deployment targets, which
+    // would make `cc` target iOS, so the host environment is restored here.
+    listOf("SDKROOT", "IPHONEOS_DEPLOYMENT_TARGET", "PLATFORM_NAME", "ARCHS", "CC", "CPP", "LD").forEach {
+        environment.remove(it)
+    }
     environment("CFLAGS", "-DSQLITE_HAS_CODEC -DSQLCIPHER_CRYPTO_CC -DSQLITE_TEMP_STORE=3")
     environment("LDFLAGS", "-framework Security -framework Foundation")
     commandLine(
