@@ -32,35 +32,19 @@ import com.mk.daftar.core.designsystem.theme.DaftarTheme
 import com.mk.daftar.core.domain.valuation.AssetCategory
 import com.mk.daftar.core.navigation.LocalNavigator
 import com.mk.daftar.core.ui.mvi.CollectEffects
-import com.mk.daftar.core.ui.presentation.QuantityForm
+import com.mk.daftar.core.ui.presentation.CountNoun
+import com.mk.daftar.core.ui.presentation.bankAndAccountLabel
+import com.mk.daftar.core.ui.presentation.countLabel
 import com.mk.daftar.core.ui.presentation.moneyText
-import com.mk.daftar.core.ui.presentation.quantityFormOf
 import com.mk.daftar.core.ui.shell.ShellScreen
 import com.mk.daftar.feature.assets.resources.Res
-import com.mk.daftar.feature.assets.resources.assets_accounts_count_few
-import com.mk.daftar.feature.assets.resources.assets_accounts_count_one
-import com.mk.daftar.feature.assets.resources.assets_accounts_count_other
-import com.mk.daftar.feature.assets.resources.assets_accounts_count_two
-import com.mk.daftar.feature.assets.resources.assets_balances_count_few
-import com.mk.daftar.feature.assets.resources.assets_balances_count_one
-import com.mk.daftar.feature.assets.resources.assets_balances_count_other
-import com.mk.daftar.feature.assets.resources.assets_balances_count_two
 import com.mk.daftar.feature.assets.resources.assets_banks
-import com.mk.daftar.feature.assets.resources.assets_banks_count_few
-import com.mk.daftar.feature.assets.resources.assets_banks_count_one
-import com.mk.daftar.feature.assets.resources.assets_banks_count_other
-import com.mk.daftar.feature.assets.resources.assets_banks_count_two
-import com.mk.daftar.feature.assets.resources.assets_banks_summary
 import com.mk.daftar.feature.assets.resources.assets_cash
 import com.mk.daftar.feature.assets.resources.assets_failed
 import com.mk.daftar.feature.assets.resources.assets_fx_attribution
 import com.mk.daftar.feature.assets.resources.assets_gold
 import com.mk.daftar.feature.assets.resources.assets_hidden_note
 import com.mk.daftar.feature.assets.resources.assets_hide_values
-import com.mk.daftar.feature.assets.resources.assets_holdings_few
-import com.mk.daftar.feature.assets.resources.assets_holdings_one
-import com.mk.daftar.feature.assets.resources.assets_holdings_other
-import com.mk.daftar.feature.assets.resources.assets_holdings_two
 import com.mk.daftar.feature.assets.resources.assets_incomplete
 import com.mk.daftar.feature.assets.resources.assets_masked_value
 import com.mk.daftar.feature.assets.resources.assets_no_records
@@ -71,7 +55,6 @@ import com.mk.daftar.feature.assets.resources.assets_state_visible
 import com.mk.daftar.feature.assets.resources.assets_subtitle
 import com.mk.daftar.feature.assets.resources.assets_title
 import com.mk.daftar.feature.assets.resources.unit_egp_short
-import org.jetbrains.compose.resources.StringResource
 import org.jetbrains.compose.resources.stringResource
 import org.koin.compose.viewmodel.koinViewModel
 
@@ -154,7 +137,7 @@ private fun AssetsRows(figures: AssetsFigures, hidden: Boolean, onIntent: (Asset
     }
     AssetRow(
         title = stringResource(Res.string.assets_gold),
-        subtitle = countText(figures.gold.count, ASSETS_HOLDINGS_COUNT_FORMS),
+        subtitle = countLabel(figures.gold.count, CountNoun.HOLDINGS),
         icon = DaftarIcons.Gold,
         tone = DaftarTileTone.Gold,
         figures = figures.gold,
@@ -166,11 +149,7 @@ private fun AssetsRows(figures: AssetsFigures, hidden: Boolean, onIntent: (Asset
     )
     AssetRow(
         title = stringResource(Res.string.assets_banks),
-        subtitle = stringResource(
-            Res.string.assets_banks_summary,
-            countText(figures.bankCount, ASSETS_BANKS_COUNT_FORMS),
-            countText(figures.banks.count, ASSETS_ACCOUNTS_COUNT_FORMS),
-        ),
+        subtitle = bankAndAccountLabel(banks = figures.bankCount, accounts = figures.banks.count),
         icon = DaftarIcons.Bank,
         tone = DaftarTileTone.Default,
         figures = figures.banks,
@@ -182,7 +161,7 @@ private fun AssetsRows(figures: AssetsFigures, hidden: Boolean, onIntent: (Asset
     )
     AssetRow(
         title = stringResource(Res.string.assets_cash),
-        subtitle = countText(figures.cash.count, ASSETS_BALANCES_COUNT_FORMS),
+        subtitle = countLabel(figures.cash.count, CountNoun.BALANCES),
         icon = DaftarIcons.Wallet,
         tone = DaftarTileTone.Default,
         figures = figures.cash,
@@ -233,55 +212,3 @@ private fun AssetRow(
         },
     )
 }
-
-/** The count's word for its quantity form, with the count itself as the argument. */
-@Composable
-private fun countText(count: Int, forms: CountForms): String = when (quantityFormOf(count)) {
-    QuantityForm.ONE -> stringResource(forms.one)
-    QuantityForm.TWO -> stringResource(forms.two)
-    QuantityForm.FEW -> "$count ${stringResource(forms.few)}"
-    QuantityForm.OTHER -> "$count ${stringResource(forms.other)}"
-}
-
-private class CountForms(
-    val one: StringResource,
-    val two: StringResource,
-    val few: StringResource,
-    val other: StringResource,
-) {
-    fun of(form: QuantityForm): StringResource = when (form) {
-        QuantityForm.ONE -> one
-        QuantityForm.TWO -> two
-        QuantityForm.FEW -> few
-        QuantityForm.OTHER -> other
-    }
-}
-
-private val ASSETS_ACCOUNTS_COUNT_FORMS =
-    CountForms(
-        Res.string.assets_accounts_count_one,
-        Res.string.assets_accounts_count_two,
-        Res.string.assets_accounts_count_few,
-        Res.string.assets_accounts_count_other,
-    )
-private val ASSETS_BALANCES_COUNT_FORMS =
-    CountForms(
-        Res.string.assets_balances_count_one,
-        Res.string.assets_balances_count_two,
-        Res.string.assets_balances_count_few,
-        Res.string.assets_balances_count_other,
-    )
-private val ASSETS_BANKS_COUNT_FORMS =
-    CountForms(
-        Res.string.assets_banks_count_one,
-        Res.string.assets_banks_count_two,
-        Res.string.assets_banks_count_few,
-        Res.string.assets_banks_count_other,
-    )
-private val ASSETS_HOLDINGS_COUNT_FORMS =
-    CountForms(
-        Res.string.assets_holdings_one,
-        Res.string.assets_holdings_two,
-        Res.string.assets_holdings_few,
-        Res.string.assets_holdings_other,
-    )

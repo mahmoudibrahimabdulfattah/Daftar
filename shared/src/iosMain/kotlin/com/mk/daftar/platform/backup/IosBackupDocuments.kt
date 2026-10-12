@@ -6,14 +6,13 @@ import com.mk.daftar.core.backup.BackupDocuments
 import com.mk.daftar.core.backup.BackupError
 import com.mk.daftar.core.backup.BackupStaging
 import com.mk.daftar.core.backup.PickedDestination
+import com.mk.daftar.core.backup.PickerOperationCoordinator
 import com.mk.daftar.core.backup.StagedBackup
 import com.mk.daftar.core.common.Outcome
-import kotlin.coroutines.resume
 import kotlinx.cinterop.ExperimentalForeignApi
 import kotlinx.cinterop.addressOf
 import kotlinx.cinterop.usePinned
 import kotlinx.coroutines.Dispatchers
-import kotlinx.coroutines.suspendCancellableCoroutine
 import kotlinx.coroutines.withContext
 import platform.Foundation.NSApplicationSupportDirectory
 import platform.Foundation.NSFileManager
@@ -91,7 +90,7 @@ internal class IosBackupDocuments : BackupDocuments {
         if (!fileManager.copyItemAtPath(file.path, named, error = null)) return Outcome.Failure(BackupError.WriteFailed)
         file.exportCopy = "${file.path}-export"
         val url = NSURL.fileURLWithPath(named)
-        val picked = presentPicker(url) ?: run {
+        val picked = presentPicker(url, file) ?: run {
             fileManager.removeItemAtPath("${file.path}-export", error = null)
             file.exportCopy = null
             return Outcome.Success(null)
@@ -140,21 +139,32 @@ private class PickerDelegate(private val onResult: (NSURL?) -> Unit) :
     }
 }
 
-/** Presents the export picker over the top view controller and suspends until the user answers. */
-private suspend fun presentPicker(url: NSURL): NSURL? = withContext(Dispatchers.Main) {
-    suspendCancellableCoroutine { continuation ->
+/** The export picker's answers. The staged file is held by the operation, so it is discarded if the operation ends. */
+private val exportOperations = PickerOperationCoordinator<NSURL>(scope = iosPickerScope)
+
+/**
+ * Presents the export picker over the top view controller and suspends until the user answers. Null means cancelled,
+ * expired or abandoned. A late answer is refused and the copy the picker made is removed.
+ */
+private suspend fun presentPicker(url: NSURL, staging: IosStagedFile): NSURL? {
+    val token = exportOperations.begin(staging)
+    withContext(Dispatchers.Main) {
         val presenter = topViewController()
         if (presenter == null) {
-            continuation.resume(null)
-            return@suspendCancellableCoroutine
+            exportOperations.complete(token, null)
+            return@withContext
         }
-        val delegate = PickerDelegate { picked -> if (continuation.isActive) continuation.resume(picked) }
+        val delegate = PickerDelegate { picked ->
+            if (!exportOperations.complete(token, picked)) {
+                picked?.let { NSFileManager.defaultManager.removeItemAtURL(it, error = null) }
+            }
+        }
         activeDelegate = delegate
         val picker = UIDocumentPickerViewController(forExportingURLs = listOf(url), asCopy = true)
         picker.delegate = delegate
-        continuation.invokeOnCancellation { activeDelegate = null }
         presenter.presentViewController(picker, animated = true, completion = null)
     }
+    return exportOperations.awaitResult(token)
 }
 
 private fun topViewController(): UIViewController? {

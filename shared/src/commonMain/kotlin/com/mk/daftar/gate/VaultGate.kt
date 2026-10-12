@@ -32,6 +32,8 @@ import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import androidx.lifecycle.viewmodel.compose.viewModel
 import androidx.lifecycle.viewmodel.initializer
 import androidx.lifecycle.viewmodel.viewModelFactory
+import com.mk.daftar.core.backup.BackupExportController
+import com.mk.daftar.core.backup.awaitsAcknowledgment
 import com.mk.daftar.core.designsystem.catalog.DesignCatalog
 import com.mk.daftar.core.designsystem.component.DaftarTextButton
 import com.mk.daftar.core.designsystem.component.DaftarTopBar
@@ -40,6 +42,7 @@ import com.mk.daftar.core.designsystem.resources.btn_back
 import com.mk.daftar.core.designsystem.theme.DaftarSpacing
 import com.mk.daftar.core.designsystem.theme.DaftarTheme
 import com.mk.daftar.core.domain.session.VaultSessionState
+import com.mk.daftar.core.navigation.BackupExportRoute
 import com.mk.daftar.core.ui.presentation.ValuesVisibility
 import com.mk.daftar.feature.auth.AuthIntent
 import com.mk.daftar.feature.auth.AuthUiState
@@ -112,11 +115,15 @@ fun VaultGate(
 
         is VaultSurface.Progress -> ProgressSurface(closing = surface.closing, modifier = modifier)
 
-        is VaultSurface.Shell -> DaftarAppShell(
-            navigator = shell.navigatorFor(surface.generation),
-            retention = shell.retention,
-            modifier = modifier,
-        )
+        is VaultSurface.Shell -> {
+            val navigator = shell.navigatorFor(surface.generation)
+            val export: BackupExportController = koinInject()
+            LaunchedEffect(surface.generation) {
+                // An export that finished while the vault was locked is shown once the vault opens again.
+                if (export.state.value.awaitsAcknowledgment) navigator.goTo(BackupExportRoute)
+            }
+            DaftarAppShell(navigator = navigator, retention = shell.retention, modifier = modifier)
+        }
     }
 }
 

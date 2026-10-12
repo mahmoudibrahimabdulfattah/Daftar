@@ -17,21 +17,4 @@
     <string name="assets_banks">البنوك</string>
     <string name="assets_cash">النقد والمحافظ</string>
     <string name="unit_egp_short">ج.م</string>
-    <string name="assets_banks_summary">%1$s · %2$s</string>
-    <string name="assets_holdings_one">مقتنى واحد</string>
-    <string name="assets_holdings_two">مقتنيان</string>
-    <string name="assets_holdings_few">مقتنيات</string>
-    <string name="assets_holdings_other">مقتنى</string>
-    <string name="assets_banks_count_one">بنك واحد</string>
-    <string name="assets_banks_count_two">بنكان</string>
-    <string name="assets_banks_count_few">بنوك</string>
-    <string name="assets_banks_count_other">بنكًا</string>
-    <string name="assets_accounts_count_one">حساب واحد</string>
-    <string name="assets_accounts_count_two">حسابان</string>
-    <string name="assets_accounts_count_few">حسابات</string>
-    <string name="assets_accounts_count_other">حسابًا</string>
-    <string name="assets_balances_count_one">رصيد واحد</string>
-    <string name="assets_balances_count_two">رصيدان</string>
-    <string name="assets_balances_count_few">أرصدة</string>
-    <string name="assets_balances_count_other">رصيدًا</string>
 </resources>

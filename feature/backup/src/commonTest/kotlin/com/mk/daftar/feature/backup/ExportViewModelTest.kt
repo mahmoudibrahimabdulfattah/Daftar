@@ -7,6 +7,7 @@ import com.mk.daftar.core.backup.BackupEncryptor
 import com.mk.daftar.core.backup.BackupError
 import com.mk.daftar.core.backup.BackupExportController
 import com.mk.daftar.core.backup.BackupExportState
+import com.mk.daftar.core.backup.BackupFormat
 import com.mk.daftar.core.backup.BackupPasswordProblem
 import com.mk.daftar.core.backup.BackupPreferences
 import com.mk.daftar.core.backup.BackupSnapshot
@@ -38,6 +39,7 @@ import kotlinx.coroutines.test.TestCoroutineScheduler
 import kotlinx.coroutines.test.advanceUntilIdle
 import kotlinx.coroutines.test.resetMain
 import kotlinx.coroutines.test.setMain
+import kotlinx.datetime.LocalDate
 import kotlinx.datetime.TimeZone
 
 class ExportViewModelTest {
@@ -161,6 +163,8 @@ class ExportViewModelTest {
     private fun settle() = dispatcher.scheduler.advanceUntilIdle()
 
     private val strong = "correct horse battery"
+
+    private val exportFileName = BackupFormat.suggestedFileName(LocalDate(2026, 10, 12))
 
     private fun ExportViewModel.enterPassword(password: String, confirm: String = password) {
         onIntent(ExportIntent.Continue)
@@ -304,5 +308,28 @@ class ExportViewModelTest {
         h.viewModel.onIntent(ExportIntent.Back)
         settle()
         assertEquals(listOf<ExportEffect>(ExportEffect.Close), h.effects)
+    }
+
+    @Test
+    fun aWriteThatFinishesWhileTheVaultIsLockedIsReportedWhenTheScreenIsBackAfterUnlock() {
+        val writeGate = CompletableDeferred<Unit>()
+        val h = harness(documents = FakeDocuments(writeGate = writeGate))
+        h.viewModel.enterPassword(strong)
+        h.viewModel.onIntent(ExportIntent.Submit)
+        settle()
+        assertEquals(BackupExportState.Writing, h.controller.state.value)
+
+        // The screen goes away while the vault is locked. The controller keeps the write running on its own.
+        writeGate.complete(Unit)
+        settle()
+        assertEquals(BackupExportState.Complete(exportFileName), h.controller.state.value)
+
+        // After unlock a fresh screen shows the completion, and the next export is still refused until it is acknowledged.
+        val fresh = ExportViewModel(h.controller)
+        assertEquals(BackupExportState.Complete(exportFileName), fresh.state.value.operation)
+        assertFalse(h.controller.start(strong.encodeToByteArray()))
+        fresh.onIntent(ExportIntent.Acknowledge)
+        settle()
+        assertEquals(BackupExportState.Idle, h.controller.state.value)
     }
 }

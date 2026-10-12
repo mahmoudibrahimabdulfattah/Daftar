@@ -4,8 +4,8 @@
     <string name="gold_value_label">قيمة الذهب</string>
     <string name="gold_value_unit">ج.م · بسعر بيع الصائغ</string>
     <string name="gold_add">إضافة ذهب</string>
-    <string name="gold_weight_notice">إجمالي الوزن ⁦%1$s⁩ جرام بعيارات مختلفة؛ ليس وزن ذهب خالص.</string>
-    <string name="gold_weight_notice_single">إجمالي الوزن ⁦%1$s⁩ جرام؛ ليس وزن ذهب خالص.</string>
+    <string name="gold_weight_notice">إجمالي الوزن عبر عيارات مختلفة؛ ليس وزن ذهب خالص.</string>
+    <string name="gold_weight_notice_single">إجمالي الوزن: %1$s جرام · عيار %2$d</string>
     <string name="gold_weight_notice_hidden">الوزن الإجمالي مخفي. ليس وزن ذهب خالص.</string>
     <string name="gold_subtotal">المتاح حتى الآن: ⁦%1$s⁩ ج.م</string>
     <string name="gold_incomplete">التقييم غير مكتمل. المقتنيات بلا سعر بيع للصائغ تظهر بشرطة.</string>

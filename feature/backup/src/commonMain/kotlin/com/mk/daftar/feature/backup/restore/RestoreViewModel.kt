@@ -292,8 +292,12 @@ class RestoreViewModel(
     /**
      * Privacy: drop every draft. Preparing is cancelled, since nothing has been committed. Committing is left alone: it
      * is the one step that cannot be stopped, and it reports its own outcome.
+     *
+     * A pick that is waiting on the system picker is left running. It holds no secret, and the picker is outside the app,
+     * so the app always goes through this path when the user opens it. Its answer then arrives as a fresh password step.
      */
     private fun invalidate() {
+        if (currentState.phase == RestorePhase.ChooseFile && work?.isActive == true) return
         when (currentState.phase) {
             RestorePhase.Committing -> return
 

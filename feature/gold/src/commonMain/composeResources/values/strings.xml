@@ -4,8 +4,8 @@
     <string name="gold_value_label">Gold value</string>
     <string name="gold_value_unit">EGP · merchant sell price</string>
     <string name="gold_add">Add gold</string>
-    <string name="gold_weight_notice">Total weight %1$s g across different karats; not fine-gold weight.</string>
-    <string name="gold_weight_notice_single">Total weight %1$s g; not fine-gold weight.</string>
+    <string name="gold_weight_notice">Total weight across different karats; not pure gold weight.</string>
+    <string name="gold_weight_notice_single">Total weight: %1$s g · %2$dK</string>
     <string name="gold_weight_notice_hidden">Total weight is hidden. It is not fine-gold weight.</string>
     <string name="gold_subtotal">Available subtotal: %1$s EGP</string>
     <string name="gold_incomplete">Valuation incomplete. Holdings without a merchant price show a dash.</string>

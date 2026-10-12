@@ -155,4 +155,32 @@
     <string name="catalog_auth_format">Update Daftar to open this data.</string>
     <string name="catalog_auth_transient">Daftar could not open now. Try again.</string>
     <string name="catalog_auth_busy">Unlocking…</string>
+
+    <!-- Counts. Each noun has the six Arabic forms; English uses zero, one and the plural. The number is isolated. -->
+    <string name="count_holdings_zero">No holdings</string>
+    <string name="count_holdings_one">1 holding</string>
+    <string name="count_holdings_two">%1$d holdings</string>
+    <string name="count_holdings_few">%1$d holdings</string>
+    <string name="count_holdings_many">%1$d holdings</string>
+    <string name="count_holdings_other">%1$d holdings</string>
+    <string name="count_banks_zero">No banks</string>
+    <string name="count_banks_one">1 bank</string>
+    <string name="count_banks_two">%1$d banks</string>
+    <string name="count_banks_few">%1$d banks</string>
+    <string name="count_banks_many">%1$d banks</string>
+    <string name="count_banks_other">%1$d banks</string>
+    <string name="count_accounts_zero">No accounts</string>
+    <string name="count_accounts_one">1 account</string>
+    <string name="count_accounts_two">%1$d accounts</string>
+    <string name="count_accounts_few">%1$d accounts</string>
+    <string name="count_accounts_many">%1$d accounts</string>
+    <string name="count_accounts_other">%1$d accounts</string>
+    <string name="count_balances_zero">No balances</string>
+    <string name="count_balances_one">1 balance</string>
+    <string name="count_balances_two">%1$d balances</string>
+    <string name="count_balances_few">%1$d balances</string>
+    <string name="count_balances_many">%1$d balances</string>
+    <string name="count_balances_other">%1$d balances</string>
+    <string name="count_banks_accounts_none">No banks or accounts</string>
+    <string name="count_banks_accounts_summary">%1$s · %2$s</string>
 </resources>
