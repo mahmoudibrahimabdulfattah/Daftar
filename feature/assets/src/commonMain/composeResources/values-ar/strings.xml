@@ -18,8 +18,6 @@
     <string name="assets_cash">النقد والمحافظ</string>
     <string name="unit_egp_short">ج.م</string>
     <string name="assets_banks_summary">%1$s · %2$s</string>
-    <string name="gold_title">الذهب</string>
-    <string name="gold_message">تُسجَّل مقتنيات الذهب في تحديث لاحق.</string>
     <string name="banks_title">البنوك</string>
     <string name="banks_message">الحسابات التي تملكها في البنوك، مرتبة بالاسم.</string>
     <string name="bank_select">اختر بنكًا</string>

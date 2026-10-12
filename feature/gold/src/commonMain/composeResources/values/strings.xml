@@ -1,0 +1,89 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <string name="gold_title">Gold</string>
+    <string name="gold_value_label">Gold value</string>
+    <string name="gold_value_unit">EGP · merchant sell price</string>
+    <string name="gold_add">Add gold</string>
+    <string name="gold_weight_notice">Total weight %1$s g across different karats; not fine-gold weight.</string>
+    <string name="gold_weight_notice_single">Total weight %1$s g; not fine-gold weight.</string>
+    <string name="gold_weight_notice_hidden">Total weight is hidden. It is not fine-gold weight.</string>
+    <string name="gold_subtotal">Available subtotal: %1$s EGP</string>
+    <string name="gold_incomplete">Valuation incomplete. Holdings without a merchant price show a dash.</string>
+    <string name="gold_values_hidden">Values are hidden. Show them to see amounts.</string>
+    <string name="gold_empty_title">No gold added yet</string>
+    <string name="gold_empty_message">Bars or jewelry; start with karat and weight.</string>
+    <string name="gold_bars">Bars</string>
+    <string name="gold_jewelry">Jewelry</string>
+    <string name="gold_karat_label">%1$dK</string>
+    <string name="gold_row_title">%1$s · %2$s</string>
+    <string name="gold_row_weight">%1$s g</string>
+    <string name="gold_row_weight_note">%1$s g · %2$s</string>
+    <string name="gold_quote_heading">Merchant sell price</string>
+    <string name="gold_quote_line">%1$s · %2$s EGP per gram</string>
+    <string name="gold_quote_none">No merchant sell price for %1$s yet.</string>
+    <string name="gold_recorded_at">%1$d %2$s, %3$s</string>
+    <string name="gold_manual_warning">A manual price is in use until you remove it.</string>
+    <string name="gold_stale_warning">A price is more than a day old. Check it before you rely on it.</string>
+    <string name="gold_clock_warning">A price time is ahead of this device clock; its age cannot be trusted.</string>
+    <string name="gold_status_clock">Check clock</string>
+    <string name="gold_reveal_message">Values are hidden. Show them to open this holding.</string>
+    <string name="gold_reveal_action">Show values</string>
+    <string name="gold_cancel">Cancel</string>
+    <string name="gold_load_failed_title">Your gold could not be read</string>
+    <string name="gold_load_failed_message">Your records are still saved. Go back and open Gold again.</string>
+    <string-array name="gold_months">
+        <item>January</item>
+        <item>February</item>
+        <item>March</item>
+        <item>April</item>
+        <item>May</item>
+        <item>June</item>
+        <item>July</item>
+        <item>August</item>
+        <item>September</item>
+        <item>October</item>
+        <item>November</item>
+        <item>December</item>
+    </string-array>
+    <string name="gold_new_title">New holding</string>
+    <string name="gold_edit_title">Edit holding</string>
+    <string name="gold_add_title">Add gold</string>
+    <string name="gold_edit_bar_title">Edit gold</string>
+    <string name="gold_intro">Enter the net gold weight in grams.</string>
+    <string name="gold_karat_field">Karat</string>
+    <string name="gold_form_field">Form</string>
+    <string name="gold_weight">Weight · grams</string>
+    <string name="gold_weight_helper">Greater than zero · up to 2 decimal places</string>
+    <string name="gold_weight_invalid">Enter a weight greater than zero, such as 26.77.</string>
+    <string name="gold_note">Note · optional</string>
+    <string name="gold_note_long">The note is too long. The limit is 4,000 characters.</string>
+    <string name="gold_preview_quote">Merchant sell · %1$s: %2$s EGP per gram</string>
+    <string name="gold_preview_value">Value at this price: %1$s EGP</string>
+    <string name="gold_preview_unavailable">No merchant sell price for %1$s yet. You can still save this holding.</string>
+    <string name="gold_preview_needs_weight">Enter a weight to see its value.</string>
+    <string name="gold_fees_notice">Valuation excludes making charges and fees.</string>
+    <string name="gold_add_holding">Add holding</string>
+    <string name="gold_save_changes">Save changes</string>
+    <string name="gold_delete_holding">Delete holding</string>
+    <string name="gold_missing_title">This holding no longer exists</string>
+    <string name="gold_missing_message">It may have been deleted elsewhere. Return to the list.</string>
+    <string name="gold_retry">Retry</string>
+    <string name="gold_back_to_editing">Back to editing</string>
+    <string name="gold_input_kept">Your input is still here</string>
+    <string name="gold_save_failed_title">Changes were not saved</string>
+    <string name="gold_save_failed_message">Saving failed. Retry; your previous records are unchanged.</string>
+    <string name="gold_save_storage_message">Not enough storage. Free some space and retry; your previous records are unchanged.</string>
+    <string name="gold_save_uncertain_message">The vault locked during the save, so the result is not confirmed. Unlock Daftar to check the record.</string>
+    <string name="gold_delete_failed_message">Deleting failed. The holding is still saved.</string>
+    <string name="gold_conflict_message">This record changed. Reload it before saving.</string>
+    <string name="gold_reload">Reload</string>
+    <string name="gold_confirm_delete_title">Delete this record?</string>
+    <string name="gold_confirm_delete_message">This record will be removed from Daftar. This cannot be undone; recovery requires an earlier backup.</string>
+    <string name="gold_confirm_delete_cancel">Cancel &amp; go back</string>
+    <string name="gold_confirm_delete_action">Delete record</string>
+    <string name="gold_confirm_discard_title">Discard changes?</string>
+    <string name="gold_confirm_discard_message">You have unsaved changes. Keep editing or discard them to return to the list.</string>
+    <string name="gold_confirm_keep">Keep editing</string>
+    <string name="gold_confirm_discard_action">Discard changes</string>
+    <string name="gold_unit_egp">EGP</string>
+</resources>

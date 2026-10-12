@@ -17,6 +17,7 @@ kotlin {
             implementation(projects.feature.cash)
             implementation(projects.feature.home)
             implementation(projects.feature.assets)
+            implementation(projects.feature.gold)
             implementation(projects.feature.journal)
             implementation(projects.feature.prices)
             implementation(projects.feature.settings)
