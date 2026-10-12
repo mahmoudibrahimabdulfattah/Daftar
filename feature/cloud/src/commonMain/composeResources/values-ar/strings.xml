@@ -7,7 +7,7 @@
     <string name="cloud_signing_in">جارٍ تسجيل الدخول…</string>
     <string name="cloud_create">إنشاء نسخة ورفعها</string>
     <string name="cloud_retention">نحتفظ بآخر ثلاث نسخ سحابية. رفع نسخة جديدة يستبدل الأقدم.</string>
-    <string name="cloud_manual_note">الرفع يدوي فقط. تحتفظ Google وApple بسجلات نسخ منفصلة.</string>
+    <string name="cloud_manual_note">الرفع يدوي فقط.</string>
     <string name="cloud_empty_title">لا توجد نسخ سحابية بعد</string>
     <string name="cloud_version_title">النسخة ⁦%1$d⁩</string>
     <string name="cloud_version_size">⁦%1$s KiB⁩</string>

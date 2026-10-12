@@ -50,9 +50,7 @@ import com.mk.daftar.feature.backup.resources.backup_password_label
 import com.mk.daftar.feature.backup.resources.backup_password_too_long
 import com.mk.daftar.feature.backup.resources.backup_password_too_short
 import com.mk.daftar.feature.backup.resources.backup_password_warning
-import com.mk.daftar.feature.backup.resources.backup_submit
 import com.mk.daftar.feature.backup.resources.backup_success_done
-import com.mk.daftar.feature.backup.resources.backup_title
 import com.mk.daftar.feature.backup.resources.cloud_sign_in_apple
 import com.mk.daftar.feature.backup.resources.cloud_sign_in_google
 import com.mk.daftar.feature.backup.resources.cloud_upload_changed
@@ -64,6 +62,8 @@ import com.mk.daftar.feature.backup.resources.cloud_upload_preparing
 import com.mk.daftar.feature.backup.resources.cloud_upload_quota
 import com.mk.daftar.feature.backup.resources.cloud_upload_retention
 import com.mk.daftar.feature.backup.resources.cloud_upload_signin_intro
+import com.mk.daftar.feature.backup.resources.cloud_upload_submit
+import com.mk.daftar.feature.backup.resources.cloud_upload_title
 import com.mk.daftar.feature.backup.resources.cloud_upload_unknown
 import com.mk.daftar.feature.backup.resources.cloud_upload_uploaded
 import org.jetbrains.compose.resources.stringResource
@@ -102,7 +102,7 @@ fun CloudUploadContent(
     ShellScreen(modifier = modifier) {
         Column(modifier = Modifier.fillMaxSize()) {
             DaftarTopBar(
-                title = stringResource(Res.string.backup_title),
+                title = stringResource(Res.string.cloud_upload_title),
                 onBack = if (busy) null else ({ onIntent(CloudUploadIntent.Back) }),
                 backLabel = stringResource(DesignRes.string.btn_back),
             )
@@ -218,7 +218,7 @@ private fun PasswordBody(state: CloudUploadUiState, onIntent: (CloudUploadIntent
             )
         }
         PrimaryButton(onClick = { onIntent(CloudUploadIntent.Submit) }, fullWidth = true) {
-            Text(stringResource(Res.string.backup_submit))
+            Text(stringResource(Res.string.cloud_upload_submit))
         }
     }
 }

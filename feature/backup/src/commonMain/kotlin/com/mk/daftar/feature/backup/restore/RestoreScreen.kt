@@ -91,6 +91,9 @@ import com.mk.daftar.feature.backup.resources.restore_review_validated
 import com.mk.daftar.feature.backup.resources.restore_review_warning
 import com.mk.daftar.feature.backup.resources.restore_title
 import com.mk.daftar.feature.backup.resources.restore_zakat_count
+import kotlin.time.Instant
+import kotlinx.datetime.TimeZone
+import kotlinx.datetime.toLocalDateTime
 import org.jetbrains.compose.resources.pluralStringResource
 import org.jetbrains.compose.resources.stringResource
 import org.koin.compose.viewmodel.koinViewModel
@@ -270,7 +273,7 @@ private fun ReviewBody(state: RestoreUiState, onIntent: (RestoreIntent) -> Unit)
         )
         if (summary != null) {
             Text(
-                text = stringResource(Res.string.restore_review_date, summary.exportedAt.toString().take(DATE_LENGTH)),
+                text = stringResource(Res.string.restore_review_date, summary.exportedAt.localDateText()),
                 style = DaftarTheme.typography.fineText,
                 color = colors.muted,
             )
@@ -423,7 +426,7 @@ private fun FailedBody(problem: RestoreProblem, onIntent: (RestoreIntent) -> Uni
     )
 }
 
-/** The date portion of an ISO instant, as the approved copy shows it. */
-private const val DATE_LENGTH = 10
+/** The export date in the device's time zone, as ISO `yyyy-MM-dd`; the stored instant is UTC. */
+private fun Instant.localDateText(): String = toLocalDateTime(TimeZone.currentSystemDefault()).date.toString()
 
 private val CONTENT_MAX_WIDTH = 560.dp

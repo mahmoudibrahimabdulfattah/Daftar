@@ -15,6 +15,7 @@ import androidx.compose.foundation.verticalScroll
 import androidx.compose.material3.CircularProgressIndicator
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
@@ -95,6 +96,8 @@ fun CloudScreen(
 ) {
     val viewModel: CloudViewModel = koinViewModel(parameters = { parametersOf(mode) })
     val state by viewModel.state.collectAsStateWithLifecycle()
+    // The page leaves composition while the upload form is on top, so this runs again when it returns.
+    LaunchedEffect(viewModel) { viewModel.onIntent(CloudIntent.Returned) }
     CollectEffects(viewModel.effects) { effect ->
         when (effect) {
             CloudEffect.OpenUpload -> onOpenUpload()
@@ -201,6 +204,7 @@ private fun EmptyBody(state: CloudUiState, onIntent: (CloudIntent) -> Unit) {
             color = DaftarTheme.colors.ink,
             modifier = Modifier.semantics { heading() },
         )
+        if (state.confirmAccountDelete) AccountConfirmation(onIntent)
         if (state.canUpload) {
             IntroText(stringResource(Res.string.cloud_retention))
             IntroText(stringResource(Res.string.cloud_manual_note))
@@ -235,7 +239,7 @@ private fun VersionsBody(state: CloudUiState, onIntent: (CloudIntent) -> Unit) {
             PrimaryButton(
                 onClick = { onIntent(CloudIntent.OpenUpload) },
                 fullWidth = true,
-                enabled = state.busy == null && state.versions.size < CLOUD_VERSION_LIMIT,
+                enabled = state.busy == null,
             ) {
                 Text(stringResource(Res.string.cloud_create))
             }
@@ -426,5 +430,4 @@ private fun IntroText(text: String) {
 }
 
 private const val KIBIBYTE = 1024
-private const val CLOUD_VERSION_LIMIT = 3
 private val CONTENT_MAX_WIDTH = 560.dp

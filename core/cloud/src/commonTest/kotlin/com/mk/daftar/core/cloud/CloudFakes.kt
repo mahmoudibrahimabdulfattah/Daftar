@@ -86,7 +86,11 @@ class FakeCloudStore : CloudStore {
 
         override fun readControl(): ControlRecord? = store.control
 
-        override fun readSlot(slot: Int): SlotRecord? = store.slots[slot]
+        /** The rules read the control document to authorize a slot read, so a missing one denies it. */
+        override fun readSlot(slot: Int): SlotRecord? {
+            if (store.control == null) throw CloudStoreException(CloudStoreFailure.DENIED)
+            return store.slots[slot]
+        }
 
         override fun writeControl(record: ControlRecord) {
             pending += {

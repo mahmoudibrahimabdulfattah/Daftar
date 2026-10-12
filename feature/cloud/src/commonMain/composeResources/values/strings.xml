@@ -7,7 +7,7 @@
     <string name="cloud_signing_in">Signing in…</string>
     <string name="cloud_create">Create and upload backup</string>
     <string name="cloud_retention">Keeps your latest three cloud backups. Uploading another replaces the oldest.</string>
-    <string name="cloud_manual_note">Uploads are manual only. Google and Apple keep separate backup histories.</string>
+    <string name="cloud_manual_note">Uploads are manual only.</string>
     <string name="cloud_empty_title">No cloud backups yet</string>
     <string name="cloud_version_title">Backup %1$d</string>
     <string name="cloud_version_size">⁦%1$s KiB⁩</string>

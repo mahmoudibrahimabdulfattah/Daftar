@@ -1,5 +1,6 @@
 package com.mk.daftar.core.cloud
 
+import com.mk.daftar.core.common.Outcome
 import com.mk.daftar.core.domain.cloud.CloudAccount
 import com.mk.daftar.core.domain.cloud.CloudAccountState
 import com.mk.daftar.core.domain.cloud.CloudBackupVersion
@@ -28,6 +29,20 @@ class CloudBackupServiceTest {
     }
 
     private suspend fun CloudBackupService.listed(): CloudListing = assertNotNull(listing(uid, account).dataOrNull())
+
+    @Test
+    fun aNewAccountListsNoVersionsWithoutReadingSlots() = runTest {
+        val listing = service(FakeCloudStore()).listed()
+        assertEquals(CloudAccountState.ACTIVE, listing.state)
+        assertTrue(listing.versions.all { it == null })
+    }
+
+    @Test
+    fun deletingANewAccountWithoutBackupsSucceeds() = runTest {
+        val store = FakeCloudStore()
+        assertTrue(service(store).deleteAllBackups(uid) is Outcome.Success)
+        assertNull(store.control)
+    }
 
     @Test
     fun firstUploadsFillTheThreeSlotsInOrder() = runTest {

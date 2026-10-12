@@ -86,6 +86,9 @@ sealed interface CloudIntent : UiIntent {
 
     data object OpenUpload : CloudIntent
 
+    /** The screen is shown again; the listing reloads when an upload was opened from it. */
+    data object Returned : CloudIntent
+
     data object DismissConfirmation : CloudIntent
 
     data object DismissProblem : CloudIntent

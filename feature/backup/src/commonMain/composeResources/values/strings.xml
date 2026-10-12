@@ -108,6 +108,8 @@
     <string name="cloud_upload_offline">No connection. Your local data is unchanged.</string>
     <string name="cloud_upload_changed">This backup has changed. Refresh the list.</string>
     <string name="cloud_upload_unknown">The upload may or may not have been saved. Refresh the cloud list before trying again.</string>
+    <string name="cloud_upload_title">Upload cloud backup</string>
+    <string name="cloud_upload_submit">Encrypt &amp; upload</string>
     <string name="cloud_sign_in_google">Continue with Google</string>
     <string name="cloud_sign_in_apple">Continue with Apple</string>
 </resources>

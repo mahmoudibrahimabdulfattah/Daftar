@@ -59,9 +59,11 @@ class CloudBackupService(private val store: CloudStore, private val random: Clou
     /** Reads the account state and the three slots, without writing anything. */
     suspend fun listing(uid: String, account: CloudAccount): Outcome<CloudListing, CloudError> = guarded {
         val read = store.runTransaction(uid) { tx ->
-            val state = tx.readControl()?.accountState() ?: CloudAccountState.ACTIVE
-            // A deleting account has no readable backups under the rules, so only its control document is read.
-            val versions: List<CloudBackupVersion?> = if (state == CloudAccountState.DELETING) {
+            val control = tx.readControl()
+            val state = control?.accountState() ?: CloudAccountState.ACTIVE
+            // Without a control document nothing was ever uploaded, and the rules refuse slot reads until it exists.
+            // A deleting account has no readable backups under the rules either, so only its control document is read.
+            val versions: List<CloudBackupVersion?> = if (control == null || state == CloudAccountState.DELETING) {
                 List(CloudBackupLimits.SLOT_COUNT) { null }
             } else {
                 (0 until CloudBackupLimits.SLOT_COUNT).map { slot -> tx.readSlot(slot)?.toVersion(slot) }
@@ -227,11 +229,10 @@ class CloudBackupService(private val store: CloudStore, private val random: Clou
         store.runTransaction(uid) { tx ->
             val control = tx.readControl()
             // Resuming an interrupted deletion: the marker is already set and no backup can remain, so nothing else is read.
-            if (control != null && control.accountState() == CloudAccountState.DELETING) return@runTransaction
+            // Without a control document nothing was ever uploaded, and the rules refuse slot reads.
+            if (control == null || control.accountState() == CloudAccountState.DELETING) return@runTransaction
             val slots = (0 until CloudBackupLimits.SLOT_COUNT).map { tx.readSlot(it) }
-            if (control != null && control.accountState() == CloudAccountState.ACTIVE) {
-                tx.writeControl(ControlRecord(DELETING, control.revision + 1))
-            }
+            tx.writeControl(ControlRecord(DELETING, control.revision + 1))
             slots.forEachIndexed { slot, record -> if (record != null) tx.deleteSlot(slot) }
         }
         Outcome.Success(Unit)

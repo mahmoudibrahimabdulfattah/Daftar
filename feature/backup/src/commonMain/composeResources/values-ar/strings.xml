@@ -132,6 +132,8 @@
     <string name="cloud_upload_offline">لا يوجد اتصال. بيانات جهازك لم تتغير.</string>
     <string name="cloud_upload_changed">تغيّرت هذه النسخة. حدّث القائمة.</string>
     <string name="cloud_upload_unknown">ربما رُفعت النسخة أو لم تُرفع. حدّث القائمة السحابية قبل المحاولة مرة أخرى.</string>
+    <string name="cloud_upload_title">رفع نسخة سحابية</string>
+    <string name="cloud_upload_submit">تشفير النسخة ورفعها</string>
     <string name="cloud_sign_in_google">المتابعة باستخدام Google</string>
     <string name="cloud_sign_in_apple">المتابعة باستخدام Apple</string>
 </resources>

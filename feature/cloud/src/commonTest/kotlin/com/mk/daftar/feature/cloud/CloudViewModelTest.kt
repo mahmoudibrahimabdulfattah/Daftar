@@ -72,6 +72,21 @@ class CloudViewModelTest {
     }
 
     @Test
+    fun returningFromAnUploadReloadsTheListing() = runTest {
+        val repository = FakeCloudRepository()
+        val viewModel = model(repository)
+        viewModel.onIntent(CloudIntent.Returned)
+        advanceUntilIdle()
+        assertEquals(CloudView.Empty, viewModel.state.value.view)
+
+        viewModel.onIntent(CloudIntent.OpenUpload)
+        repository.listing = Outcome.Success(listingWith(version(0), null, null))
+        viewModel.onIntent(CloudIntent.Returned)
+        advanceUntilIdle()
+        assertEquals(CloudView.Versions, viewModel.state.value.view)
+    }
+
+    @Test
     fun aDeletingAccountShowsIncompleteDeletion() = runTest {
         val repository = FakeCloudRepository()
         repository.listing = Outcome.Success(listingWith(state = CloudAccountState.DELETING))
@@ -126,6 +141,17 @@ class CloudViewModelTest {
         gate.complete(Unit)
         advanceUntilIdle()
         assertEquals(CloudView.SignedOut, viewModel.state.value.view)
+    }
+
+    @Test
+    fun aFailedAccountDeletionKeepsItsProblemAfterTheReload() = runTest {
+        val repository = FakeCloudRepository()
+        val viewModel = model(repository)
+        repository.deleteAccountResult = Outcome.Failure(CloudError.FAILED)
+        viewModel.onIntent(CloudIntent.ConfirmDeleteAccount)
+        advanceUntilIdle()
+        assertEquals(CloudError.FAILED, viewModel.state.value.problem)
+        assertEquals(CloudView.Empty, viewModel.state.value.view)
     }
 
     @Test

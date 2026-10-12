@@ -27,6 +27,7 @@ class CloudViewModel(private val repository: CloudBackupRepository, mode: CloudM
         ),
     ) {
     private var work: Job? = null
+    private var uploadOpened = false
 
     init {
         if (repository.availability == CloudAvailability.UNAVAILABLE) {
@@ -59,7 +60,15 @@ class CloudViewModel(private val repository: CloudBackupRepository, mode: CloudM
             // Download is offered only on the recovery surface and upload only from Settings, so a stray intent is ignored.
             is CloudIntent.Download -> if (currentState.canRestore) start { download(intent.version) }
 
-            CloudIntent.OpenUpload -> if (currentState.canUpload) emitEffect(CloudEffect.OpenUpload)
+            CloudIntent.OpenUpload -> if (currentState.canUpload) {
+                uploadOpened = true
+                emitEffect(CloudEffect.OpenUpload)
+            }
+
+            CloudIntent.Returned -> if (uploadOpened) {
+                uploadOpened = false
+                start { loadListing() }
+            }
 
             CloudIntent.DismissConfirmation -> reduce { copy(pendingVersion = null, confirmAccountDelete = false) }
 
@@ -188,7 +197,7 @@ class CloudViewModel(private val repository: CloudBackupRepository, mode: CloudM
                 else -> {
                     reduce { copy(busy = null, problem = result.error) }
                     // An interruption after the backups were removed is shown as an incomplete deletion.
-                    loadListing()
+                    loadListing(keepProblem = true)
                 }
             }
         }
