@@ -4,8 +4,8 @@ import com.mk.daftar.core.common.Outcome
 import com.mk.daftar.core.common.map
 
 /** The biometric slot as one device-only, nonsynchronizing Keychain item. Atomic replacement comes from the item update. */
-internal class KeychainBiometricSlotStore : BiometricSlotStore {
-    private val item = KeychainItem(SLOT_ACCOUNT)
+internal class KeychainBiometricSlotStore(account: String) : BiometricSlotStore {
+    private val item = KeychainItem(account)
 
     override suspend fun read(): Outcome<ByteArray?, BiometricError> = when (val read = item.read()) {
         is Outcome.Failure -> Outcome.Failure(read.error.toBiometricError())
@@ -25,7 +25,8 @@ internal class KeychainBiometricSlotStore : BiometricSlotStore {
         is Outcome.Success -> Outcome.Success(Unit)
     }
 
-    private companion object {
+    companion object {
+        /** The Keychain account of the legacy generation's biometric slot. */
         const val SLOT_ACCOUNT = "biometric-slot.v1"
     }
 }

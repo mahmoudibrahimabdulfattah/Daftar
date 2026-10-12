@@ -7,7 +7,6 @@ import com.mk.daftar.core.data.storage.isUnavailableAtOpen
 import com.mk.daftar.core.data.storage.toStorageError
 import com.mk.daftar.core.database.DaftarDatabase
 import com.mk.daftar.core.database.buildDaftarDatabase
-import com.mk.daftar.core.database.dao.ManualQuoteDao
 import com.mk.daftar.core.database.driver.createSqlCipherDriver
 import com.mk.daftar.core.domain.repository.PreferencesRead
 import com.mk.daftar.core.domain.repository.UserPreferencesRepository
@@ -20,6 +19,8 @@ import com.mk.daftar.core.security.BiometricSlotState
 import com.mk.daftar.core.security.KeyLease
 import com.mk.daftar.core.security.SecretBytes
 import com.mk.daftar.core.security.SecurityError
+import com.mk.daftar.core.security.VaultGeneration
+import com.mk.daftar.core.security.VaultGenerations
 import com.mk.daftar.core.security.VaultSecurity
 import kotlin.coroutines.cancellation.CancellationException
 import kotlin.time.Clock
@@ -31,9 +32,9 @@ import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.first
 import kotlinx.coroutines.withContext
 
-/** Builds a fresh Room builder for one database file. Each open takes its own builder. */
+/** Builds a fresh Room builder for the database file of one vault generation. Each open takes its own builder. */
 fun interface DaftarDatabaseBuilderProvider {
-    fun builder(): RoomDatabase.Builder<DaftarDatabase>
+    fun builder(generation: VaultGeneration): RoomDatabase.Builder<DaftarDatabase>
 }
 
 /** Why an unlock or create did not open the vault. */
@@ -66,6 +67,8 @@ sealed interface VaultOpenFailure {
  */
 class DaftarVaultSession internal constructor(
     private val security: VaultSecurity,
+    /** The generation the pointer names. Read only when a database opens, so startup never touches the platform. */
+    private val activeGeneration: suspend () -> VaultGeneration,
     private val databases: DaftarDatabaseBuilderProvider,
     clock: Clock,
     ids: IdGenerator,
@@ -106,23 +109,41 @@ class DaftarVaultSession internal constructor(
      * schema callback, so a bad file fails here rather than in a later repository call.
      */
     private suspend fun openDatabase(lease: KeyLease): DaftarDatabase = withContext(ioDispatcher) {
-        val database = buildDaftarDatabase(databases.builder(), createSqlCipherDriver(lease))
-        try {
-            database.manualQuoteDao().get(FORCE_OPEN_KEY)
-            database
-        } catch (error: Throwable) {
-            withContext(NonCancellable) { database.close() }
-            throw error
-        }
+        // The database of the active generation. A restore commits only while no session is open, so the generation
+        // read here is the one that issued [lease].
+        openDaftarDatabase(databases.builder(activeGeneration()), lease)
     }
 
     private suspend fun closeDatabase(database: DaftarDatabase) {
         withContext(ioDispatcher) { database.close() }
     }
+}
 
-    private companion object {
-        /** A key that always exists in the schema, so forcing the open reads a real table. */
-        val FORCE_OPEN_KEY: String = "USD_EGP"
+/** The generation the pointer names. A pointer that cannot be read is an error: no database opens without it. */
+internal suspend fun VaultGenerations.activeGeneration(): VaultGeneration = when (val pointer = pointer()) {
+    is Outcome.Failure -> error("the vault pointer is unavailable")
+    is Outcome.Success -> pointer.data.active
+}
+
+/** A key that always exists in the schema, so forcing the open reads a real table. */
+private const val FORCE_OPEN_KEY: String = "USD_EGP"
+
+/**
+ * Builds Room over the lease's raw key, then forces an actual open. The read runs Room's identity check and the schema
+ * callback, so a bad file fails here rather than in a later repository call. Used for the live vault and for a staged
+ * restore, so both are checked the same way.
+ */
+internal suspend fun openDaftarDatabase(
+    builder: RoomDatabase.Builder<DaftarDatabase>,
+    lease: KeyLease,
+): DaftarDatabase {
+    val database = buildDaftarDatabase(builder, createSqlCipherDriver(lease))
+    try {
+        database.manualQuoteDao().get(FORCE_OPEN_KEY)
+        return database
+    } catch (error: Throwable) {
+        withContext(NonCancellable) { database.close() }
+        throw error
     }
 }
 

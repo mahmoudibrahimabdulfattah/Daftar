@@ -10,6 +10,12 @@ import kotlinx.serialization.json.Json
 /** A decrypted and validated backup. Its header-level facts are returned with the snapshot. */
 class DecodedBackup(val snapshot: BackupSnapshot, val exportedAt: Instant, val appVersion: String)
 
+/** Authenticates and decodes a complete file. [BackupCodec] is the production implementation. */
+fun interface BackupDecryptor {
+    /** Returns the decoded backup, or the reason it was refused. [password] is wiped before this returns. */
+    suspend fun decrypt(file: ByteArray, password: ByteArray): Outcome<DecodedBackup, BackupError>
+}
+
 /** Encrypts one snapshot into the complete file. [BackupCodec] is the production implementation. */
 interface BackupEncryptor {
     /**
@@ -29,7 +35,12 @@ interface BackupEncryptor {
  * export, and the Argon2id key is derived from the password for that salt only. The codec never writes a file and
  * never keeps the password, the key or the plaintext after it returns.
  */
-class BackupCodec(private val crypto: PasswordCrypto) : BackupEncryptor {
+class BackupCodec(private val crypto: PasswordCrypto) :
+    BackupEncryptor,
+    BackupDecryptor {
+
+    override suspend fun decrypt(file: ByteArray, password: ByteArray): Outcome<DecodedBackup, BackupError> =
+        decode(file, password)
 
     override suspend fun encode(
         snapshot: BackupSnapshot,
@@ -137,6 +148,7 @@ class BackupCodec(private val crypto: PasswordCrypto) : BackupEncryptor {
             return Outcome.Failure(BackupError.CorruptPayload)
         }
         if (snapshot.recordCount > BackupFormat.MAX_RECORDS) return Outcome.Failure(BackupError.TooManyRecords)
+        if (!snapshot.isConsistent()) return Outcome.Failure(BackupError.CorruptPayload)
         return Outcome.Success(DecodedBackup(snapshot, exportedAt, document.appVersion))
     }
 

@@ -170,3 +170,19 @@ private fun SourceTime.columns(): SourceColumns = when (this) {
     is SourceTime.DateOnly -> SourceColumns("DATE_ONLY", null, null, value.toString())
     SourceTime.Unknown -> SourceColumns("UNKNOWN", null, null, null)
 }
+
+/** The row for a manual quote read from a backup. [revision] is the first revision of a restored row. */
+fun PriceQuote.toManualEntity(revision: Long): ManualQuoteEntity {
+    val provenance = this.provenance
+    require(provenance.kind == QuoteKind.MANUAL) { "only manual quotes have manual rows" }
+    val entered = provenance.recordedAt
+    return ManualQuoteEntity(
+        quoteKey = QuoteKeys.encode(keyOf(this)),
+        value = valueOf(this).toPlainString(),
+        enteredSeconds = entered.epochSeconds,
+        enteredNanos = entered.nanosecondsOfSecond,
+        pinned = provenance.manualPinned,
+        note = provenance.note,
+        revision = revision,
+    )
+}

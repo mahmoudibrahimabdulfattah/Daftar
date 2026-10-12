@@ -2,7 +2,6 @@ package com.mk.daftar.core.security
 
 import android.content.Context
 import android.content.pm.ApplicationInfo
-import java.io.File
 import org.koin.core.module.Module
 import org.koin.core.scope.Scope
 import org.koin.dsl.module
@@ -30,25 +29,8 @@ fun androidSecurityConfigurationModule(configuration: AndroidSecurityConfigurati
     single { configuration }
 }
 
-/** Keystore aliases for the PIN envelope and the backoff record. They are separate keys. */
-private const val PIN_ENVELOPE_ALIAS = "com.mk.daftar.security.pin-envelope.v1"
-private const val BACKOFF_ALIAS = "com.mk.daftar.security.backoff.v1"
-
 internal actual val platformSecurityModule: Module = module {
-    single<PlatformEnvelopeProtector> {
-        AndroidKeystoreProtector(PIN_ENVELOPE_ALIAS, keystorePolicy(get()))
-    }
-    single<SecurityRecordStore> {
-        FileRecordStore(securityDirectory(get()).resolve(PIN_ENVELOPE_FILE))
-    }
-    single<BackoffStore> {
-        FileBackoffStore(
-            file = securityDirectory(get()).resolve(BACKOFF_FILE),
-            protector = AndroidKeystoreProtector(BACKOFF_ALIAS, keystorePolicy(get())),
-        )
-    }
-    single<BiometricKeyStore> { AndroidBiometricKeyStore(get(), keystorePolicy(get())) }
-    single<BiometricSlotStore> { FileBiometricSlotStore(securityDirectory(get()).resolve(BIOMETRIC_SLOT_FILE)) }
+    single<PlatformVaultStorageFactory> { AndroidVaultStorageFactory(get(), keystorePolicy(get())) }
 }
 
 /** The policy both the envelope and the backoff protector use, resolved against the installed application. */
@@ -70,9 +52,7 @@ internal fun resolveKeystorePolicy(configuration: AndroidSecurityConfiguration, 
 
 internal fun Context.isDebuggable(): Boolean = (applicationInfo.flags and ApplicationInfo.FLAG_DEBUGGABLE) != 0
 
-/** Under `noBackupFilesDir`, so the sealed state is never backed up or transferred. */
-internal fun securityDirectory(context: Context): File = File(context.noBackupFilesDir, "daftar-security")
-
-private const val PIN_ENVELOPE_FILE = "pin-envelope.v1.bin"
-private const val BACKOFF_FILE = "backoff.v1.bin"
-private const val BIOMETRIC_SLOT_FILE = "biometric-slot.v1.bin"
+/** File names inside a generation's security directory. The sealed state is never backed up or transferred. */
+internal const val PIN_ENVELOPE_FILE: String = "pin-envelope.v1.bin"
+internal const val BACKOFF_FILE: String = "backoff.v1.bin"
+internal const val BIOMETRIC_SLOT_FILE: String = "biometric-slot.v1.bin"

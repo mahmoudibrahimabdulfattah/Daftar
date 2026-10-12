@@ -33,8 +33,11 @@ class AndroidBiometricCrypto(val cipher: Cipher) : BiometricCrypto
  * Keys are created only by explicit enrollment, never regenerated silently. Production accepts StrongBox or a
  * hardware-backed TEE, and only the debug policy accepts software keys.
  */
-internal class AndroidBiometricKeyStore(private val context: Context, private val policy: KeystorePolicy) :
-    BiometricKeyStore {
+internal class AndroidBiometricKeyStore(
+    private val context: Context,
+    private val policy: KeystorePolicy,
+    private val generation: VaultGeneration = VaultGeneration.LEGACY,
+) : BiometricKeyStore {
 
     override suspend fun capability(): BiometricCapability = withContext(Dispatchers.Default) {
         when (BiometricManager.from(context).canAuthenticate(BIOMETRIC_STRONG)) {
@@ -164,6 +167,10 @@ internal class AndroidBiometricKeyStore(private val context: Context, private va
         return generator.generateKey()
     }
 
+    /** The alias of one key: the generation's namespace, then the key identifier. Legacy aliases are unchanged. */
+    private fun aliasFor(keyId: ByteArray): String = KEY_ALIAS_ROOT + generation.name(BIOMETRIC_PURPOSE) +
+        keyId.joinToString("") { byte -> (byte.toInt() and 0xFF).toString(16).padStart(2, '0') }
+
     private fun keySpec(alias: String, strongBox: Boolean): KeyGenParameterSpec {
         val builder = KeyGenParameterSpec.Builder(alias, KeyProperties.PURPOSE_ENCRYPT or KeyProperties.PURPOSE_DECRYPT)
             .setKeySize(KEY_BITS)
@@ -191,10 +198,7 @@ internal class AndroidBiometricKeyStore(private val context: Context, private va
         const val KEY_BITS = 256
         const val GCM_IV_BYTES = 12
         const val GCM_TAG_BITS = 128
-        const val ALIAS_PREFIX = "com.mk.daftar.security.biometric.v1."
-
-        fun aliasFor(keyId: ByteArray): String = ALIAS_PREFIX + keyId.joinToString("") { byte ->
-            (byte.toInt() and 0xFF).toString(16).padStart(2, '0')
-        }
+        const val KEY_ALIAS_ROOT = "com.mk.daftar.security."
+        const val BIOMETRIC_PURPOSE = "biometric.v1."
     }
 }

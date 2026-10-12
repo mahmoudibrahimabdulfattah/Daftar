@@ -1,6 +1,7 @@
 package com.mk.daftar.di
 
 import com.mk.daftar.core.backup.BackupCodec
+import com.mk.daftar.core.backup.BackupDecryptor
 import com.mk.daftar.core.backup.BackupEncryptor
 import com.mk.daftar.core.backup.BackupExportController
 import com.mk.daftar.core.security.createPasswordCrypto
@@ -23,7 +24,9 @@ const val DAFTAR_APP_VERSION: String = "1.0"
 val backupModule: Module = module {
     includes(platformBackupModule)
     single { createPasswordCrypto() }
-    single<BackupEncryptor> { BackupCodec(get()) }
+    single { BackupCodec(get()) }
+    single<BackupEncryptor> { get<BackupCodec>() }
+    single<BackupDecryptor> { get<BackupCodec>() }
     single {
         BackupExportController(
             source = get(),

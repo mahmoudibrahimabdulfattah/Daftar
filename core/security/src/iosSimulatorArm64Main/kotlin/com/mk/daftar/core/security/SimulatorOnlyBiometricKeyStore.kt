@@ -10,7 +10,7 @@ import platform.LocalAuthentication.LAContext
  * Keychain, seals with XChaCha20-Poly1305, and still goes through the prompter, so the UI and slot paths run. It gives
  * no hardware or biometric guarantee.
  */
-internal class SimulatorOnlyBiometricKeyStore : BiometricKeyStore {
+internal class SimulatorOnlyBiometricKeyStore(private val accountPrefix: String) : BiometricKeyStore {
     private val aead = LibsodiumAead()
     private val random = LibsodiumSecureRandom()
 
@@ -77,7 +77,7 @@ internal class SimulatorOnlyBiometricKeyStore : BiometricKeyStore {
         }
 
     private fun accountFor(keyId: ByteArray): String =
-        "simulator-only-biometric-key." + keyId.joinToString("") { (it.toInt() and 0xFF).toString(16).padStart(2, '0') }
+        accountPrefix + keyId.joinToString("") { (it.toInt() and 0xFF).toString(16).padStart(2, '0') }
 
     private companion object {
         const val KEY_BYTES = 32

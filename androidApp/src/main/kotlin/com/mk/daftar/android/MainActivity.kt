@@ -13,6 +13,7 @@ import androidx.core.splashscreen.SplashScreen.Companion.installSplashScreen
 import com.mk.daftar.App
 import com.mk.daftar.platform.BiometricPromptHost
 import com.mk.daftar.platform.backup.AndroidBackupPicker
+import com.mk.daftar.platform.backup.AndroidRestorePicker
 
 /**
  * The launcher. Every window of this activity is secure: FLAG_SECURE is set before content, is never toggled per
@@ -31,6 +32,11 @@ class MainActivity : AppCompatActivity() {
         AndroidBackupPicker.deliver(uri)
     }
 
+    /** The open picker for an encrypted restore. Registered before the activity starts, as the activity API requires. */
+    private val openBackup = registerForActivityResult(AndroidRestorePicker.contract) { uri ->
+        AndroidRestorePicker.deliver(uri)
+    }
+
     override fun onCreate(savedInstanceState: Bundle?) {
         // The splash is the static starting theme; it never waits for the vault or the network.
         installSplashScreen()
@@ -39,6 +45,7 @@ class MainActivity : AppCompatActivity() {
         super.onCreate(savedInstanceState)
         BiometricPromptHost.attach(this)
         AndroidBackupPicker.attach(this, createBackup)
+        AndroidRestorePicker.attach(openBackup)
         setContent {
             val covered by vaultLifecycle.covered.collectAsState()
             App(
@@ -68,6 +75,7 @@ class MainActivity : AppCompatActivity() {
     override fun onDestroy() {
         BiometricPromptHost.detach(this)
         AndroidBackupPicker.detach(createBackup)
+        AndroidRestorePicker.detach(openBackup)
         super.onDestroy()
     }
 

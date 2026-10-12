@@ -53,3 +53,12 @@ data class BackupSnapshot(
 fun interface BackupSnapshotSource {
     suspend fun read(): Outcome<BackupSnapshot, BackupError>
 }
+
+/**
+ * The canonical text of a snapshot: the same bytes the format writes for its records, with a fixed export time. Two
+ * snapshots with the same records have the same canonical form, whatever order their lists were built in.
+ */
+fun BackupSnapshot.canonicalForm(): String = BackupJson.encodeToString(
+    PayloadDocument.serializer(),
+    toDocument(kotlin.time.Instant.fromEpochSeconds(0), appVersion = ""),
+)

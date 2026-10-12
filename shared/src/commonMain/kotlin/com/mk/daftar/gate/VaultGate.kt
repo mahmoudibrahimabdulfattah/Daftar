@@ -45,6 +45,7 @@ import com.mk.daftar.feature.auth.AuthIntent
 import com.mk.daftar.feature.auth.AuthUiState
 import com.mk.daftar.feature.auth.AuthViewModel
 import com.mk.daftar.feature.auth.ui.AuthContent
+import com.mk.daftar.feature.backup.restore.RestoreScreen
 import com.mk.daftar.platform.PlatformBackHandler
 import com.mk.daftar.shared.resources.Res
 import com.mk.daftar.shared.resources.dev_catalog
@@ -77,7 +78,13 @@ fun VaultGate(
     val auth: AuthViewModel = koinViewModel()
     val visibility: ValuesVisibility = koinInject()
     val authState by auth.state.collectAsStateWithLifecycle()
-    val onAuthIntent: (AuthIntent) -> Unit = remember(auth) { { intent -> auth.onIntent(intent) } }
+    // The restore wizard is hosted here, outside the shell. It opens only from the forgotten-PIN screen.
+    val restoreOpen = remember { mutableStateOf(false) }
+    val onAuthIntent: (AuthIntent) -> Unit = remember(auth) {
+        { intent ->
+            if (intent == AuthIntent.OpenRestore) restoreOpen.value = true else auth.onIntent(intent)
+        }
+    }
     LaunchedEffect(state) {
         if (state !is VaultSessionState.Open) {
             shell.release()
@@ -95,6 +102,11 @@ fun VaultGate(
             onAuthIntent = onAuthIntent,
             developerTools = developerEntriesVisible(state, developerTools),
             covered = covered,
+            restoreOpen = restoreOpen.value,
+            onRestoreClose = {
+                restoreOpen.value = false
+                onAuthIntent(AuthIntent.Recheck)
+            },
             modifier = modifier,
         )
 
@@ -118,6 +130,8 @@ private fun LockedSurface(
     onAuthIntent: (AuthIntent) -> Unit,
     developerTools: Boolean,
     covered: Boolean,
+    restoreOpen: Boolean,
+    onRestoreClose: () -> Unit,
     modifier: Modifier = Modifier,
 ) {
     var developer by remember { mutableStateOf<DeveloperDestination?>(null) }
@@ -129,6 +143,19 @@ private fun LockedSurface(
             preview.release()
             developer = null
         }
+    }
+    if (restoreOpen) {
+        // System back leaves the wizard from any step. Leaving drops its drafts, as the view model is cleared.
+        PlatformBackHandler(enabled = true, onBack = onRestoreClose)
+        Box(
+            modifier = modifier
+                .fillMaxSize()
+                .background(DaftarTheme.colors.paper)
+                .windowInsetsPadding(WindowInsets.safeDrawing),
+        ) {
+            RestoreScreen(onClose = onRestoreClose, modifier = Modifier.fillMaxSize())
+        }
+        return
     }
     when (developer) {
         null -> AuthSurface(

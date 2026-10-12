@@ -12,6 +12,6 @@ internal fun newTestLocation(): TestLocation {
     val context = InstrumentationRegistry.getInstrumentation().targetContext
     val directory = File(context.cacheDir, "daftar-data-test-${UUID.randomUUID()}").apply { mkdirs() }
     val file = File(directory, DAFTAR_DATABASE_FILE_NAME)
-    val provider = DaftarDatabaseBuilderProvider { daftarDatabaseBuilder(context, file) }
+    val provider = DaftarDatabaseBuilderProvider { _ -> daftarDatabaseBuilder(context, file) }
     return TestLocation(provider) { directory.deleteRecursively() }
 }

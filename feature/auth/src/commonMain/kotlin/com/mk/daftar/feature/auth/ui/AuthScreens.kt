@@ -99,7 +99,6 @@ import com.mk.daftar.feature.auth.resources.auth_recovery_body
 import com.mk.daftar.feature.auth.resources.auth_recovery_heading
 import com.mk.daftar.feature.auth.resources.auth_restart_creation
 import com.mk.daftar.feature.auth.resources.auth_restore_backup
-import com.mk.daftar.feature.auth.resources.auth_restore_later
 import com.mk.daftar.feature.auth.resources.auth_retry
 import com.mk.daftar.feature.auth.resources.auth_security_footnote
 import com.mk.daftar.feature.auth.resources.auth_step_1
@@ -447,16 +446,13 @@ private fun RecoveryBody(state: AuthUiState, onIntent: (AuthIntent) -> Unit) {
         ) {
             Text(stringResource(Res.string.auth_try_pin_again))
         }
-        DaftarTextButton(onClick = {}, enabled = false, modifier = Modifier.fillMaxWidth()) {
+        DaftarTextButton(
+            onClick = { onIntent(AuthIntent.OpenRestore) },
+            enabled = state.busy == null,
+            modifier = Modifier.fillMaxWidth(),
+        ) {
             Text(stringResource(Res.string.auth_restore_backup))
         }
-        Text(
-            text = stringResource(Res.string.auth_restore_later),
-            style = typography.fineText,
-            color = colors.muted,
-            textAlign = TextAlign.Center,
-            modifier = Modifier.fillMaxWidth(),
-        )
     }
 }
 

@@ -164,6 +164,12 @@ sealed interface AuthIntent : UiIntent {
     /** Retry after an unavailable state, or a status read after a return to the screen. */
     data object Recheck : AuthIntent
 
+    /**
+     * "Restore encrypted backup" on the forgotten-PIN screen. The restore wizard lives outside this feature, so the
+     * gate handles this intent and this view model ignores it.
+     */
+    data object OpenRestore : AuthIntent
+
     /** Background, inactivity, developer entry: drop every draft now and cancel work that has not finished. */
     data object PrivacyInvalidated : AuthIntent
 }

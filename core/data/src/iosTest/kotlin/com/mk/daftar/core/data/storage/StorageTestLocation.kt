@@ -19,6 +19,6 @@ internal fun newTestLocation(): TestLocation {
         error = null,
     )
     val path = "$directory/$DAFTAR_DATABASE_FILE_NAME"
-    val provider = DaftarDatabaseBuilderProvider { daftarDatabaseBuilder(path) }
+    val provider = DaftarDatabaseBuilderProvider { _ -> daftarDatabaseBuilder(path) }
     return TestLocation(provider) { NSFileManager.defaultManager.removeItemAtPath(directory, error = null) }
 }

@@ -24,6 +24,7 @@ import platform.CoreFoundation.kCFTypeDictionaryKeyCallBacks
 import platform.CoreFoundation.kCFTypeDictionaryValueCallBacks
 import platform.Security.SecAccessControlCreateWithFlags
 import platform.Security.SecItemCopyMatching
+import platform.Security.SecItemDelete
 import platform.Security.SecKeyCopyPublicKey
 import platform.Security.SecKeyCopyPublicKey as copyPublicKey
 import platform.Security.SecKeyCreateDecryptedData
@@ -31,6 +32,7 @@ import platform.Security.SecKeyCreateEncryptedData
 import platform.Security.SecKeyCreateRandomKey
 import platform.Security.SecKeyIsAlgorithmSupported
 import platform.Security.SecKeyRef
+import platform.Security.errSecItemNotFound
 import platform.Security.errSecSuccess
 import platform.Security.kSecAccessControlPrivateKeyUsage
 import platform.Security.kSecAttrAccessControl
@@ -58,8 +60,8 @@ import platform.Security.kSecReturnRef
  * presence requirement, so the app PIN is the only gate on the PIN path. A missing key is
  * [SecurityError.DeviceKeyUnavailable], and [prepare] creates one only when none exists.
  */
-internal class SecureEnclaveProtector : PlatformEnvelopeProtector {
-    private val tag = KEY_TAG.encodeToByteArray()
+internal class SecureEnclaveProtector(keyTag: String) : PlatformEnvelopeProtector {
+    private val tag = keyTag.encodeToByteArray()
 
     override suspend fun prepare(): Outcome<Unit, SecurityError> {
         val existing = loadPrivateKey()
@@ -162,9 +164,30 @@ internal class SecureEnclaveProtector : PlatformEnvelopeProtector {
         return query
     }
 
-    private companion object {
-        const val KEY_TAG = "com.mk.daftar.security.pin-envelope.secure-enclave.v1"
+    companion object {
+        /** The application tag of the legacy generation's key. */
+        const val LEGACY_KEY_TAG = "com.mk.daftar.security.pin-envelope.secure-enclave.v1"
+
         const val KEY_BITS = 256
         val ALGORITHM = kSecKeyAlgorithmECIESEncryptionCofactorX963SHA256AESGCM
+    }
+}
+
+/** Removes the Secure Enclave key with [keyTag]. Idempotent: a missing key is success. */
+internal fun deleteSecureEnclaveKey(keyTag: String): Outcome<Unit, SecurityError> {
+    val query =
+        CFDictionaryCreateMutable(null, 0, kCFTypeDictionaryKeyCallBacks.ptr, kCFTypeDictionaryValueCallBacks.ptr)
+    val tagData = cfData(keyTag.encodeToByteArray())
+    CFDictionarySetValue(query, kSecClass, kSecClassKey)
+    CFDictionarySetValue(query, kSecAttrApplicationTag, tagData)
+    CFDictionarySetValue(query, kSecAttrKeyType, kSecAttrKeyTypeECSECPrimeRandom)
+    CFDictionarySetValue(query, kSecAttrKeyClass, kSecAttrKeyClassPrivate)
+    val status = SecItemDelete(query)
+    CFRelease(tagData)
+    CFRelease(query)
+    return if (status == errSecSuccess || status == errSecItemNotFound) {
+        Outcome.Success(Unit)
+    } else {
+        Outcome.Failure(SecurityError.PersistenceFailure)
     }
 }
