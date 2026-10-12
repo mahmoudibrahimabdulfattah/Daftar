@@ -31,9 +31,17 @@ data class BankDetailRoute(val bankId: String) : NavKey
 @Serializable
 data object GoldRoute : NavKey
 
-/** Cash and wallet balances, reached from Home and Assets. A placeholder until the cash feature phase. */
+/** Cash and wallet balances, reached from Home and Assets. The list of the cash feature. */
 @Serializable
 data object CashRoute : NavKey
+
+/** A new cash or wallet balance. */
+@Serializable
+data object CashAddRoute : NavKey
+
+/** One cash or wallet balance, edited or deleted. */
+@Serializable
+data class CashEditRoute(val balanceId: String) : NavKey
 
 /** Merchant quotes, their sources and the global estimate. Reached from Home. */
 @Serializable

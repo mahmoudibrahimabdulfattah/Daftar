@@ -14,6 +14,7 @@ kotlin {
             implementation(projects.core.navigation)
             implementation(projects.core.ui)
             implementation(projects.feature.auth)
+            implementation(projects.feature.cash)
             implementation(projects.feature.home)
             implementation(projects.feature.assets)
             implementation(projects.feature.journal)
