@@ -1,0 +1,33 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <string name="backup_title">تصدير مشفّر</string>
+    <string name="backup_intro_heading">نسخة تحتفظ بها</string>
+    <string name="backup_intro_message">تحتوي على الأصول والسجل والإعدادات. لا تتضمن رمز دفتر أو مفاتيح البصمة.</string>
+    <string name="backup_intro_continue">متابعة</string>
+    <string name="backup_password_heading">اختر كلمة مرور مستقلة وقوية. ستحتاجها لاستعادة هذه النسخة.</string>
+    <string name="backup_password_label">كلمة مرور النسخة</string>
+    <string name="backup_confirm_label">تأكيد كلمة المرور</string>
+    <string name="backup_password_hint">12 حرفًا على الأقل · مختلفة عن رمز دفتر</string>
+    <string name="backup_password_too_short">استخدم 12 حرفًا على الأقل.</string>
+    <string name="backup_password_too_long">كلمة المرور طويلة جدًا. الحد 256 حرفًا.</string>
+    <string name="backup_password_invalid">كلمة المرور تحتوي على رموز لا يمكن حفظها.</string>
+    <string name="backup_confirm_mismatch">كلمتا المرور غير متطابقتين.</string>
+    <string name="backup_password_warning">فقدان كلمة المرور يعني تعذّر استعادة النسخة. احتفظ بها في مكان آمن منفصل.</string>
+    <string name="backup_submit">إنشاء واختيار مكان الحفظ</string>
+    <string name="backup_picker_note_android">سيظهر منتقي ملفات Android لاختيار مكان الحفظ. لا نطلب صلاحية الوصول إلى كل ملفاتك.</string>
+    <string name="backup_picker_note_ios">سيفتح منتقي الملفات في iOS لاختيار مكان الحفظ. لا نطلب صلاحية الوصول إلى كل ملفاتك.</string>
+    <string name="backup_busy_heading">جارٍ تجهيز النسخة</string>
+    <string name="backup_busy_message">تُشفَّر البيانات قبل اختيار مكان الحفظ. لا يُكتب أي ملف مؤقت غير مشفّر.</string>
+    <string name="backup_writing_heading">جارٍ حفظ النسخة</string>
+    <string name="backup_writing_message">نكتب الملف المشفّر إلى المكان المختار.</string>
+    <string name="backup_success_heading">تم حفظ النسخة</string>
+    <string name="backup_success_message">نسخة مشفّرة · لا تتضمن رمز دفتر أو مفاتيح البصمة.</string>
+    <string name="backup_success_done">العودة للإعدادات</string>
+    <string name="backup_failed_heading">لم تُحفظ النسخة</string>
+    <string name="backup_failed_write">تعذّرت الكتابة في المكان المختار. اختر مكانًا آخر أو تحقق من المساحة المتاحة.</string>
+    <string name="backup_failed_other">حدث خطأ أثناء تجهيز النسخة.</string>
+    <string name="backup_failed_safe">قاعدة بياناتك لم تتغيّر. لا يظهر «تم التصدير» إلا بعد اكتمال كتابة الملف.</string>
+    <string name="backup_choose_other">اختيار مكان آخر</string>
+    <string name="backup_cancel">إلغاء</string>
+    <string name="backup_back">رجوع</string>
+</resources>

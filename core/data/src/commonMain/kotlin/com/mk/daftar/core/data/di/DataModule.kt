@@ -1,5 +1,7 @@
 package com.mk.daftar.core.data.di
 
+import com.mk.daftar.core.backup.BackupSnapshotSource
+import com.mk.daftar.core.data.backup.VaultBackupSnapshotReader
 import com.mk.daftar.core.data.ids.IdGenerator
 import com.mk.daftar.core.data.ids.UuidV4Generator
 import com.mk.daftar.core.data.repository.BankRecordRepository
@@ -55,6 +57,7 @@ val dataModule: Module = module {
         )
     }
     single<UserPreferencesRepository> { UserPreferencesRecordRepository(get()) }
+    single<BackupSnapshotSource> { VaultBackupSnapshotReader(get<DaftarVaultSession>().host, get()) }
 }
 
 /** Platform bindings: the database builder for this platform's private, device-only location. */

@@ -103,6 +103,10 @@ data class NoteEditRoute(val noteId: String) : NavKey
 @Serializable
 data class ManualQuoteRoute(val quoteKey: String? = null) : NavKey
 
+/** The encrypted export: one password-protected copy of the vault. Reached from Settings and never a top-level tab. */
+@Serializable
+data object BackupExportRoute : NavKey
+
 /** The four top-level destinations, in display order. Each owns an independent back stack rooted at its key. */
 enum class TopLevelDestination(val route: NavKey) {
     HOME(HomeRoute),

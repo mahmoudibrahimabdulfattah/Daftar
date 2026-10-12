@@ -2,4 +2,8 @@
 <resources>
     <string name="settings_title">Settings</string>
     <string name="settings_message">Theme, language and security options appear here in a later update.</string>
+    <string name="settings_backup_heading">Backup</string>
+    <string name="settings_backup_title">Encrypted export</string>
+    <string name="settings_backup_subtitle">Separate password</string>
+    <string name="settings_backup_action">Export</string>
 </resources>
