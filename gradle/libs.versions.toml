@@ -13,6 +13,7 @@ ktor = "3.6.0"
 turbine = "1.2.1"
 room = "2.8.5"
 sqlite = "2.7.1"
+sqlcipher = "4.19.1"
 datastore = "1.2.1"
 lifecycle = "2.11.0"
 navigation3 = "1.1.2"
@@ -79,7 +80,9 @@ junit = { module = "junit:junit", version.ref = "junit" }
 
 androidx-room-runtime = { module = "androidx.room:room-runtime", version.ref = "room" }
 androidx-room-compiler = { module = "androidx.room:room-compiler", version.ref = "room" }
+androidx-sqlite = { module = "androidx.sqlite:sqlite", version.ref = "sqlite" }
 androidx-sqlite-bundled = { module = "androidx.sqlite:sqlite-bundled", version.ref = "sqlite" }
+sqlcipher-android = { module = "net.zetetic:sqlcipher-android", version.ref = "sqlcipher" }
 androidx-datastore-preferences-core = { module = "androidx.datastore:datastore-preferences-core", version.ref = "datastore" }
 
 turbine = { module = "app.cash.turbine:turbine", version.ref = "turbine" }
