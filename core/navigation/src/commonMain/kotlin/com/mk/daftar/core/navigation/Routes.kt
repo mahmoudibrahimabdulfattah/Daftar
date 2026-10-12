@@ -55,7 +55,7 @@ data class AccountAddRoute(val bankId: String) : NavKey
 @Serializable
 data class AccountEditRoute(val accountId: String) : NavKey
 
-/** Gold holdings, reached from Home and Assets. A placeholder until the gold feature phase replaces its entry. */
+/** Gold holdings, reached from Home and Assets. */
 @Serializable
 data object GoldRoute : NavKey
 

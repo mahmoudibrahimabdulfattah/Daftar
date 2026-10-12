@@ -105,4 +105,4 @@ class SettingsScreenshotHostActivity : ComponentActivity() {
 }
 
 /** The build the captures show. It is the build's own values, not a release claim. */
-internal val HOST_INFO = AppBuildInfo(versionName = "0.1.0", buildNumber = "1")
+internal val HOST_INFO = AppBuildInfo(versionName = "1.0.0", buildNumber = "1")
