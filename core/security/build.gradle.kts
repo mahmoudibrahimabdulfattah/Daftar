@@ -16,6 +16,10 @@ kotlin {
     }
 
     sourceSets {
+        androidMain.dependencies {
+            // BiometricManager reports strong-biometric capability, and BiometricPrompt needs the same crypto type.
+            implementation(libs.androidx.biometric)
+        }
         commonMain.dependencies {
             api(projects.core.common)
             implementation(libs.libsodium.bindings)

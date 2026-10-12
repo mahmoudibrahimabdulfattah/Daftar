@@ -21,6 +21,8 @@ class SecurityModuleTest {
                     single<SecurityRecordStore> { harness.records }
                     single<BackoffStore> { harness.backoff }
                     single<MonotonicClock> { harness.clock }
+                    single<BiometricKeyStore> { harness.biometricKeys }
+                    single<BiometricSlotStore> { harness.biometricSlots }
                 },
             )
         }

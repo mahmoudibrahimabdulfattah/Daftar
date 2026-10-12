@@ -25,6 +25,16 @@ internal class DurableFile(private val file: File) {
 
     fun exists(): Boolean = file.exists()
 
+    /** Removes the file if present. Idempotent. */
+    suspend fun delete(): Outcome<Unit, SecurityError> = withContext(Dispatchers.IO) {
+        try {
+            Files.deleteIfExists(file.toPath())
+            Outcome.Success(Unit)
+        } catch (failure: IOException) {
+            Outcome.Failure(SecurityError.PersistenceFailure)
+        }
+    }
+
     suspend fun writeAtomic(bytes: ByteArray): Outcome<Unit, SecurityError> = withContext(Dispatchers.IO) {
         try {
             file.parentFile?.mkdirs()
@@ -91,5 +101,26 @@ internal class FileBackoffStore(file: File, private val protector: PlatformEnvel
             is Outcome.Success -> result.data
         }
         return durable.writeAtomic(sealed)
+    }
+}
+
+/** The biometric slot, stored as-is. The platform cipher authenticates it and its header, so an edit is detected. */
+internal class FileBiometricSlotStore(file: File) : BiometricSlotStore {
+    private val durable = DurableFile(file)
+
+    override suspend fun read(): Outcome<ByteArray?, BiometricError> = when (val read = durable.read()) {
+        is Outcome.Failure -> Outcome.Failure(read.error.toBiometricError())
+        is Outcome.Success -> Outcome.Success(read.data)
+    }
+
+    override suspend fun write(slot: ByteArray): Outcome<Unit, BiometricError> =
+        when (val written = durable.writeAtomic(slot)) {
+            is Outcome.Failure -> Outcome.Failure(written.error.toBiometricError())
+            is Outcome.Success -> Outcome.Success(Unit)
+        }
+
+    override suspend fun delete(): Outcome<Unit, BiometricError> = when (val deleted = durable.delete()) {
+        is Outcome.Failure -> Outcome.Failure(deleted.error.toBiometricError())
+        is Outcome.Success -> Outcome.Success(Unit)
     }
 }

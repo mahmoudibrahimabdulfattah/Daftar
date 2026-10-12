@@ -42,7 +42,7 @@ val dataModule: Module = module {
         )
     }
     single<VaultSession> { get<DaftarVaultSession>() }
-    single { VaultAuthenticator(security = get(), session = get()) }
+    single { VaultAuthenticator(security = get(), session = get(), preferences = get()) }
     single<GoldRepository> { GoldRecordRepository(get<DaftarVaultSession>().host) }
     single<BankRepository> { BankRecordRepository(get<DaftarVaultSession>().host) }
     single<CashRepository> { CashRecordRepository(get<DaftarVaultSession>().host) }

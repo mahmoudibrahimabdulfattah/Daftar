@@ -1,2 +1,3 @@
 /* Home-screen name. Follows the device language. */
 "CFBundleDisplayName" = "Daftar";
+"NSFaceIDUsageDescription" = "Daftar uses Face ID to open your notebook quickly. Biometric data never leaves this device.";

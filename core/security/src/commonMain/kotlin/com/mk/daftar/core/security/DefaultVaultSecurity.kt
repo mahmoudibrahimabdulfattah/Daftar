@@ -19,8 +19,12 @@ internal class DefaultVaultSecurity(
     private val records: SecurityRecordStore,
     private val coordinator: UnlockCoordinator,
     private val clock: MonotonicClock,
+    private val biometrics: BiometricSlots,
 ) : VaultSecurity {
     private val sessionMutex = Mutex()
+
+    /** Biometric prompts run one at a time; a second request waits for the first to settle. */
+    private val biometricMutex = Mutex()
 
     /** Guarded by [sessionMutex]. Each publish and each lock bumps the generation. */
     private var sessionGeneration = 0L
@@ -63,7 +67,7 @@ internal class DefaultVaultSecurity(
         val startGeneration = sessionMutex.withLock { sessionGeneration }
         return coordinator.attempt(
             verify = { record -> verifyPin(pin, record) },
-            finish = { dek -> publish(dek, startGeneration) },
+            finish = { dek -> publish(dek, startGeneration, UnlockProof.Pin) },
         )
     }
 
@@ -93,6 +97,115 @@ internal class DefaultVaultSecurity(
             session = null
             sessionGeneration++
         }
+    }
+
+    override suspend fun biometricCapability(): BiometricCapability = biometrics.capability()
+
+    override suspend fun biometricSlotState(): Outcome<BiometricSlotState, BiometricError> = biometrics.state()
+
+    override suspend fun enrollBiometrics(lease: KeyLease, prompter: BiometricPrompter): Outcome<Unit, BiometricError> {
+        if (lease.proof != UnlockProof.Pin) return Outcome.Failure(BiometricError.PinRequired)
+        if (!isCurrent(lease)) return Outcome.Failure(BiometricError.Superseded)
+        val ids = when (val envelope = envelopeIdentifiers()) {
+            is Outcome.Failure -> return Outcome.Failure(envelope.error)
+            is Outcome.Success -> envelope.data
+        }
+        val key = lease.copyKeyForEnrollment()
+        val committed = try {
+            biometricMutex.withLock { biometrics.enroll(ids.vaultId, ids.dekId, key, prompter) }
+        } finally {
+            key.fill(0)
+        }
+        if (!isCurrent(lease)) {
+            // A lock arrived during the prompt. The slot must not outlive the session that created it.
+            if (committed is Outcome.Success) biometrics.remove()
+            return Outcome.Failure(BiometricError.Superseded)
+        }
+        return committed
+    }
+
+    override suspend fun reenrollBiometrics(
+        pin: SecretBytes,
+        prompter: BiometricPrompter,
+    ): Outcome<Unit, BiometricError> {
+        if (!pin.use { PinNormalizer.isValidDigits(it) }) {
+            return Outcome.Failure(BiometricError.Security(SecurityError.InvalidPinFormat))
+        }
+        when (val ready = Libsodium.ensureReady()) {
+            is Outcome.Failure -> return Outcome.Failure(BiometricError.Security(ready.error))
+            is Outcome.Success -> Unit
+        }
+        var enrolled: Outcome<Unit, BiometricError> = Outcome.Failure(BiometricError.Superseded)
+        val verified = coordinator.attempt(
+            verify = { record -> verifyPin(pin, record) },
+            finish = { dek ->
+                enrolled = try {
+                    val ids = envelopeIdentifiers()
+                    when (ids) {
+                        is Outcome.Failure -> Outcome.Failure(ids.error)
+
+                        is Outcome.Success -> dek.use { key ->
+                            biometricMutex.withLock {
+                                biometrics.enroll(ids.data.vaultId, ids.data.dekId, key, prompter)
+                            }
+                        }
+                    }
+                } finally {
+                    dek.wipe()
+                }
+                Outcome.Success(Unit)
+            },
+        )
+        return when (verified) {
+            is Outcome.Failure -> Outcome.Failure(BiometricError.Security(verified.error))
+            is Outcome.Success -> enrolled
+        }
+    }
+
+    override suspend fun unlockWithBiometrics(prompter: BiometricPrompter): Outcome<KeyLease, BiometricError> {
+        val startGeneration = sessionMutex.withLock { sessionGeneration }
+        val ids = when (val envelope = envelopeIdentifiers()) {
+            is Outcome.Failure -> return Outcome.Failure(envelope.error)
+            is Outcome.Success -> envelope.data
+        }
+        // Biometric failures never touch the PIN backoff record: the OS throttles its own attempts.
+        val key = when (
+            val unwrapped = biometricMutex.withLock {
+                biometrics.unwrap(ids.vaultId, ids.dekId, prompter)
+            }
+        ) {
+            is Outcome.Failure -> return Outcome.Failure(unwrapped.error)
+            is Outcome.Success -> unwrapped.data
+        }
+        return when (val published = publish(SecretBytes.owned(key), startGeneration, UnlockProof.Biometric)) {
+            is Outcome.Success -> Outcome.Success(published.data)
+
+            is Outcome.Failure -> Outcome.Failure(
+                if (published.error == SecurityError.SessionSuperseded) {
+                    BiometricError.Superseded
+                } else {
+                    BiometricError.Security(published.error)
+                },
+            )
+        }
+    }
+
+    override suspend fun disableBiometrics(): Outcome<Unit, BiometricError> = biometricMutex.withLock {
+        biometrics.remove()
+    }
+
+    /** The vault and DEK identifiers from the stored envelope. The envelope is unsealed without the PIN. */
+    private suspend fun envelopeIdentifiers(): Outcome<EnvelopeIdentifiers, BiometricError> =
+        when (val opened = openEnvelope()) {
+            is Outcome.Failure -> Outcome.Failure(BiometricError.Security(opened.error))
+
+            is Outcome.Success -> Outcome.Success(
+                EnvelopeIdentifiers(vaultId = opened.data.header.vaultId, dekId = opened.data.header.dekId),
+            )
+        }
+
+    private suspend fun isCurrent(lease: KeyLease): Boolean = sessionMutex.withLock {
+        session === lease && sessionGeneration == lease.generation
     }
 
     private suspend fun createLocked(pin: SecretBytes): Outcome<KeyLease, SecurityError> {
@@ -147,7 +260,7 @@ internal class DefaultVaultSecurity(
                 return Outcome.Failure(SecurityError.AlreadyInitialized)
             }
         }
-        return publish(dek, sessionMutex.withLock { sessionGeneration })
+        return publish(dek, sessionMutex.withLock { sessionGeneration }, UnlockProof.Pin)
     }
 
     /**
@@ -289,18 +402,23 @@ internal class DefaultVaultSecurity(
     }
 
     /** Publishes [dek] as the unlocked session. A lock that happened since [startGeneration] discards it. */
-    private suspend fun publish(dek: SecretBytes, startGeneration: Long): Outcome<KeyLease, SecurityError> =
-        sessionMutex.withLock {
-            if (sessionGeneration != startGeneration) {
-                dek.wipe()
-                return@withLock Outcome.Failure(SecurityError.SessionSuperseded)
-            }
-            session?.close()
-            sessionGeneration++
-            val lease = KeyLease(dek, sessionGeneration)
-            session = lease
-            Outcome.Success(lease)
+    private suspend fun publish(
+        dek: SecretBytes,
+        startGeneration: Long,
+        proof: UnlockProof,
+    ): Outcome<KeyLease, SecurityError> = sessionMutex.withLock {
+        if (sessionGeneration != startGeneration) {
+            dek.wipe()
+            return@withLock Outcome.Failure(SecurityError.SessionSuperseded)
         }
+        session?.close()
+        sessionGeneration++
+        val lease = KeyLease(dek, sessionGeneration, proof)
+        session = lease
+        Outcome.Success(lease)
+    }
+
+    private class EnvelopeIdentifiers(val vaultId: ByteArray, val dekId: ByteArray)
 
     private companion object {
         const val KEY_BYTES = 32

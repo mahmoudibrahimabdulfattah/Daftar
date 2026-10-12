@@ -4,6 +4,8 @@
 
     <!-- The only permission: the app reaches the price services. No storage, location, notification or runtime grants. -->
     <uses-permission android:name="android.permission.INTERNET" />
+    <!-- Strong biometrics only, for the optional unlock. No device credential or other grant. -->
+    <uses-permission android:name="android.permission.USE_BIOMETRIC" />
 
     <!--
         Merged from dependencies, but unused here: the app registers no dynamic receivers, so the custom

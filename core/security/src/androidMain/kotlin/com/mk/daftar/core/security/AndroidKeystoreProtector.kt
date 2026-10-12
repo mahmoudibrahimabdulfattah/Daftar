@@ -146,10 +146,7 @@ internal class AndroidKeystoreProtector(private val alias: String, private val p
         }
     }
 
-    private fun acceptable(level: KeystoreLevel): Boolean = when (policy) {
-        KeystorePolicy.RequireHardware -> level == KeystoreLevel.StrongBox || level == KeystoreLevel.TrustedEnvironment
-        KeystorePolicy.AllowSoftwareForDebug -> true
-    }
+    private fun acceptable(level: KeystoreLevel): Boolean = policy.accepts(level)
 
     private fun loadKey(): SecretKey? {
         val keyStore = KeyStore.getInstance(ANDROID_KEYSTORE).apply { load(null) }
@@ -188,21 +185,7 @@ internal class AndroidKeystoreProtector(private val alias: String, private val p
         return builder.build()
     }
 
-    private fun levelOf(key: SecretKey): KeystoreLevel {
-        val info = SecretKeyFactory.getInstance(key.algorithm, ANDROID_KEYSTORE)
-            .getKeySpec(key, KeyInfo::class.java) as KeyInfo
-        return if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.S) {
-            when (info.securityLevel) {
-                KeyProperties.SECURITY_LEVEL_STRONGBOX -> KeystoreLevel.StrongBox
-                KeyProperties.SECURITY_LEVEL_TRUSTED_ENVIRONMENT -> KeystoreLevel.TrustedEnvironment
-                KeyProperties.SECURITY_LEVEL_SOFTWARE -> KeystoreLevel.Software
-                else -> KeystoreLevel.Unknown
-            }
-        } else {
-            @Suppress("DEPRECATION")
-            if (info.isInsideSecureHardware) KeystoreLevel.TrustedEnvironment else KeystoreLevel.Software
-        }
-    }
+    private fun levelOf(key: SecretKey): KeystoreLevel = keystoreLevelOf(key)
 
     private companion object {
         const val ANDROID_KEYSTORE = "AndroidKeyStore"
@@ -211,4 +194,27 @@ internal class AndroidKeystoreProtector(private val alias: String, private val p
         const val GCM_IV_BYTES = 12
         const val GCM_TAG_BITS = 128
     }
+}
+
+/** The hardware level the platform reports for [key]. */
+internal fun keystoreLevelOf(key: SecretKey): KeystoreLevel {
+    val info = SecretKeyFactory.getInstance(key.algorithm, "AndroidKeyStore")
+        .getKeySpec(key, KeyInfo::class.java) as KeyInfo
+    return if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.S) {
+        when (info.securityLevel) {
+            KeyProperties.SECURITY_LEVEL_STRONGBOX -> KeystoreLevel.StrongBox
+            KeyProperties.SECURITY_LEVEL_TRUSTED_ENVIRONMENT -> KeystoreLevel.TrustedEnvironment
+            KeyProperties.SECURITY_LEVEL_SOFTWARE -> KeystoreLevel.Software
+            else -> KeystoreLevel.Unknown
+        }
+    } else {
+        @Suppress("DEPRECATION")
+        if (info.isInsideSecureHardware) KeystoreLevel.TrustedEnvironment else KeystoreLevel.Software
+    }
+}
+
+/** Production accepts only hardware-backed levels. Software keys are accepted only under the debug policy. */
+internal fun KeystorePolicy.accepts(level: KeystoreLevel): Boolean = when (this) {
+    KeystorePolicy.RequireHardware -> level == KeystoreLevel.StrongBox || level == KeystoreLevel.TrustedEnvironment
+    KeystorePolicy.AllowSoftwareForDebug -> true
 }

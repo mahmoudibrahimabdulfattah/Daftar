@@ -27,16 +27,28 @@ class SecretBytes private constructor(val size: Int, private var bytes: ByteArra
     }
 }
 
+/** How the current session was authenticated. Only a PIN-proven session may enroll biometrics. */
+enum class UnlockProof {
+    Pin,
+    Biometric,
+}
+
 /**
  * The unlocked vault key. Phase 4 holds it for the lifetime of a session and closes it on lock. [useDatabaseKey]
  * is the only path to the raw key, and the bytes are valid only inside the block.
  */
-class KeyLease internal constructor(private val key: SecretBytes, val generation: Long) {
+class KeyLease internal constructor(private val key: SecretBytes, val generation: Long, val proof: UnlockProof) {
     val isClosed: Boolean
         get() = key.isWiped
 
     /** Bounded accessor for the database factory. Features never receive the raw key. */
     fun <R> useDatabaseKey(block: (ByteArray) -> R): R = key.use(block)
+
+    /**
+     * A private copy of the key for one biometric enrollment. The caller wipes it in a `finally`. It is never
+     * retained, and it is not a database key accessor.
+     */
+    internal fun copyKeyForEnrollment(): ByteArray = key.use { it.copyOf() }
 
     /** Wipes the key. Later [useDatabaseKey] calls fail. */
     fun close() {

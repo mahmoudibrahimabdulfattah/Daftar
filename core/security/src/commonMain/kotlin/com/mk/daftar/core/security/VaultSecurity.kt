@@ -23,4 +23,26 @@ interface VaultSecurity {
 
     /** Closes the session. Any in-flight unlock that completes afterwards is rejected. */
     suspend fun lock()
+
+    /** Whether the platform can authenticate with a strong biometric right now. */
+    suspend fun biometricCapability(): BiometricCapability
+
+    /** Whether the stored biometric slot is absent, valid or unusable. The PIN envelope is never consulted. */
+    suspend fun biometricSlotState(): Outcome<BiometricSlotState, BiometricError>
+
+    /**
+     * Wraps the open session's DEK under a new biometric-bound key. [lease] must have been proven with the PIN in this
+     * session: a session opened with biometrics cannot authorize enrollment. Commits the slot only after it is written.
+     * The PIN envelope and the database are unchanged.
+     */
+    suspend fun enrollBiometrics(lease: KeyLease, prompter: BiometricPrompter): Outcome<Unit, BiometricError>
+
+    /** Re-enrollment from settings: verifies [pin] first, then enrolls the current DEK. Never opens a session. */
+    suspend fun reenrollBiometrics(pin: SecretBytes, prompter: BiometricPrompter): Outcome<Unit, BiometricError>
+
+    /** Opens the vault with the biometric slot. A successful prompt alone never opens it: the DEK must unwrap. */
+    suspend fun unlockWithBiometrics(prompter: BiometricPrompter): Outcome<KeyLease, BiometricError>
+
+    /** Destroys the biometric slot and its key. Idempotent. The PIN stays usable. */
+    suspend fun disableBiometrics(): Outcome<Unit, BiometricError>
 }
