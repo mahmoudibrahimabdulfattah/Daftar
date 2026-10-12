@@ -32,6 +32,7 @@ dependencyResolutionManagement {
 
 include(":androidApp")
 include(":core:common")
+include(":core:database-driver")
 include(":core:designsystem")
 include(":core:model")
 include(":core:network")

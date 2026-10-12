@@ -1,0 +1,5 @@
+language = C
+package = sqlcipher
+headers = sqlite3.h
+staticLibraries = libsqlcipher.a
+linkerOpts = -framework Security
