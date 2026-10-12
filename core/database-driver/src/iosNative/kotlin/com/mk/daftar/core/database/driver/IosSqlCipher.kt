@@ -49,6 +49,7 @@ import sqlcipher.sqlite3_column_type
 import sqlcipher.sqlite3_errmsg
 import sqlcipher.sqlite3_finalize
 import sqlcipher.sqlite3_get_autocommit
+import sqlcipher.sqlite3_key
 import sqlcipher.sqlite3_open_v2
 import sqlcipher.sqlite3_prepare_v2
 import sqlcipher.sqlite3_reset
@@ -58,13 +59,14 @@ import sqlcipher.sqlite3_step
 private val SQLITE_TRANSIENT = (-1L).toCPointer<CFunction<(COpaquePointer?) -> Unit>>()
 
 /**
- * Opens the file with the SQLCipher symbols linked into the app, sets the busy timeout, and runs the raw-key
- * statement. sqlite3_open_v2 does not read the file, so the key is the first statement that does.
+ * Opens the file with the SQLCipher symbols linked into the app, keys it through `sqlite3_key`, and sets the busy
+ * timeout. sqlite3_open_v2 does not read the file, and the key call comes before any statement can read it. The key
+ * is passed as the mutable `x'<hex>'` buffer with its explicit length, never as a SQL string.
  */
 internal actual fun openKeyedConnection(fileName: String, rawKeyLiteral: ByteArray): SQLiteConnection {
     val connection = openHandle(fileName)
     try {
-        connection.executeOnce(rawKeyPragma(rawKeyLiteral))
+        connection.applyRawKey(rawKeyLiteral)
         connection.executeOnce(BUSY_TIMEOUT_PRAGMA_SQL)
     } catch (error: Exception) {
         connection.close()
@@ -116,6 +118,13 @@ internal class NativeSqlCipherConnection(private val db: CPointer<sqlite3>) : SQ
     }
 
     override fun inTransaction(): Boolean = sqlite3_get_autocommit(db) == 0
+
+    /** Keys the database before any read. The caller wipes [rawKeyLiteral] after this returns. */
+    fun applyRawKey(rawKeyLiteral: ByteArray) {
+        check(!closed) { "connection is closed" }
+        val rc = rawKeyLiteral.usePinned { pinned -> sqlite3_key(db, pinned.addressOf(0), rawKeyLiteral.size) }
+        if (rc != SQLITE_OK) throw sqliteFailure(rc, db)
+    }
 
     override fun close() {
         if (closed) return

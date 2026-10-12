@@ -23,9 +23,3 @@ internal fun rawKeyLiteral(key: ByteArray): ByteArray {
     suffix.copyInto(out, position)
     return out
 }
-
-/**
- * The statement SQLCipher must receive first: `PRAGMA key = "x'<hex>'"`. The statement is a String, which cannot be
- * wiped; this is the documented limitation of the bridge, and it lives only as long as the statement runs.
- */
-internal fun rawKeyPragma(literal: ByteArray): String = "PRAGMA key = \"" + literal.decodeToString() + "\""

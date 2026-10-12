@@ -72,7 +72,7 @@ class SqlCipherDriverTest {
     /** The platform open applies the key first; the double records that statement, as the real bridge does. */
     private fun driver(engine: Engine, keys: DatabaseKeyAccess = FixedKeys(key)) = SqlCipherDriver(keys) { _, literal ->
         engine.openCount++
-        engine.statements += rawKeyPragma(literal)
+        engine.statements += keyStatement(literal)
         if (engine.keyRejected) throw IllegalStateException("file is not a database")
         Connection(engine)
     }
@@ -84,7 +84,7 @@ class SqlCipherDriverTest {
 
         assertEquals(
             listOf(
-                "PRAGMA key = \"x'" + key.joinToString("") { hexOf(it) } + "'\"",
+                "KEY x'" + key.joinToString("") { hexOf(it) } + "'",
                 "PRAGMA cipher_version",
                 "SELECT count(*) FROM sqlite_master",
                 "PRAGMA temp_store = MEMORY",
@@ -103,7 +103,7 @@ class SqlCipherDriverTest {
         driver.open("notes.db").close()
         assertEquals(2, engine.openCount)
         assertEquals(2 * 4, engine.statements.size)
-        assertTrue(engine.statements.chunked(4).all { it.first().startsWith("PRAGMA key") })
+        assertTrue(engine.statements.chunked(4).all { it.first().startsWith("KEY ") })
     }
 
     @Test
@@ -169,20 +169,21 @@ class SqlCipherDriverTest {
     }
 
     @Test
-    fun rawKeyPragmaUsesTheRawKeyEncodingWithLowercaseHex() {
+    fun rawKeyLiteralUsesTheRawKeyEncodingWithLowercaseHex() {
         val bytes = ByteArray(RAW_KEY_BYTES) { it.toByte() }
         val literal = rawKeyLiteral(bytes)
         assertEquals(
-            "PRAGMA key = \"x'000102030405060708090a0b0c0d0e0f101112131415161718191a1b1c1d1e1f'\"",
-            rawKeyPragma(literal),
+            "x'000102030405060708090a0b0c0d0e0f101112131415161718191a1b1c1d1e1f'",
+            literal.decodeToString(),
         )
         literal.fill(0)
     }
 
     @Test
-    fun rawKeyPragmaEncodesHighBytesAsTwoDigits() {
+    fun rawKeyLiteralEncodesHighBytesAsTwoDigits() {
         val literal = rawKeyLiteral(ByteArray(RAW_KEY_BYTES) { 0xFF.toByte() })
-        assertEquals("PRAGMA key = \"x'" + "ff".repeat(RAW_KEY_BYTES) + "'\"", rawKeyPragma(literal))
+        assertEquals("x'" + "ff".repeat(RAW_KEY_BYTES) + "'", literal.decodeToString())
+        literal.fill(0)
     }
 
     @Test
@@ -190,6 +191,9 @@ class SqlCipherDriverTest {
         assertFailsWith<IllegalArgumentException> { rawKeyLiteral(ByteArray(16)) }
         assertFailsWith<IllegalArgumentException> { rawKeyLiteral(ByteArray(33)) }
     }
+
+    /** The engine double records the key the way the platform bridge applies it: from the byte buffer, not SQL. */
+    private fun keyStatement(literal: ByteArray): String = "KEY " + literal.decodeToString()
 
     private fun hexOf(byte: Byte): String {
         val value = byte.toInt() and 0xFF

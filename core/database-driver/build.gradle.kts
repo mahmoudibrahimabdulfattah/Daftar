@@ -113,6 +113,8 @@ kotlin {
         }
         compilations.getByName("main").cinterops.create("sqlcipher") {
             includeDirs(sqlcipherSourceDir)
+            // sqlite3_key is declared only under SQLITE_HAS_CODEC in SQLCipher's header; the bridge keys through it.
+            compilerOpts("-DSQLITE_HAS_CODEC")
             extraOpts("-libraryPath", sqlcipherIosDir.resolve(libSlice).absolutePath)
             tasks.named(interopProcessingTaskName) { dependsOn(buildSqlCipherIos) }
         }
