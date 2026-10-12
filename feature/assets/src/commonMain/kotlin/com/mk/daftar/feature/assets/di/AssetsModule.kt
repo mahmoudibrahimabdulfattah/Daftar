@@ -12,7 +12,6 @@ import com.mk.daftar.core.designsystem.theme.DaftarTheme
 import com.mk.daftar.core.navigation.AssetsRoute
 import com.mk.daftar.core.navigation.BankDetailRoute
 import com.mk.daftar.core.navigation.BanksRoute
-import com.mk.daftar.core.navigation.CashRoute
 import com.mk.daftar.core.navigation.GoldRoute
 import com.mk.daftar.core.navigation.LocalNavigator
 import com.mk.daftar.core.navigation.TopLevelDestination
@@ -25,8 +24,6 @@ import com.mk.daftar.feature.assets.BankDetailScreen
 import com.mk.daftar.feature.assets.BanksScreen
 import com.mk.daftar.feature.assets.resources.Res
 import com.mk.daftar.feature.assets.resources.bank_select
-import com.mk.daftar.feature.assets.resources.cash_message
-import com.mk.daftar.feature.assets.resources.cash_title
 import com.mk.daftar.feature.assets.resources.gold_message
 import com.mk.daftar.feature.assets.resources.gold_title
 import org.jetbrains.compose.resources.stringResource
@@ -38,8 +35,8 @@ import org.koin.dsl.navigation3.navigation
 
 /**
  * Assets' entries. The bank list and its detail are one list-detail pair: scene metadata, not a second navigator,
- * decides whether they sit side by side. Selecting another bank replaces the detail on the stack. Gold and cash are
- * neutral placeholders until their feature phases replace these entries under the same route keys.
+ * decides whether they sit side by side. Selecting another bank replaces the detail on the stack. Gold is a neutral
+ * placeholder until its feature phase replaces that entry under the same route key.
  */
 @OptIn(KoinExperimentalAPI::class, ExperimentalMaterial3AdaptiveApi::class)
 val assetsModule: Module = module {
@@ -49,12 +46,6 @@ val assetsModule: Module = module {
         PlaceholderScreen(
             title = stringResource(Res.string.gold_title),
             message = stringResource(Res.string.gold_message),
-        )
-    }
-    navigation<CashRoute> {
-        PlaceholderScreen(
-            title = stringResource(Res.string.cash_title),
-            message = stringResource(Res.string.cash_message),
         )
     }
     navigation<BanksRoute>(

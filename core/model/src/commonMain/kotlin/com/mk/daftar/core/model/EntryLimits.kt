@@ -35,4 +35,8 @@ object EntryLimits {
     /** A zakat payment is strictly positive with at most [PAYMENT_FRACTION_DIGITS] fractional digits. */
     fun isValidPayment(amount: Decimal): Boolean =
         amount > Decimal.ZERO && amount.fractionDigits <= PAYMENT_FRACTION_DIGITS
+
+    /** A recorded balance is zero or positive with at most [PAYMENT_FRACTION_DIGITS] fractional digits. */
+    fun isValidBalance(amount: Decimal): Boolean =
+        amount >= Decimal.ZERO && amount.fractionDigits <= PAYMENT_FRACTION_DIGITS
 }

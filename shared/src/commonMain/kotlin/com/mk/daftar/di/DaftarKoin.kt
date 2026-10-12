@@ -6,6 +6,7 @@ import com.mk.daftar.core.network.di.networkModule
 import com.mk.daftar.core.security.di.securityModule
 import com.mk.daftar.feature.assets.di.assetsModule
 import com.mk.daftar.feature.auth.di.authModule
+import com.mk.daftar.feature.cash.di.cashModule
 import com.mk.daftar.feature.home.di.homeModule
 import com.mk.daftar.feature.journal.di.journalModule
 import com.mk.daftar.feature.prices.di.pricesModule
@@ -26,6 +27,7 @@ val daftarModules: List<Module> = listOf(
     authModule,
     homeModule,
     assetsModule,
+    cashModule,
     journalModule,
     pricesModule,
     settingsModule,

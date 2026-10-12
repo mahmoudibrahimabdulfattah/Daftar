@@ -11,6 +11,8 @@ import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.shape.RoundedCornerShape
+import androidx.compose.foundation.text.BasicText
+import androidx.compose.foundation.text.TextAutoSize
 import androidx.compose.material3.HorizontalDivider
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
@@ -27,6 +29,8 @@ import androidx.compose.ui.text.buildAnnotatedString
 import androidx.compose.ui.text.withStyle
 import androidx.compose.ui.unit.LayoutDirection
 import androidx.compose.ui.unit.dp
+import androidx.compose.ui.unit.isSpecified
+import androidx.compose.ui.unit.sp
 import com.mk.daftar.core.designsystem.theme.DaftarSpacing
 import com.mk.daftar.core.designsystem.theme.DaftarTheme
 
@@ -76,7 +80,15 @@ fun DaftarAmount(
     } else {
         modifier
     }
-    Text(text = text, style = style, color = color, modifier = amountModifier)
+    // One line that shrinks to fit the width: the figure and its unit never wrap apart, whatever the screen.
+    val maxSize = if (style.fontSize.isSpecified) style.fontSize else 32.sp
+    BasicText(
+        text = text,
+        style = style.copy(color = color),
+        maxLines = 1,
+        autoSize = TextAutoSize.StepBased(minFontSize = 14.sp, maxFontSize = maxSize),
+        modifier = amountModifier,
+    )
 }
 
 /**

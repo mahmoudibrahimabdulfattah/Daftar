@@ -20,8 +20,6 @@
     <string name="assets_banks_summary">%1$s · %2$s</string>
     <string name="gold_title">Gold</string>
     <string name="gold_message">Gold holdings are recorded in a later update.</string>
-    <string name="cash_title">Cash &amp; wallets</string>
-    <string name="cash_message">Cash and wallet balances are recorded in a later update.</string>
     <string name="banks_title">Banks</string>
     <string name="banks_message">Accounts you hold at banks, listed by name.</string>
     <string name="bank_select">Select a bank</string>

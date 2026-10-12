@@ -20,8 +20,6 @@
     <string name="assets_banks_summary">%1$s · %2$s</string>
     <string name="gold_title">الذهب</string>
     <string name="gold_message">تُسجَّل مقتنيات الذهب في تحديث لاحق.</string>
-    <string name="cash_title">النقد والمحافظ</string>
-    <string name="cash_message">تُسجَّل أرصدة النقد والمحافظ في تحديث لاحق.</string>
     <string name="banks_title">البنوك</string>
     <string name="banks_message">الحسابات التي تملكها في البنوك، مرتبة بالاسم.</string>
     <string name="bank_select">اختر بنكًا</string>
