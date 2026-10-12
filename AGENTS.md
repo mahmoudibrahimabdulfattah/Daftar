@@ -40,6 +40,21 @@ Then run the app on the Android emulator (debug package `com.mk.daftar.debug`) a
 - Lock on background, cover the app in recents, no balances in logs, notifications or the clipboard.
 - No cloud backup or device transfer of app data; backups are explicit exports encrypted with a separate password.
 
+## Design system (`core:designsystem`)
+
+- Fully custom theme: `DaftarTheme` (colors, typography, shapes) with companion accessors; Material 3 receives a
+  complete matching scheme only so any Material component stays on-brand. Palette and tokens follow the approved
+  design exactly; brass is reserved for gold.
+- Containers use the Compose Styles API (`DaftarStyles`, `Modifier.styleable`, a `style: Style = Style` parameter on
+  every styled component). Text and icon colour and text style come from the component via `ProvideContent`
+  (Material `Text` doesn't read colours from a style) — use Material `Text`/`Icon` inside components.
+- Components are stateless: callbacks and presentation values only. No repositories, security operations or
+  navigation ownership in `core:designsystem`.
+- Fonts: Alexandria for Arabic text, Rubik for English and every numeric run (tabular figures). Both are bundled
+  variable fonts with 400/500/600/700 weights.
+- The catalog (`DesignCatalog`) is the living reference: every component and state, toggled between light/dark and
+  Arabic/English. Keep it current when a component changes.
+
 ## Style
 
 - ktlint (android_studio style) + Compose rules via Spotless; run `./gradlew spotlessApply`.
