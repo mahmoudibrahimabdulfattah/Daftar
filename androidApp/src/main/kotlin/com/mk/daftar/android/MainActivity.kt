@@ -11,6 +11,7 @@ import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
 import androidx.core.splashscreen.SplashScreen.Companion.installSplashScreen
 import com.mk.daftar.App
+import com.mk.daftar.platform.BiometricPromptHost
 
 /**
  * The launcher. Every window of this activity is secure: FLAG_SECURE is set before content, is never toggled per
@@ -30,6 +31,7 @@ class MainActivity : AppCompatActivity() {
         enableEdgeToEdge()
         window.addFlags(WindowManager.LayoutParams.FLAG_SECURE)
         super.onCreate(savedInstanceState)
+        BiometricPromptHost.attach(this)
         setContent {
             val covered by vaultLifecycle.covered.collectAsState()
             App(
@@ -54,6 +56,11 @@ class MainActivity : AppCompatActivity() {
     override fun onStop() {
         vaultLifecycle.stopped(changingConfigurations = isChangingConfigurations)
         super.onStop()
+    }
+
+    override fun onDestroy() {
+        BiometricPromptHost.detach(this)
+        super.onDestroy()
     }
 
     /** System bar icons follow the app's theme, which may differ from the device's. */

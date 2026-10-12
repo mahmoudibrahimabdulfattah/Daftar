@@ -139,6 +139,119 @@ internal class FakeBackoffStore : BackoffStore {
     }
 }
 
+/** The crypto handle the fake key store hands to the prompter. */
+internal class FakeBiometricCrypto : BiometricCrypto
+
+/**
+ * Stands in for the platform biometric key. Keys are random 32-byte secrets per key identifier. Wrapping and
+ * unwrapping run the prompter first, exactly as the platform does, and [invalidated] simulates an enrollment change.
+ */
+internal class FakeBiometricKeyStore : BiometricKeyStore {
+    private val aead = LibsodiumAead()
+    private val random = LibsodiumSecureRandom()
+    val keys = mutableMapOf<String, ByteArray>()
+    var capabilityValue: BiometricCapability = BiometricCapability.Available
+    var invalidated = false
+    var createCalls = 0
+    var deleteCalls = 0
+    var unwrapCalls = 0
+
+    override suspend fun capability(): BiometricCapability = capabilityValue
+
+    override suspend fun createKey(keyId: ByteArray): Outcome<Unit, BiometricError> {
+        createCalls++
+        if (keys.containsKey(hex(keyId))) return Outcome.Failure(BiometricError.Unavailable)
+        keys[hex(keyId)] = random.bytes(KEY_BYTES)
+        return Outcome.Success(Unit)
+    }
+
+    override suspend fun deleteKey(keyId: ByteArray): Outcome<Unit, BiometricError> {
+        deleteCalls++
+        keys.remove(hex(keyId))
+        return Outcome.Success(Unit)
+    }
+
+    override suspend fun wrap(
+        keyId: ByteArray,
+        aad: ByteArray,
+        plaintext: ByteArray,
+        prompter: BiometricPrompter,
+    ): Outcome<ByteArray, BiometricError> {
+        val key = keys[hex(keyId)] ?: return Outcome.Failure(BiometricError.EnrollmentChanged)
+        if (invalidated) return Outcome.Failure(BiometricError.EnrollmentChanged)
+        val crypto = FakeBiometricCrypto()
+        prompter.authorize(crypto).failureOrNull()?.let { return Outcome.Failure(it) }
+        val nonce = random.bytes(NONCE_BYTES)
+        return Outcome.Success(nonce + aead.seal(key, nonce, aad, plaintext))
+    }
+
+    override suspend fun unwrap(
+        keyId: ByteArray,
+        aad: ByteArray,
+        sealed: ByteArray,
+        prompter: BiometricPrompter,
+    ): Outcome<ByteArray, BiometricError> {
+        unwrapCalls++
+        val key = keys[hex(keyId)] ?: return Outcome.Failure(BiometricError.EnrollmentChanged)
+        if (invalidated) return Outcome.Failure(BiometricError.EnrollmentChanged)
+        val crypto = FakeBiometricCrypto()
+        prompter.authorize(crypto).failureOrNull()?.let { return Outcome.Failure(it) }
+        val opened = aead.open(
+            key,
+            sealed.copyOfRange(0, NONCE_BYTES),
+            aad,
+            sealed.copyOfRange(NONCE_BYTES, sealed.size),
+        ) ?: return Outcome.Failure(BiometricError.CorruptSlot)
+        return Outcome.Success(opened)
+    }
+
+    private fun hex(bytes: ByteArray): String = bytes.joinToString("") {
+        (it.toInt() and 0xFF).toString(16).padStart(2, '0')
+    }
+
+    private companion object {
+        const val KEY_BYTES = 32
+        const val NONCE_BYTES = 24
+    }
+}
+
+internal class FakeBiometricSlotStore : BiometricSlotStore {
+    var slot: ByteArray? = null
+    var writes = 0
+    var failingWrites = mutableSetOf<Int>()
+
+    override suspend fun read(): Outcome<ByteArray?, BiometricError> = Outcome.Success(slot?.copyOf())
+
+    override suspend fun write(slot: ByteArray): Outcome<Unit, BiometricError> {
+        writes++
+        if (writes in failingWrites) return Outcome.Failure(BiometricError.StorageFailure)
+        this.slot = slot.copyOf()
+        return Outcome.Success(Unit)
+    }
+
+    override suspend fun delete(): Outcome<Unit, BiometricError> {
+        slot = null
+        return Outcome.Success(Unit)
+    }
+}
+
+/**
+ * A prompter that answers with [results] in order, then authenticates. [gate] holds the answer until completed, so a
+ * test can change the session while a prompt is on screen.
+ */
+internal class ScriptedPrompter(vararg results: BiometricAuthResult) : BiometricPrompter {
+    private val queue = ArrayDeque(results.toList())
+    var calls = 0
+    var gate: CompletableDeferred<Unit>? = null
+
+    override suspend fun authorize(crypto: BiometricCrypto): BiometricAuthResult {
+        calls++
+        gate?.await()
+        val next = queue.removeFirstOrNull() ?: return BiometricAuthResult.Authenticated(crypto)
+        return if (next is BiometricAuthResult.Authenticated) BiometricAuthResult.Authenticated(crypto) else next
+    }
+}
+
 /** A vault wired to fakes. A "relaunch" is a new [vault] over the same stores and clock. */
 internal class VaultHarness(
     val clock: FakeClock = FakeClock(),
@@ -146,6 +259,8 @@ internal class VaultHarness(
     val protector: FakeProtector = FakeProtector(),
     val records: FakeRecordStore = FakeRecordStore(),
     val backoff: FakeBackoffStore = FakeBackoffStore(),
+    val biometricKeys: FakeBiometricKeyStore = FakeBiometricKeyStore(),
+    val biometricSlots: FakeBiometricSlotStore = FakeBiometricSlotStore(),
 ) {
     fun vault(): DefaultVaultSecurity = DefaultVaultSecurity(
         kdf = kdf,
@@ -155,6 +270,7 @@ internal class VaultHarness(
         records = records,
         coordinator = BackoffUnlockCoordinator(backoff, clock),
         clock = clock,
+        biometrics = BiometricSlots(biometricKeys, biometricSlots, LibsodiumSecureRandom()),
     )
 
     fun storedRecord(): BackoffRecord = (BackoffCodec.decode(checkNotNull(backoff.record)) as Outcome.Success).data

@@ -21,6 +21,7 @@ val daftarModules: List<Module> = listOf(
     dataModule,
     domainModule,
     platformServicesModule,
+    platformBiometricModule,
     authModule,
     homeModule,
     assetsModule,

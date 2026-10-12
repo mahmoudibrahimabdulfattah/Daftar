@@ -5,6 +5,7 @@ import com.mk.daftar.core.common.SystemMonotonicTime
 import com.mk.daftar.core.data.session.VaultAuthenticator
 import com.mk.daftar.core.domain.repository.UserPreferencesRepository
 import com.mk.daftar.core.domain.session.VaultSession
+import com.mk.daftar.core.security.BiometricPrompter
 import com.mk.daftar.core.security.VaultSecurity
 import com.mk.daftar.feature.auth.AuthDraftRegistry
 import com.mk.daftar.feature.auth.AuthGateway
@@ -23,7 +24,13 @@ import org.koin.dsl.module
  */
 val platformServicesModule: Module = module {
     single<MonotonicTime> { SystemMonotonicTime }
-    single<AuthGateway> { VaultAuthGateway(security = get<VaultSecurity>(), authenticator = get<VaultAuthenticator>()) }
+    single<AuthGateway> {
+        VaultAuthGateway(
+            security = get<VaultSecurity>(),
+            authenticator = get<VaultAuthenticator>(),
+            prompter = get<BiometricPrompter>(),
+        )
+    }
     single {
         VaultLifecycleCoordinator(
             session = get<VaultSession>(),

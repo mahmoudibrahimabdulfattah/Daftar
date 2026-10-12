@@ -51,23 +51,31 @@ import com.mk.daftar.core.designsystem.component.PrimaryButton
 import com.mk.daftar.core.designsystem.icon.DaftarIcons
 import com.mk.daftar.core.designsystem.resources.Res as DesignRes
 import com.mk.daftar.core.designsystem.resources.btn_back
+import com.mk.daftar.core.designsystem.resources.pin_biometric
 import com.mk.daftar.core.designsystem.theme.DaftarSpacing
 import com.mk.daftar.core.designsystem.theme.DaftarTheme
 import com.mk.daftar.core.security.PinEntryBuffer
 import com.mk.daftar.feature.auth.AuthBusy
 import com.mk.daftar.feature.auth.AuthError
 import com.mk.daftar.feature.auth.AuthIntent
+import com.mk.daftar.feature.auth.AuthNotice
 import com.mk.daftar.feature.auth.AuthPhase
 import com.mk.daftar.feature.auth.AuthUiState
 import com.mk.daftar.feature.auth.AuthUnavailableReason
+import com.mk.daftar.feature.auth.BiometricOffer
 import com.mk.daftar.feature.auth.resources.Res
 import com.mk.daftar.feature.auth.resources.auth_backoff_seconds
 import com.mk.daftar.feature.auth.resources.auth_biometric_body
 import com.mk.daftar.feature.auth.resources.auth_biometric_enable
 import com.mk.daftar.feature.auth.resources.auth_biometric_heading
 import com.mk.daftar.feature.auth.resources.auth_biometric_later
+import com.mk.daftar.feature.auth.resources.auth_biometric_locked_out
+import com.mk.daftar.feature.auth.resources.auth_biometric_not_enabled
+import com.mk.daftar.feature.auth.resources.auth_biometric_not_enrolled
+import com.mk.daftar.feature.auth.resources.auth_biometric_privacy
 import com.mk.daftar.feature.auth.resources.auth_biometric_unavailable
 import com.mk.daftar.feature.auth.resources.auth_busy_creating
+import com.mk.daftar.feature.auth.resources.auth_busy_enrolling
 import com.mk.daftar.feature.auth.resources.auth_busy_unlocking
 import com.mk.daftar.feature.auth.resources.auth_checking
 import com.mk.daftar.feature.auth.resources.auth_confirm_action
@@ -133,7 +141,7 @@ fun AuthContent(state: AuthUiState, onIntent: (AuthIntent) -> Unit, modifier: Mo
             },
     ) {
         when (state.phase) {
-            AuthPhase.BiometricStub -> AuthTopBar(
+            AuthPhase.Biometric -> AuthTopBar(
                 title = stringResource(Res.string.auth_biometric_heading),
                 onBack = { onIntent(AuthIntent.Back) },
             )
@@ -175,7 +183,7 @@ private fun AuthPhaseContent(state: AuthUiState, onIntent: (AuthIntent) -> Unit)
         AuthPhase.Checking -> CheckingBody()
         AuthPhase.Create -> CreateBody(state, onIntent)
         AuthPhase.Confirm -> ConfirmBody(state, onIntent)
-        AuthPhase.BiometricStub -> BiometricBody(state, onIntent)
+        AuthPhase.Biometric -> BiometricBody(state, onIntent)
         AuthPhase.Unlock -> UnlockBody(state, onIntent)
         AuthPhase.Recovery -> RecoveryBody(state, onIntent)
         is AuthPhase.Unavailable -> UnavailableBody(phase.reason, state, onIntent)
@@ -302,19 +310,36 @@ private fun BiometricBody(state: AuthUiState, onIntent: (AuthIntent) -> Unit) {
             color = colors.muted,
             textAlign = TextAlign.Center,
         )
-        DaftarNotePanel(modifier = Modifier.fillMaxWidth(), tone = DaftarNoteTone.Context) {
-            Text(stringResource(Res.string.auth_biometric_unavailable), style = DaftarTheme.typography.noteBody)
+        when (state.biometricOffer) {
+            BiometricOffer.Checking, BiometricOffer.Available -> Unit
+
+            BiometricOffer.NotEnrolled -> DaftarNotePanel(
+                modifier = Modifier.fillMaxWidth(),
+                tone = DaftarNoteTone.Context,
+            ) {
+                Text(stringResource(Res.string.auth_biometric_not_enrolled), style = DaftarTheme.typography.noteBody)
+            }
+
+            BiometricOffer.Unavailable -> DaftarNotePanel(
+                modifier = Modifier.fillMaxWidth(),
+                tone = DaftarNoteTone.Context,
+            ) {
+                Text(stringResource(Res.string.auth_biometric_unavailable), style = DaftarTheme.typography.noteBody)
+            }
         }
         PrimaryButton(
-            onClick = {},
-            enabled = false,
+            onClick = { onIntent(AuthIntent.EnableBiometrics) },
+            enabled = state.biometricOffer == BiometricOffer.Available && state.busy == null,
+            loading = state.busy == AuthBusy.Enrolling,
             fullWidth = true,
             modifier = Modifier.fillMaxWidth(),
         ) {
             Text(stringResource(Res.string.auth_biometric_enable))
         }
-        if (state.busy == AuthBusy.Creating) {
-            BusyCaption(stringResource(Res.string.auth_busy_creating))
+        when (state.busy) {
+            AuthBusy.Creating -> BusyCaption(stringResource(Res.string.auth_busy_creating))
+            AuthBusy.Enrolling -> BusyCaption(stringResource(Res.string.auth_busy_enrolling))
+            else -> Unit
         }
         DaftarTextButton(
             onClick = { onIntent(AuthIntent.SkipBiometrics) },
@@ -323,6 +348,13 @@ private fun BiometricBody(state: AuthUiState, onIntent: (AuthIntent) -> Unit) {
         ) {
             Text(stringResource(Res.string.auth_biometric_later))
         }
+        Text(
+            text = stringResource(Res.string.auth_biometric_privacy),
+            style = DaftarTheme.typography.fineText,
+            color = colors.muted,
+            textAlign = TextAlign.Center,
+            modifier = Modifier.fillMaxWidth(),
+        )
     }
 }
 
@@ -335,6 +367,7 @@ private fun UnlockBody(state: AuthUiState, onIntent: (AuthIntent) -> Unit) {
         )
         PinInput(state = state, invalid = state.retrySeconds == null && state.error == AuthError.IncorrectPin)
         UnlockNote(state)
+        BiometricNotice(state)
         PinKeypad(state = state, onIntent = onIntent)
         if (state.retrySeconds != null) {
             Text(
@@ -536,13 +569,31 @@ private fun PinInput(state: AuthUiState, invalid: Boolean) {
 
 @Composable
 private fun PinKeypad(state: AuthUiState, onIntent: (AuthIntent) -> Unit) {
+    // The biometric key exists only on the lock screen, and only when the vault says biometrics are ready.
+    val biometric = state.biometricReady && state.phase == AuthPhase.Unlock
     DaftarKeypad(
         onDigit = { digit -> onIntent(AuthIntent.Digit('0'.code + digit)) },
         onErase = { onIntent(AuthIntent.Erase) },
         eraseLabel = stringResource(Res.string.auth_erase_digit),
         enabled = state.inputEnabled,
         modifier = Modifier.fillMaxWidth(),
+        biometricLabel = if (biometric) stringResource(DesignRes.string.pin_biometric) else "",
+        onBiometric = if (biometric) ({ onIntent(AuthIntent.BiometricUnlock) }) else null,
     )
+}
+
+/** The biometric notice on the lock screen. Informative only: it never blocks the PIN path. */
+@Composable
+private fun BiometricNotice(state: AuthUiState) {
+    val message = when (state.notice) {
+        AuthNotice.BiometricsUnavailable -> stringResource(Res.string.auth_biometric_unavailable)
+        AuthNotice.BiometricsLockedOut -> stringResource(Res.string.auth_biometric_locked_out)
+        AuthNotice.BiometricsNotEnabled -> stringResource(Res.string.auth_biometric_not_enabled)
+        null -> return
+    }
+    DaftarNotePanel(modifier = Modifier.fillMaxWidth(), tone = DaftarNoteTone.Context) {
+        Text(message, style = DaftarTheme.typography.noteBody)
+    }
 }
 
 @Composable

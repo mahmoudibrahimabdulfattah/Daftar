@@ -45,6 +45,7 @@ class VaultOnDeviceTest {
             records = records,
             coordinator = BackoffUnlockCoordinator(backoff, clock),
             clock = clock,
+            biometrics = BiometricSlots(FakeBiometricKeyStore(), FakeBiometricSlotStore(), LibsodiumSecureRandom()),
         )
         try {
             val start = TimeSource.Monotonic.markNow()

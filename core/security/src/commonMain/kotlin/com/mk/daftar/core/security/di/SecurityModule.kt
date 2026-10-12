@@ -2,6 +2,7 @@ package com.mk.daftar.core.security.di
 
 import com.mk.daftar.core.security.Aead
 import com.mk.daftar.core.security.BackoffUnlockCoordinator
+import com.mk.daftar.core.security.BiometricSlots
 import com.mk.daftar.core.security.DefaultVaultSecurity
 import com.mk.daftar.core.security.LibsodiumAead
 import com.mk.daftar.core.security.LibsodiumPinKdf
@@ -23,7 +24,8 @@ internal val securityCoreModule: Module = module {
     single<Aead> { LibsodiumAead() }
     single<SecureRandom> { LibsodiumSecureRandom() }
     single<UnlockCoordinator> { BackoffUnlockCoordinator(get(), get()) }
-    single<VaultSecurity> { DefaultVaultSecurity(get(), get(), get(), get(), get(), get(), get()) }
+    single { BiometricSlots(get(), get(), get()) }
+    single<VaultSecurity> { DefaultVaultSecurity(get(), get(), get(), get(), get(), get(), get(), get()) }
 }
 
 /**

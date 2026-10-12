@@ -4,6 +4,7 @@ package com.mk.daftar.feature.auth
 
 import com.mk.daftar.core.common.MonotonicTime
 import com.mk.daftar.core.domain.storage.StorageError
+import com.mk.daftar.core.security.BiometricCapability
 import com.mk.daftar.core.security.SecretBytes
 import com.mk.daftar.core.security.SecurityError
 import com.mk.daftar.core.security.SecurityStatus
@@ -11,6 +12,7 @@ import kotlin.test.AfterTest
 import kotlin.test.BeforeTest
 import kotlin.test.Test
 import kotlin.test.assertEquals
+import kotlin.test.assertFalse
 import kotlin.test.assertNull
 import kotlin.test.assertTrue
 import kotlin.time.Duration
@@ -33,9 +35,15 @@ private class FakeGateway : AuthGateway {
     var status: SecurityStatus = SecurityStatus.NotInitialized
     var onCreate: suspend (SecretBytes) -> AuthResult = { AuthResult.Opened }
     var onUnlock: suspend (SecretBytes) -> AuthResult = { AuthResult.Opened }
+    var onCreateWithBiometrics: suspend (SecretBytes) -> AuthResult = { AuthResult.Opened }
+    var onUnlockWithBiometrics: suspend () -> AuthResult = { AuthResult.Opened }
+    var capability: BiometricCapability = BiometricCapability.Available
+    var ready = false
     var statusCalls = 0
     var createCalls = 0
     var unlockCalls = 0
+    var createWithBiometricsCalls = 0
+    var biometricUnlockCalls = 0
     val pins = mutableListOf<String>()
 
     override suspend fun status(): SecurityStatus {
@@ -54,6 +62,21 @@ private class FakeGateway : AuthGateway {
         pins += pin.use { it.decodeToString() }
         return onUnlock(pin)
     }
+
+    override suspend fun createWithBiometrics(pin: SecretBytes): AuthResult {
+        createWithBiometricsCalls++
+        pins += pin.use { it.decodeToString() }
+        return onCreateWithBiometrics(pin)
+    }
+
+    override suspend fun unlockWithBiometrics(): AuthResult {
+        biometricUnlockCalls++
+        return onUnlockWithBiometrics()
+    }
+
+    override suspend fun biometricCapability(): BiometricCapability = capability
+
+    override suspend fun biometricReady(): Boolean = ready
 }
 
 class AuthViewModelTest {
@@ -96,7 +119,7 @@ class AuthViewModelTest {
 
         vm.type("123456")
         vm.onIntent(AuthIntent.Submit)
-        assertEquals(AuthPhase.BiometricStub, vm.state.value.phase)
+        assertEquals(AuthPhase.Biometric, vm.state.value.phase)
         assertEquals(0, gateway.createCalls, "matching confirmation does not create yet")
 
         vm.onIntent(AuthIntent.SkipBiometrics)
@@ -135,7 +158,7 @@ class AuthViewModelTest {
 
         vm.type("123456")
         vm.onIntent(AuthIntent.Submit)
-        assertEquals(AuthPhase.BiometricStub, vm.state.value.phase)
+        assertEquals(AuthPhase.Biometric, vm.state.value.phase)
         vm.onIntent(AuthIntent.SkipBiometrics)
         advanceUntilIdle()
         assertEquals(listOf("123456"), gateway.pins)
@@ -324,7 +347,7 @@ class AuthViewModelTest {
         vm.onIntent(AuthIntent.Submit)
         vm.type("123456")
         vm.onIntent(AuthIntent.Submit)
-        assertEquals(AuthPhase.BiometricStub, vm.state.value.phase)
+        assertEquals(AuthPhase.Biometric, vm.state.value.phase)
 
         drafts.invalidateAll()
         advanceUntilIdle()
@@ -384,5 +407,191 @@ class AuthViewModelTest {
         advanceUntilIdle()
         assertEquals(AuthPhase.Unlock, vm.state.value.phase)
         assertNull(vm.state.value.retrySeconds)
+    }
+
+    @Test
+    fun enableBiometricsCreatesTheVaultOnceWithTheChosenPinAndOpens() = runTest(dispatcher) {
+        val gateway = FakeGateway()
+        val (vm, _) = rig(gateway)
+        advanceUntilIdle()
+        vm.type("123456")
+        vm.onIntent(AuthIntent.Submit)
+        vm.type("123456")
+        vm.onIntent(AuthIntent.Submit)
+        advanceUntilIdle()
+        assertEquals(BiometricOffer.Available, vm.state.value.biometricOffer)
+
+        vm.onIntent(AuthIntent.EnableBiometrics)
+        advanceUntilIdle()
+        assertEquals(1, gateway.createWithBiometricsCalls)
+        assertEquals(0, gateway.createCalls, "the PIN-only path is not taken")
+        assertEquals(listOf("123456"), gateway.pins)
+        assertNull(vm.state.value.busy)
+    }
+
+    @Test
+    fun aNotEnrolledOfferCannotEnableBiometrics() = runTest(dispatcher) {
+        val gateway = FakeGateway()
+        gateway.capability = BiometricCapability.NotEnrolled
+        val (vm, _) = rig(gateway)
+        advanceUntilIdle()
+        vm.type("123456")
+        vm.onIntent(AuthIntent.Submit)
+        vm.type("123456")
+        vm.onIntent(AuthIntent.Submit)
+        advanceUntilIdle()
+        assertEquals(BiometricOffer.NotEnrolled, vm.state.value.biometricOffer)
+
+        vm.onIntent(AuthIntent.EnableBiometrics)
+        advanceUntilIdle()
+        assertEquals(0, gateway.createWithBiometricsCalls)
+        assertEquals(AuthPhase.Biometric, vm.state.value.phase)
+    }
+
+    @Test
+    fun aFailedEnrollmentOpensThePinScreenWithANoticeAndNeverRepeatsCreation() = runTest(dispatcher) {
+        val gateway = FakeGateway()
+        gateway.onCreateWithBiometrics = {
+            gateway.status = SecurityStatus.Locked(null)
+            AuthResult.EnrollmentFailed(AuthBiometricFailure.Cancelled)
+        }
+        val (vm, _) = rig(gateway)
+        advanceUntilIdle()
+        vm.type("123456")
+        vm.onIntent(AuthIntent.Submit)
+        vm.type("123456")
+        vm.onIntent(AuthIntent.Submit)
+        advanceUntilIdle()
+        vm.onIntent(AuthIntent.EnableBiometrics)
+        advanceUntilIdle()
+
+        assertEquals(AuthPhase.Unlock, vm.state.value.phase)
+        assertEquals(AuthNotice.BiometricsNotEnabled, vm.state.value.notice)
+        assertEquals(1, gateway.createWithBiometricsCalls)
+        assertEquals(0, gateway.createCalls)
+    }
+
+    @Test
+    fun theBiometricKeyAppearsOnlyWhenReadyAndNeverPromptsOnItsOwn() = runTest(dispatcher) {
+        val gateway = FakeGateway()
+        gateway.status = SecurityStatus.Locked(null)
+        gateway.ready = true
+        val (vm, _) = rig(gateway)
+        advanceUntilIdle()
+        assertTrue(vm.state.value.biometricReady)
+        assertEquals(0, gateway.biometricUnlockCalls, "the prompt never starts on its own")
+
+        vm.onIntent(AuthIntent.BiometricUnlock)
+        advanceUntilIdle()
+        assertEquals(1, gateway.biometricUnlockCalls)
+    }
+
+    @Test
+    fun theBiometricKeyIsIgnoredWhenNotReady() = runTest(dispatcher) {
+        val gateway = FakeGateway()
+        gateway.status = SecurityStatus.Locked(null)
+        gateway.ready = false
+        val (vm, _) = rig(gateway)
+        advanceUntilIdle()
+        vm.onIntent(AuthIntent.BiometricUnlock)
+        advanceUntilIdle()
+        assertEquals(0, gateway.biometricUnlockCalls)
+    }
+
+    @Test
+    fun aCancelledPromptReturnsToThePinSilentlyAndPinEntryStillWorks() = runTest(dispatcher) {
+        val gateway = FakeGateway()
+        gateway.status = SecurityStatus.Locked(null)
+        gateway.ready = true
+        gateway.onUnlockWithBiometrics = { AuthResult.Biometric(AuthBiometricFailure.Cancelled) }
+        val (vm, _) = rig(gateway)
+        advanceUntilIdle()
+        vm.onIntent(AuthIntent.BiometricUnlock)
+        advanceUntilIdle()
+
+        assertNull(vm.state.value.error)
+        assertNull(vm.state.value.notice)
+        assertNull(vm.state.value.busy)
+        assertEquals(1, gateway.biometricUnlockCalls, "a cancelled prompt is never shown again")
+        assertTrue(vm.state.value.biometricReady, "a cancel does not erase the enrollment")
+
+        gateway.onUnlock = { AuthResult.Opened }
+        vm.type("123456")
+        vm.onIntent(AuthIntent.Submit)
+        advanceUntilIdle()
+        assertEquals(1, gateway.unlockCalls)
+    }
+
+    @Test
+    fun aLockedOutPromptShowsANoticeAndNeverCountsAsAPinFailure() = runTest(dispatcher) {
+        val gateway = FakeGateway()
+        gateway.status = SecurityStatus.Locked(null)
+        gateway.ready = true
+        gateway.onUnlockWithBiometrics = { AuthResult.Biometric(AuthBiometricFailure.LockedOut) }
+        val (vm, _) = rig(gateway)
+        advanceUntilIdle()
+        vm.onIntent(AuthIntent.BiometricUnlock)
+        advanceUntilIdle()
+
+        assertEquals(AuthNotice.BiometricsLockedOut, vm.state.value.notice)
+        assertNull(vm.state.value.error)
+        assertEquals(0, gateway.unlockCalls)
+    }
+
+    @Test
+    fun anEnrollmentChangeTurnsTheKeyOffAndExplainsThePinFallback() = runTest(dispatcher) {
+        val gateway = FakeGateway()
+        gateway.status = SecurityStatus.Locked(null)
+        gateway.ready = true
+        gateway.onUnlockWithBiometrics = {
+            gateway.ready = false
+            AuthResult.Biometric(AuthBiometricFailure.EnrollmentChanged)
+        }
+        val (vm, _) = rig(gateway)
+        advanceUntilIdle()
+        vm.onIntent(AuthIntent.BiometricUnlock)
+        advanceUntilIdle()
+
+        assertFalse(vm.state.value.biometricReady)
+        assertEquals(AuthNotice.BiometricsUnavailable, vm.state.value.notice)
+        assertEquals(AuthPhase.Unlock, vm.state.value.phase)
+    }
+
+    @Test
+    fun privacyDuringABiometricPromptKeepsTheOperationRunning() = runTest(dispatcher) {
+        val gateway = FakeGateway()
+        gateway.status = SecurityStatus.Locked(null)
+        gateway.ready = true
+        val release = CompletableDeferred<AuthResult>()
+        gateway.onUnlockWithBiometrics = { release.await() }
+        val (vm, drafts) = rig(gateway)
+        advanceUntilIdle()
+        vm.onIntent(AuthIntent.BiometricUnlock)
+        advanceUntilIdle()
+
+        // The prompt deactivates the app, which raises the cover and clears the drafts.
+        drafts.invalidateAll()
+        advanceUntilIdle()
+        assertEquals(AuthBusy.UnlockingBiometric, vm.state.value.busy, "the prompt is not cancelled by inactivity")
+
+        release.complete(AuthResult.Opened)
+        advanceUntilIdle()
+        assertNull(vm.state.value.busy)
+    }
+
+    @Test
+    fun aLateBiometricResultAfterALockIsSilent() = runTest(dispatcher) {
+        val gateway = FakeGateway()
+        gateway.status = SecurityStatus.Locked(null)
+        gateway.ready = true
+        gateway.onUnlockWithBiometrics = { AuthResult.Superseded }
+        val (vm, _) = rig(gateway)
+        advanceUntilIdle()
+        vm.onIntent(AuthIntent.BiometricUnlock)
+        advanceUntilIdle()
+
+        assertNull(vm.state.value.error)
+        assertNull(vm.state.value.notice)
+        assertNull(vm.state.value.busy)
     }
 }

@@ -10,8 +10,15 @@ import com.mk.daftar.core.data.session.VaultAuthenticator
 import com.mk.daftar.core.data.session.VaultOpenFailure
 import com.mk.daftar.core.database.daftarDatabaseBuilder
 import com.mk.daftar.core.database.daftarDatabaseFile
+import com.mk.daftar.core.domain.repository.AppLanguage
 import com.mk.daftar.core.domain.repository.GoldHoldingInput
+import com.mk.daftar.core.domain.repository.InactivityTimeout
+import com.mk.daftar.core.domain.repository.PreferencesRead
+import com.mk.daftar.core.domain.repository.ThemeMode
+import com.mk.daftar.core.domain.repository.UserPreferences
+import com.mk.daftar.core.domain.repository.UserPreferencesRepository
 import com.mk.daftar.core.domain.session.VaultSessionState
+import com.mk.daftar.core.domain.storage.StorageError
 import com.mk.daftar.core.domain.storage.VaultRead
 import com.mk.daftar.core.model.Decimal
 import com.mk.daftar.core.model.GoldForm
@@ -30,7 +37,9 @@ import kotlin.test.assertEquals
 import kotlin.test.assertIs
 import kotlin.test.assertTrue
 import kotlin.time.Clock
+import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.first
+import kotlinx.coroutines.flow.flowOf
 import kotlinx.coroutines.test.runTest
 import org.koin.android.ext.koin.androidContext
 import org.koin.dsl.koinApplication
@@ -57,7 +66,7 @@ class KeystoreSessionDeviceTest {
         val databaseFile = daftarDatabaseFile(context)
         val provider = DaftarDatabaseBuilderProvider { daftarDatabaseBuilder(context, databaseFile) }
         val session = DaftarVaultSession(security, provider, Clock.System, UuidV4Generator())
-        val authenticator = VaultAuthenticator(security, session)
+        val authenticator = VaultAuthenticator(security, session, MemoryPreferences)
         val gold = GoldRecordRepository(session.host)
         try {
             val created = authenticator.create(pin("246810"))
@@ -90,4 +99,18 @@ class KeystoreSessionDeviceTest {
 
     private fun pin(digits: String): SecretBytes =
         checkNotNull((PinNormalizer.normalize(digits) as? Outcome.Success)?.data) { "test PIN must normalize" }
+}
+
+/** Holds preferences in memory. This test never reads them: it needs only the authenticator's constructor. */
+private object MemoryPreferences : UserPreferencesRepository {
+    override fun observe(): Flow<PreferencesRead> = flowOf(PreferencesRead.Ready(UserPreferences(), false))
+
+    override suspend fun setThemeMode(mode: ThemeMode): Outcome<Unit, StorageError> = Outcome.Success(Unit)
+
+    override suspend fun setLanguage(language: AppLanguage): Outcome<Unit, StorageError> = Outcome.Success(Unit)
+
+    override suspend fun setInactivityTimeout(timeout: InactivityTimeout): Outcome<Unit, StorageError> =
+        Outcome.Success(Unit)
+
+    override suspend fun setBiometricEnabled(enabled: Boolean): Outcome<Unit, StorageError> = Outcome.Success(Unit)
 }

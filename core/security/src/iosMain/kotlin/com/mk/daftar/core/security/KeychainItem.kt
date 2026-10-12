@@ -32,6 +32,7 @@ import platform.CoreFoundation.kCFTypeDictionaryKeyCallBacks
 import platform.CoreFoundation.kCFTypeDictionaryValueCallBacks
 import platform.Security.SecItemAdd
 import platform.Security.SecItemCopyMatching
+import platform.Security.SecItemDelete
 import platform.Security.SecItemUpdate
 import platform.Security.errSecItemNotFound
 import platform.Security.errSecSuccess
@@ -95,6 +96,18 @@ internal class KeychainItem(private val account: String) {
         }
         CFRelease(data)
         if (status == errSecSuccess) Outcome.Success(Unit) else Outcome.Failure(SecurityError.PersistenceFailure)
+    }
+
+    /** Removes the item if present. Idempotent. */
+    fun delete(): Outcome<Unit, SecurityError> = memScoped {
+        val query = baseQuery()
+        val status = SecItemDelete(query)
+        CFRelease(query)
+        if (status == errSecSuccess || status == errSecItemNotFound) {
+            Outcome.Success(Unit)
+        } else {
+            Outcome.Failure(SecurityError.PersistenceFailure)
+        }
     }
 
     private fun baseQuery(): CFMutableDictionaryRef? {

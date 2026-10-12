@@ -5,4 +5,6 @@
     <string name="dev_preview">معاينة الهيكل</string>
     <string name="progress_opening">جارٍ الفتح…</string>
     <string name="progress_closing">جارٍ القفل…</string>
+    <string name="biometric_prompt_title">التحقق لفتح دفتر</string>
+    <string name="biometric_prompt_negative">استخدام رمز دفتر</string>
 </resources>

@@ -19,6 +19,10 @@ import com.mk.daftar.core.domain.usecase.CreateZakatPaymentUseCase
 import com.mk.daftar.core.domain.usecase.ObservePortfolioValuationUseCase
 import com.mk.daftar.core.domain.usecase.ObserveSelectedQuotesUseCase
 import com.mk.daftar.core.domain.usecase.RefreshPricesUseCase
+import com.mk.daftar.core.security.BiometricCapability
+import com.mk.daftar.core.security.BiometricError
+import com.mk.daftar.core.security.BiometricPrompter
+import com.mk.daftar.core.security.BiometricSlotState
 import com.mk.daftar.core.security.KeyLease
 import com.mk.daftar.core.security.SecretBytes
 import com.mk.daftar.core.security.SecurityError
@@ -134,5 +138,38 @@ private class ProbedSecurity(private val probes: StartupProbes) : VaultSecurity 
 
     override suspend fun lock() {
         probes.securityCalls++
+    }
+
+    override suspend fun biometricCapability(): BiometricCapability {
+        probes.securityCalls++
+        error("startup must not query biometrics")
+    }
+
+    override suspend fun biometricSlotState(): Outcome<BiometricSlotState, BiometricError> {
+        probes.securityCalls++
+        error("startup must not read the biometric slot")
+    }
+
+    override suspend fun enrollBiometrics(lease: KeyLease, prompter: BiometricPrompter): Outcome<Unit, BiometricError> {
+        probes.securityCalls++
+        error("startup must not enroll biometrics")
+    }
+
+    override suspend fun reenrollBiometrics(
+        pin: SecretBytes,
+        prompter: BiometricPrompter,
+    ): Outcome<Unit, BiometricError> {
+        probes.securityCalls++
+        error("startup must not re-enroll biometrics")
+    }
+
+    override suspend fun unlockWithBiometrics(prompter: BiometricPrompter): Outcome<KeyLease, BiometricError> {
+        probes.securityCalls++
+        error("startup must not unlock with biometrics")
+    }
+
+    override suspend fun disableBiometrics(): Outcome<Unit, BiometricError> {
+        probes.securityCalls++
+        error("startup must not disable biometrics")
     }
 }

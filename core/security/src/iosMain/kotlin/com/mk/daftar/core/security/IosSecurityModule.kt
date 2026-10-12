@@ -9,8 +9,13 @@ import org.koin.dsl.module
  */
 internal expect fun createPlatformEnvelopeProtector(): PlatformEnvelopeProtector
 
+/** Chooses the biometric key for this iOS target. Device binaries get the Secure Enclave key, never the test key. */
+internal expect fun createPlatformBiometricKeyStore(): BiometricKeyStore
+
 internal actual val platformSecurityModule: Module = module {
     single<PlatformEnvelopeProtector> { createPlatformEnvelopeProtector() }
     single<SecurityRecordStore> { KeychainRecordStore() }
     single<BackoffStore> { KeychainBackoffStore() }
+    single<BiometricKeyStore> { createPlatformBiometricKeyStore() }
+    single<BiometricSlotStore> { KeychainBiometricSlotStore() }
 }

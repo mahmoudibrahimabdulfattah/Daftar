@@ -1,5 +1,6 @@
 package com.mk.daftar.feature.auth
 
+import com.mk.daftar.core.security.BiometricCapability
 import com.mk.daftar.core.ui.mvi.UiIntent
 import com.mk.daftar.core.ui.mvi.UiState
 
@@ -14,10 +15,13 @@ sealed interface AuthPhase {
     /** First run, step 2: enter the same PIN again. A mismatch keeps the candidate and sets [AuthError.PinMismatch]. */
     data object Confirm : AuthPhase
 
-    /** First run, step 3: the optional biometric step. Enabling is not available yet. "Not now" creates the vault. */
-    data object BiometricStub : AuthPhase
+    /**
+     * First run, step 3: the optional biometric offer. The offer depends on [AuthUiState.biometricOffer]. "Not now"
+     * creates a PIN-only vault.
+     */
+    data object Biometric : AuthPhase
 
-    /** The vault is locked: enter the PIN to open it. */
+    /** The vault is locked: enter the PIN to open it. The biometric key appears when [AuthUiState.biometricReady]. */
     data object Unlock : AuthPhase
 
     /** The forgotten-PIN explanation. Nothing here changes the vault. */
@@ -50,10 +54,51 @@ enum class AuthError {
     OpenFailed,
 }
 
+/** An informative message about biometrics. It never blocks the PIN path and is never an error toast. */
+enum class AuthNotice {
+    /** Biometrics are unavailable now, or the device's enrollment changed. The PIN still works. */
+    BiometricsUnavailable,
+
+    /** Biometrics are locked out for now. The PIN still works. */
+    BiometricsLockedOut,
+
+    /** Enabling biometrics did not complete. The vault was created and opens with the PIN. */
+    BiometricsNotEnabled,
+}
+
+/** What the biometric offer can say on the first-run screen. */
+enum class BiometricOffer {
+    /** The platform is being asked. Enabling is not offered yet. */
+    Checking,
+    Available,
+    NotEnrolled,
+    Unavailable,
+    ;
+
+    companion object {
+        fun from(capability: BiometricCapability): BiometricOffer = when (capability) {
+            BiometricCapability.Available -> Available
+            BiometricCapability.NotEnrolled -> NotEnrolled
+            BiometricCapability.Unavailable -> Unavailable
+        }
+    }
+}
+
 /** A long-running operation that owns the screen's input until it ends. */
 enum class AuthBusy {
     Creating,
     Unlocking,
+
+    /** Creating the vault and enrolling biometrics for the same key. */
+    Enrolling,
+
+    /** The platform biometric prompt is on screen. Its result is owned by the operation, not the screen. */
+    UnlockingBiometric,
+    ;
+
+    /** Biometric operations survive the prompt's temporary deactivation of the app. */
+    val isBiometric: Boolean
+        get() = this == Enrolling || this == UnlockingBiometric
 }
 
 data class AuthUiState(
@@ -64,6 +109,10 @@ data class AuthUiState(
     val error: AuthError? = null,
     /** Whole seconds left in a backoff penalty, rounded up. Non-null only while the penalty is running. */
     val retrySeconds: Int? = null,
+    val biometricOffer: BiometricOffer = BiometricOffer.Checking,
+    /** True when the lock screen may offer the biometric key. Never true while a penalty blocks the keypad. */
+    val biometricReady: Boolean = false,
+    val notice: AuthNotice? = null,
 ) : UiState {
     /** Input is accepted only when no operation is running and no penalty blocks the keypad. */
     val inputEnabled: Boolean
@@ -91,14 +140,20 @@ sealed interface AuthIntent : UiIntent {
     /** Continue, Confirm, or Unlock, depending on the screen. Never sent automatically. */
     data object Submit : AuthIntent
 
-    /** Back: from confirmation or the biometric step to a clean creation. Elsewhere it clears the entry. */
+    /** Back: from confirmation or the biometric offer to a clean creation. Elsewhere it clears the entry. */
     data object Back : AuthIntent
 
     /** "Choose another PIN": wipes the candidate and returns to an empty Create. */
     data object RestartCreation : AuthIntent
 
-    /** "Not now" on the biometric step: creates the vault. */
+    /** "Enable biometrics" on the offer: creates the vault and enrolls the same key. */
+    data object EnableBiometrics : AuthIntent
+
+    /** "Not now" on the offer: creates a PIN-only vault. */
     data object SkipBiometrics : AuthIntent
+
+    /** The biometric key on the lock screen, tapped explicitly. */
+    data object BiometricUnlock : AuthIntent
 
     /** Forgot PIN? */
     data object ShowRecovery : AuthIntent

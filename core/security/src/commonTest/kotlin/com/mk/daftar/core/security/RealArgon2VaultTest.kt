@@ -27,6 +27,7 @@ class RealArgon2VaultTest {
             records = records,
             coordinator = BackoffUnlockCoordinator(backoff, clock),
             clock = clock,
+            biometrics = BiometricSlots(FakeBiometricKeyStore(), FakeBiometricSlotStore(), LibsodiumSecureRandom()),
         )
 
         val first = vault()

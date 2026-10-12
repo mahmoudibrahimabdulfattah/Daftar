@@ -47,6 +47,8 @@ internal actual val platformSecurityModule: Module = module {
             protector = AndroidKeystoreProtector(BACKOFF_ALIAS, keystorePolicy(get())),
         )
     }
+    single<BiometricKeyStore> { AndroidBiometricKeyStore(get(), keystorePolicy(get())) }
+    single<BiometricSlotStore> { FileBiometricSlotStore(securityDirectory(get()).resolve(BIOMETRIC_SLOT_FILE)) }
 }
 
 /** The policy both the envelope and the backoff protector use, resolved against the installed application. */
@@ -73,3 +75,4 @@ internal fun securityDirectory(context: Context): File = File(context.noBackupFi
 
 private const val PIN_ENVELOPE_FILE = "pin-envelope.v1.bin"
 private const val BACKOFF_FILE = "backoff.v1.bin"
+private const val BIOMETRIC_SLOT_FILE = "biometric-slot.v1.bin"

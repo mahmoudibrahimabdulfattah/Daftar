@@ -28,7 +28,12 @@
     <string name="auth_biometric_body">استخدم بصمة الجهاز لفتح دفتر بسرعة. سيظل رمز دفتر متاحًا دائمًا.</string>
     <string name="auth_biometric_enable">تفعيل البصمة</string>
     <string name="auth_biometric_later">لاحقًا</string>
-    <string name="auth_biometric_unavailable">ستتوفر البصمة في تحديث لاحق.</string>
+    <string name="auth_biometric_privacy">لا تُرسل بيانات البصمة إلى دفتر.</string>
+    <string name="auth_biometric_unavailable">البصمة غير متاحة الآن، أو تغيّرت بصمات الجهاز. يمكنك فتح بياناتك بالرمز.</string>
+    <string name="auth_biometric_not_enrolled">أكمل بالرمز وفعّلها لاحقًا.</string>
+    <string name="auth_biometric_locked_out">البصمة مقفلة مؤقتًا. استخدم رمزك.</string>
+    <string name="auth_biometric_not_enabled">لم تُفعَّل البصمة. أكمل بالرمز.</string>
+    <string name="auth_busy_enrolling">جارٍ تفعيل البصمة…</string>
     <string name="auth_recovery_heading">لا يمكن استعادة الرمز</string>
     <string name="auth_recovery_body">إذا كانت البصمة مفعّلة، يمكنك فتح دفتر بها. تغيير الرمز يحتاج الرمز الحالي.</string>
     <string name="auth_recovery_backup_warning">استعادة نسخة احتياطية تحتاج كلمة مرور النسخة. بدون الرمز أو البصمة أو نسخة صالحة، لن تتمكن من فتح بياناتك. لا نحذف شيئًا تلقائيًا.</string>

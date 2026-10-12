@@ -14,6 +14,7 @@ import kotlinx.coroutines.SupervisorJob
 import kotlinx.coroutines.async
 import kotlinx.coroutines.cancel
 import kotlinx.coroutines.channels.awaitClose
+import kotlinx.coroutines.coroutineScope
 import kotlinx.coroutines.currentCoroutineContext
 import kotlinx.coroutines.ensureActive
 import kotlinx.coroutines.flow.Flow
@@ -98,6 +99,12 @@ internal class VaultSessionEngine<L : Any, DB : Any>(
     /** Guarded by [gate]. The generation the in-flight authentication started with, if one is running. */
     private var attemptStarted: Long? = null
 
+    /**
+     * Guarded by [gate]. The child job running the in-flight authentication. A lock cancels it, so a pending platform
+     * prompt is dismissed at once and its late result is discarded.
+     */
+    private var attemptJob: Job? = null
+
     /** Mirrors [generation] for synchronous reads by running operations. Written only under [gate]. */
     private val latestGeneration = MutableStateFlow(0L)
 
@@ -110,25 +117,27 @@ internal class VaultSessionEngine<L : Any, DB : Any>(
 
     /** Revokes access at once, then tears the session down before returning. Cleanup finishes even if cancelled. */
     suspend fun lock(): Unit = withContext(NonCancellable) {
-        val target = gate.withLock {
+        val (target, running) = gate.withLock {
             generation++
             latestGeneration.value = generation
             visible.value = null
             phase.value = if (current == null) VaultSessionState.Locked else VaultSessionState.Closing
-            generation
+            generation to attemptJob.takeIf { attemptStarted != null }
         }
+        running?.cancel()
         lifecycle.withLock { teardownBefore(target) }
     }
 
     /**
      * Runs one authentication attempt and publishes the database it opens. [attempt] must not throw for expected
-     * failures; it returns the lease on success.
+     * failures; it returns the lease on success. A lock during the attempt cancels only the attempt's own job, so the
+     * result is [EngineOpen.Superseded] and the caller is never cancelled.
      */
     suspend fun <E : Any> unlock(attempt: suspend () -> Outcome<L, E>): EngineOpen<E> = authentication.withLock {
         val started = beginAttempt() ?: return@withLock EngineOpen.AlreadyOpen
         try {
             val outcome = try {
-                attempt()
+                runAttempt(attempt)
             } catch (error: CancellationException) {
                 withContext(NonCancellable) {
                     revokeAuthentication()
@@ -137,11 +146,18 @@ internal class VaultSessionEngine<L : Any, DB : Any>(
                 throw error
             }
             when (outcome) {
+                null -> {
+                    // A lock cancelled the attempt, so nothing is published and the lease is never admitted.
+                    withContext(NonCancellable) {
+                        revokeAuthentication()
+                        markFailed(started, unavailable = false)
+                    }
+                    EngineOpen.Superseded
+                }
+
                 is Outcome.Failure -> {
                     markFailed(started, unavailable = false)
-                    if (currentGeneration() ==
-                        started
-                    ) {
+                    if (currentGeneration() == started) {
                         EngineOpen.AttemptFailed(outcome.error)
                     } else {
                         EngineOpen.Superseded
@@ -152,8 +168,28 @@ internal class VaultSessionEngine<L : Any, DB : Any>(
             }
         } finally {
             withContext(NonCancellable) {
-                gate.withLock { if (attemptStarted == started) attemptStarted = null }
+                gate.withLock {
+                    if (attemptStarted == started) {
+                        attemptStarted = null
+                        attemptJob = null
+                    }
+                }
             }
+        }
+    }
+
+    /**
+     * Runs [attempt] in its own child job, which is registered so that [lock] can cancel it. Returns null when the
+     * child was cancelled while the caller stayed active; a cancelled caller rethrows.
+     */
+    private suspend fun <E : Any> runAttempt(attempt: suspend () -> Outcome<L, E>): Outcome<L, E>? = coroutineScope {
+        val job = async { attempt() }
+        gate.withLock { attemptJob = job }
+        try {
+            job.await()
+        } catch (error: CancellationException) {
+            currentCoroutineContext().ensureActive()
+            null
         }
     }
 
