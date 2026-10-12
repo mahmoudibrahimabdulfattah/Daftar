@@ -35,7 +35,7 @@ data object GoldRoute : NavKey
 @Serializable
 data object CashRoute : NavKey
 
-/** Merchant quotes and their sources. A neutral placeholder entry until the prices phase replaces it. */
+/** Merchant quotes, their sources and the global estimate. Reached from Home. */
 @Serializable
 data object PricesRoute : NavKey
 
@@ -62,6 +62,14 @@ data object NoteAddRoute : NavKey
 /** One personal note, edited or deleted. */
 @Serializable
 data class NoteEditRoute(val noteId: String) : NavKey
+
+/**
+ * The manual quote editor. [quoteKey] is a stable token for one enterable quote, such as `gold-21-sell` or `usd-egp`,
+ * decoded by the prices feature. Null opens the editor with the quote still to be chosen. An unknown token is shown as
+ * a missing quote, never as another quote.
+ */
+@Serializable
+data class ManualQuoteRoute(val quoteKey: String? = null) : NavKey
 
 /** The four top-level destinations, in display order. Each owns an independent back stack rooted at its key. */
 enum class TopLevelDestination(val route: NavKey) {

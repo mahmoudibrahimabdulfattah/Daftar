@@ -8,6 +8,7 @@ import com.mk.daftar.feature.assets.di.assetsModule
 import com.mk.daftar.feature.auth.di.authModule
 import com.mk.daftar.feature.home.di.homeModule
 import com.mk.daftar.feature.journal.di.journalModule
+import com.mk.daftar.feature.prices.di.pricesModule
 import com.mk.daftar.feature.settings.di.settingsModule
 import org.koin.core.context.startKoin
 import org.koin.core.module.Module
@@ -26,6 +27,7 @@ val daftarModules: List<Module> = listOf(
     homeModule,
     assetsModule,
     journalModule,
+    pricesModule,
     settingsModule,
 )
 

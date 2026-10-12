@@ -28,6 +28,7 @@ import com.mk.daftar.core.domain.usecase.ObserveGoldHoldingsUseCase
 import com.mk.daftar.core.domain.usecase.ObservePersonalNoteUseCase
 import com.mk.daftar.core.domain.usecase.ObservePersonalNotesUseCase
 import com.mk.daftar.core.domain.usecase.ObservePortfolioValuationUseCase
+import com.mk.daftar.core.domain.usecase.ObserveQuoteSnapshotUseCase
 import com.mk.daftar.core.domain.usecase.ObserveSelectedQuotesUseCase
 import com.mk.daftar.core.domain.usecase.ObserveZakatPaymentUseCase
 import com.mk.daftar.core.domain.usecase.ObserveZakatPaymentsUseCase
@@ -83,5 +84,6 @@ val domainModule = module {
     factoryOf(::UpdatePersonalNoteUseCase)
     factoryOf(::DeletePersonalNoteUseCase)
     factoryOf(::ObserveSelectedQuotesUseCase)
+    factoryOf(::ObserveQuoteSnapshotUseCase)
     factoryOf(::ObservePortfolioValuationUseCase)
 }

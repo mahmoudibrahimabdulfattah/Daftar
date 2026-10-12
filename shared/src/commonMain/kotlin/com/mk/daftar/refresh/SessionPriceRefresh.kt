@@ -5,6 +5,7 @@ import com.mk.daftar.core.domain.refresh.PriceRefreshController
 import com.mk.daftar.core.domain.refresh.PriceRefreshStatus
 import com.mk.daftar.core.domain.refresh.RefreshOutcome
 import com.mk.daftar.core.domain.refresh.outcome
+import com.mk.daftar.core.domain.refresh.rejections
 import com.mk.daftar.core.domain.session.VaultSession
 import com.mk.daftar.core.domain.session.VaultSessionState
 import com.mk.daftar.core.domain.usecase.RefreshPricesUseCase
@@ -59,11 +60,11 @@ class SessionPriceRefresh(
     private fun startRefresh(open: Long) {
         mutable.value = PriceRefreshStatus.Refreshing(open)
         inFlight = scope.launch {
-            val outcome = when (val result = refreshPrices()) {
-                is Outcome.Success -> result.data.outcome()
-                is Outcome.Failure -> RefreshOutcome.Failed
+            val finished = when (val result = refreshPrices()) {
+                is Outcome.Success -> PriceRefreshStatus.Finished(open, result.data.outcome(), result.data.rejections())
+                is Outcome.Failure -> PriceRefreshStatus.Finished(open, RefreshOutcome.Failed)
             }
-            if (generation == open) mutable.value = PriceRefreshStatus.Finished(open, outcome)
+            if (generation == open) mutable.value = finished
         }
     }
 

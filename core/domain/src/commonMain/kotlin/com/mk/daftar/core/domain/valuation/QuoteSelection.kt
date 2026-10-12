@@ -112,6 +112,13 @@ fun selectQuotes(snapshot: QuoteSnapshot, now: Instant): SelectedQuotes {
     return SelectedQuotes(selected)
 }
 
+/**
+ * The remote quotes alone: what every key would select if no manual value existed. This is the source value beneath a
+ * pinned override, so the UI can show it next to the override without a second selection policy.
+ */
+fun selectRemoteQuotes(snapshot: QuoteSnapshot, now: Instant): SelectedQuotes =
+    selectQuotes(snapshot.copy(manual = emptyList()), now)
+
 private fun selectFor(key: QuoteKey, snapshot: QuoteSnapshot, now: Instant): SelectedQuote? {
     val manualForKey = snapshot.manual.filter { it.value.key() == key && it.value.provenance.kind == QuoteKind.MANUAL }
     manualForKey.firstOrNull { it.value.provenance.manualPinned }?.let { pinned ->

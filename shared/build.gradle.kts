@@ -17,6 +17,7 @@ kotlin {
             implementation(projects.feature.home)
             implementation(projects.feature.assets)
             implementation(projects.feature.journal)
+            implementation(projects.feature.prices)
             implementation(projects.feature.settings)
             implementation(project.dependencies.platform(libs.koin.bom))
             implementation(libs.koin.core)

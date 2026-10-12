@@ -150,7 +150,10 @@ class SessionPriceRefreshTest {
         runCurrent()
         rig.prices.answers.single().complete(Outcome.Success(partly()))
         advanceUntilIdle()
-        assertEquals(PriceRefreshStatus.Finished(1, RefreshOutcome.PartiallyFailed), rig.refresh.status.value)
+        assertEquals(
+            PriceRefreshStatus.Finished(1, RefreshOutcome.PartiallyFailed, setOf(RefreshRejection.Unreachable)),
+            rig.refresh.status.value,
+        )
 
         rig.session.current.value = VaultSessionState.Locked
         rig.session.current.value = VaultSessionState.Open(2)

@@ -51,8 +51,6 @@
     <string name="home_month_10">أكتوبر</string>
     <string name="home_month_11">نوفمبر</string>
     <string name="home_month_12">ديسمبر</string>
-    <string name="prices_title">الأسعار</string>
-    <string name="prices_message">تظهر تفاصيل الأسعار هنا في مرحلة لاحقة.</string>
     <string name="home_holdings_one">مقتنى واحد</string>
     <string name="home_holdings_two">مقتنيان</string>
     <string name="home_holdings_few">مقتنيات</string>
