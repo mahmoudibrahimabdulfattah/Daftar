@@ -9,6 +9,7 @@ import androidx.activity.enableEdgeToEdge
 import androidx.appcompat.app.AppCompatActivity
 import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
+import androidx.core.splashscreen.SplashScreen.Companion.installSplashScreen
 import com.mk.daftar.App
 
 /**
@@ -24,6 +25,8 @@ class MainActivity : AppCompatActivity() {
     private val vaultLifecycle get() = (application as DaftarApplication).vaultLifecycle
 
     override fun onCreate(savedInstanceState: Bundle?) {
+        // The splash is the static starting theme; it never waits for the vault or the network.
+        installSplashScreen()
         enableEdgeToEdge()
         window.addFlags(WindowManager.LayoutParams.FLAG_SECURE)
         super.onCreate(savedInstanceState)
