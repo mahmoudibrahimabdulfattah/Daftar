@@ -90,6 +90,24 @@ class Navigator(private val start: TopLevelDestination = TopLevelDestination.HOM
         }
     }
 
+    /** Screens with unsaved edits register here, so [requestLeave] can ask before it abandons them. */
+    val leaveGuard: LeaveGuard = LeaveGuard()
+
+    /**
+     * The shell's way out of the current screen: a back action or a switch to another tab. Switching to the tab that is
+     * already shown is nothing. The innermost guard may ask first; without one the request is performed at once.
+     */
+    fun requestLeave(request: LeaveRequest) {
+        if (isDisposed) return
+        if (request is LeaveRequest.Switch && request.destination == topLevel) return
+        leaveGuard.ask(request) {
+            when (request) {
+                LeaveRequest.Back -> goBack()
+                is LeaveRequest.Switch -> select(request.destination)
+            }
+        }
+    }
+
     /** Returns every stack to its root and the start tab to the front, without marking the navigator disposed. */
     fun reset() {
         TopLevelDestination.entries.forEach { destination ->
@@ -103,6 +121,7 @@ class Navigator(private val start: TopLevelDestination = TopLevelDestination.HOM
     /** Resets, then makes the navigator inert. Used when the vault generation that owned it is closed. */
     fun dispose() {
         reset()
+        leaveGuard.clear()
         isDisposed = true
     }
 }

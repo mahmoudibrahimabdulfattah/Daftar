@@ -24,6 +24,7 @@ import com.mk.daftar.core.designsystem.resources.nav_assets
 import com.mk.daftar.core.designsystem.resources.nav_home
 import com.mk.daftar.core.designsystem.resources.nav_journal
 import com.mk.daftar.core.designsystem.resources.nav_settings
+import com.mk.daftar.core.navigation.LeaveRequest
 import com.mk.daftar.core.navigation.LocalNavigator
 import com.mk.daftar.core.navigation.Navigator
 import com.mk.daftar.core.navigation.TopLevelDestination
@@ -72,12 +73,12 @@ fun DaftarAppShell(navigator: Navigator, retention: ShellRetention, modifier: Mo
         DaftarAdaptiveShell(
             destinations = shellDestinations(),
             selectedIndex = navigator.topLevel.ordinal,
-            onSelect = { index -> navigator.select(TopLevelDestination.entries[index]) },
+            onSelect = { index -> navigator.requestLeave(LeaveRequest.Switch(TopLevelDestination.entries[index])) },
             modifier = modifier,
         ) {
             NavDisplay(
                 entries = visible,
-                onBack = { navigator.goBack() },
+                onBack = { navigator.requestLeave(LeaveRequest.Back) },
                 sceneStrategies = listOf(listDetail),
                 transitionSpec = { fadeIn(tween(duration)) togetherWith fadeOut(tween(duration)) },
                 popTransitionSpec = { fadeIn(tween(duration)) togetherWith fadeOut(tween(duration)) },

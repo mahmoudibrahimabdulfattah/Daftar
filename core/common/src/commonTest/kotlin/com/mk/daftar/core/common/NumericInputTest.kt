@@ -165,4 +165,12 @@ class NumericInputTest {
         assertFails(NumericInputFailure.Malformed, markup("ج.م"))
         assertFails(NumericInputFailure.Malformed, markup("1$"))
     }
+
+    @Test
+    fun normalizeDigitsMapsArabicIndicAndPersianDigitsAndNothingElse() {
+        assertEquals("2026-03-20", NumericInput.normalizeDigits("٢٠٢٦-٠٣-٢٠"))
+        // Only digits change: the Arabic decimal separator stays for the caller to interpret.
+        assertEquals("1234٫5", NumericInput.normalizeDigits("۱۲۳۴٫۵"))
+        assertEquals("abc-", NumericInput.normalizeDigits("abc-"))
+    }
 }
