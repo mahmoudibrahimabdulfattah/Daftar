@@ -38,8 +38,22 @@ data class GoldHolding(
     }
 }
 
-/** A bank the user keeps accounts with. A container, not an asset. */
-data class Bank(val id: BankId, val name: String, val createdAt: Instant, val updatedAt: Instant) {
+/**
+ * A bank the user keeps accounts with. A container, not an asset.
+ *
+ * [institutionId] links the bank to a catalog institution, or is null for a custom or not-yet-identified bank.
+ * [identityReviewed] records that the user made the identity choice explicitly, so automatic matching never
+ * revisits it.
+ * The display [name] is always the user's own and never changes with the identity.
+ */
+data class Bank(
+    val id: BankId,
+    val name: String,
+    val createdAt: Instant,
+    val updatedAt: Instant,
+    val institutionId: InstitutionId? = null,
+    val identityReviewed: Boolean = false,
+) {
     init {
         requireOrdered(createdAt, updatedAt)
         requireTrimmed(name, "name")
@@ -47,8 +61,14 @@ data class Bank(val id: BankId, val name: String, val createdAt: Instant, val up
     }
 
     companion object {
-        fun create(id: BankId, name: String, createdAt: Instant, updatedAt: Instant): Bank =
-            Bank(id, requireName(name, "name"), createdAt, updatedAt)
+        fun create(
+            id: BankId,
+            name: String,
+            createdAt: Instant,
+            updatedAt: Instant,
+            institutionId: InstitutionId? = null,
+            identityReviewed: Boolean = false,
+        ): Bank = Bank(id, requireName(name, "name"), createdAt, updatedAt, institutionId, identityReviewed)
     }
 }
 

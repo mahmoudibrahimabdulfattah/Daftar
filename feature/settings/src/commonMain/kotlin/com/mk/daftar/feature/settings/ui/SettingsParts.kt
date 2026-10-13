@@ -45,7 +45,9 @@ import com.mk.daftar.core.designsystem.theme.DaftarTheme
 import com.mk.daftar.core.domain.repository.AppLanguage
 import com.mk.daftar.core.domain.repository.InactivityTimeout
 import com.mk.daftar.core.domain.repository.ThemeMode
+import com.mk.daftar.core.navigation.TopLevelDestination
 import com.mk.daftar.core.security.PinEntryBuffer
+import com.mk.daftar.core.ui.shell.RootReselectScroll
 import com.mk.daftar.feature.settings.SecurityActionFailure
 import com.mk.daftar.feature.settings.resources.Res
 import com.mk.daftar.feature.settings.resources.bio_cancelled
@@ -78,8 +80,13 @@ internal fun SettingsPage(
     title: String,
     modifier: Modifier = Modifier,
     onBack: (() -> Unit)? = null,
+    rootDestination: TopLevelDestination? = null,
     content: @Composable ColumnScope.() -> Unit,
 ) {
+    val scroll = rememberScrollState()
+    if (rootDestination != null) {
+        RootReselectScroll(rootDestination) { scroll.animateScrollTo(0) }
+    }
     Column(modifier = modifier.fillMaxSize().background(DaftarTheme.colors.paper)) {
         DaftarTopBar(
             title = title,
@@ -90,7 +97,7 @@ internal fun SettingsPage(
             modifier = Modifier
                 .weight(1f)
                 .fillMaxWidth()
-                .verticalScroll(rememberScrollState())
+                .verticalScroll(scroll)
                 .padding(horizontal = DaftarSpacing.md, vertical = DaftarSpacing.sm),
             horizontalAlignment = Alignment.CenterHorizontally,
         ) {

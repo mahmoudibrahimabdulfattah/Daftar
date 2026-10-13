@@ -25,6 +25,7 @@ import androidx.compose.ui.semantics.heading
 import androidx.compose.ui.semantics.semantics
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import com.mk.daftar.core.designsystem.component.DaftarAmount
+import com.mk.daftar.core.designsystem.component.DaftarBankTile
 import com.mk.daftar.core.designsystem.component.DaftarFooterAction
 import com.mk.daftar.core.designsystem.component.DaftarLedgerRow
 import com.mk.daftar.core.designsystem.component.DaftarNotePanel
@@ -43,6 +44,8 @@ import com.mk.daftar.core.designsystem.resources.btn_back
 import com.mk.daftar.core.designsystem.resources.btn_saving
 import com.mk.daftar.core.designsystem.theme.DaftarSpacing
 import com.mk.daftar.core.designsystem.theme.DaftarTheme
+import com.mk.daftar.core.domain.bank.BankDirectory
+import com.mk.daftar.core.model.bank.BankDirectoryData
 import com.mk.daftar.core.navigation.LeaveRequest
 import com.mk.daftar.core.navigation.LocalNavigator
 import com.mk.daftar.core.navigation.Navigator
@@ -58,14 +61,18 @@ import com.mk.daftar.feature.banks.BankEditorViewModel
 import com.mk.daftar.feature.banks.BankNameError
 import com.mk.daftar.feature.banks.BankPhase
 import com.mk.daftar.feature.banks.DependentAccount
+import com.mk.daftar.feature.banks.PickerBackGuard
 import com.mk.daftar.feature.banks.resources.Res
 import com.mk.daftar.feature.banks.resources.bank_add_title
 import com.mk.daftar.feature.banks.resources.bank_blocked_message
 import com.mk.daftar.feature.banks.resources.bank_blocked_title
+import com.mk.daftar.feature.banks.resources.bank_change_identity
 import com.mk.daftar.feature.banks.resources.bank_delete
+import com.mk.daftar.feature.banks.resources.bank_display_name
 import com.mk.daftar.feature.banks.resources.bank_edit_title
 import com.mk.daftar.feature.banks.resources.bank_form_heading
 import com.mk.daftar.feature.banks.resources.bank_form_message
+import com.mk.daftar.feature.banks.resources.bank_identity_custom
 import com.mk.daftar.feature.banks.resources.bank_name_empty_preview
 import com.mk.daftar.feature.banks.resources.bank_name_label
 import com.mk.daftar.feature.banks.resources.bank_name_long
@@ -74,6 +81,7 @@ import com.mk.daftar.feature.banks.resources.bank_name_required
 import com.mk.daftar.feature.banks.resources.bank_no_numbers
 import com.mk.daftar.feature.banks.resources.bank_review_accounts
 import com.mk.daftar.feature.banks.resources.bank_save
+import com.mk.daftar.feature.banks.resources.bank_use_custom
 import com.mk.daftar.feature.banks.resources.banks_cancel
 import com.mk.daftar.feature.banks.resources.banks_failed_message
 import com.mk.daftar.feature.banks.resources.banks_failed_title
@@ -125,9 +133,8 @@ internal fun LeaveGuardRegistration(
 ) {
     val leave by rememberUpdatedState(onLeaveRequest)
     DisposableEffect(owner, navigator) {
-        val unregister = navigator.leaveGuard.register(owner) { request, proceed ->
-            leave { discarded ->
-                if (discarded && request is LeaveRequest.Switch) navigator.goBack()
+        val unregister = navigator.leaveGuard.register(owner) { _, proceed ->
+            leave { _ ->
                 proceed()
             }
         }
@@ -145,6 +152,13 @@ fun BankEditorContent(
 ) {
     val editable = state.phase == BankPhase.Ready && !state.completed && state.busy == null
     val showsForm = state.phase == BankPhase.Ready && !state.completed
+    val picker = state.picker.takeIf { showsForm }
+    PickerBackGuard(enabled = picker != null) { onIntent(BankEditorIntent.ClosePicker) }
+    if (picker != null) {
+        ShellScreen(modifier = modifier) { BankPickerContent(picker = picker, onIntent = onIntent) }
+        BankEditorDialogs(state = state, onIntent = onIntent)
+        return
+    }
     ShellScreen(modifier = modifier) {
         Column(modifier = Modifier.fillMaxSize()) {
             DaftarTopBar(
@@ -264,9 +278,12 @@ private fun BankForm(state: BankEditorUiState, editable: Boolean, onIntent: (Ban
                 color = DaftarTheme.colors.muted,
             )
         }
+        BankIdentityRow(state = state, editable = editable, onIntent = onIntent)
         val error = state.nameError.takeIf { state.attempted }
         DaftarTextField(
-            label = stringResource(Res.string.bank_name_label),
+            label = stringResource(
+                if (state.institutionId != null) Res.string.bank_display_name else Res.string.bank_name_label,
+            ),
             value = state.draft.nameText,
             onValueChange = { onIntent(BankEditorIntent.NameChanged(it)) },
             helper = error?.let { stringResource(bankNameMessage(it)) },
@@ -277,7 +294,7 @@ private fun BankForm(state: BankEditorUiState, editable: Boolean, onIntent: (Ban
         DaftarLedgerRow(
             title = preview.ifEmpty { stringResource(Res.string.bank_name_empty_preview) },
             subtitle = stringResource(Res.string.bank_name_preview),
-            icon = DaftarIcons.Bank,
+            leading = { DaftarBankTile(mark = bankMarkFor(state.institutionId)) },
         )
         DaftarNotePanel(tone = DaftarNoteTone.Context) {
             Text(stringResource(Res.string.bank_no_numbers))
@@ -290,6 +307,39 @@ private fun BankForm(state: BankEditorUiState, editable: Boolean, onIntent: (Ban
             ) {
                 Text(stringResource(Res.string.bank_delete))
             }
+        }
+    }
+}
+
+/**
+ * Which bank this is: its tile and catalog name, or Custom bank. Changing the identity reopens the directory, and a
+ * catalog bank can become a custom one. The display name below is edited separately and never changes the identity.
+ */
+@Composable
+private fun BankIdentityRow(state: BankEditorUiState, editable: Boolean, onIntent: (BankEditorIntent) -> Unit) {
+    val language = appLanguage()
+    val institution = state.institutionId?.let { id ->
+        BankDirectoryData.institutions.firstOrNull { it.id.value == id }
+    }
+    DaftarLedgerRow(
+        title = institution?.let { BankDirectory.localizedName(it, language) }
+            ?: stringResource(Res.string.bank_identity_custom),
+        leading = { DaftarBankTile(mark = bankMarkFor(state.institutionId)) },
+    )
+    DaftarTextButton(
+        onClick = { onIntent(BankEditorIntent.OpenPicker) },
+        fullWidth = true,
+        enabled = editable,
+    ) {
+        Text(stringResource(Res.string.bank_change_identity))
+    }
+    if (state.institutionId != null) {
+        DaftarTextButton(
+            onClick = { onIntent(BankEditorIntent.PickOther) },
+            fullWidth = true,
+            enabled = editable,
+        ) {
+            Text(stringResource(Res.string.bank_use_custom))
         }
     }
 }

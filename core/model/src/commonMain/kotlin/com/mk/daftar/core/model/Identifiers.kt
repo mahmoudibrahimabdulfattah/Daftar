@@ -36,3 +36,24 @@ data class NoteId(val value: String) {
         require(value.isNotBlank()) { "id must not be blank" }
     }
 }
+
+/**
+ * The identity of a catalog institution, such as `eg.nbe`. Lowercase ASCII letters, digits, dots and hyphens, one to
+ * [MAX_LENGTH] characters. Valid IDs that this build does not know are kept as they are. The ID is never a local record
+ * ID and never reused.
+ */
+data class InstitutionId(val value: String) {
+    init {
+        require(isValid(value)) { "invalid institution id" }
+    }
+
+    companion object {
+        const val MAX_LENGTH: Int = 64
+
+        fun isValid(text: String): Boolean = text.length in 1..MAX_LENGTH && text.all { ch ->
+            ch in 'a'..'z' || ch in '0'..'9' || ch == '.' || ch == '-'
+        }
+
+        fun parseOrNull(text: String): InstitutionId? = if (isValid(text)) InstitutionId(text) else null
+    }
+}

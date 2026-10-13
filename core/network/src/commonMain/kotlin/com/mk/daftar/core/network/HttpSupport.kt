@@ -62,22 +62,30 @@ private fun HttpClientConfig<*>.configure() {
 
 /**
  * GETs [url] and returns the body as UTF-8 text, reading at most [maxBytes]. The limit is enforced while reading,
- * and a declared Content-Length over the limit is refused before any body is read.
+ * and a declared Content-Length over the limit is refused before any body is read. When [mediaType] is given, the
+ * response must declare that media type, without parameters, or it is refused as a wrong content type.
  */
 internal suspend fun HttpClient.fetchBoundedText(
     url: String,
     accept: String,
     maxBytes: Int,
     clock: Clock,
+    mediaType: String? = null,
 ): Outcome<String, DataError> = networkCall(clock) {
     prepareGet(url) {
         header(HttpHeaders.Accept, accept)
     }.execute { response ->
         val declared = response.headers[HttpHeaders.ContentLength]?.toLongOrNull()
-        if (declared != null && declared > maxBytes) {
-            Outcome.Failure(DataError.InvalidPayload(PayloadFailure.TooLarge))
-        } else {
-            readBoundedText(response, maxBytes)
+        val declaredType = response.headers[HttpHeaders.ContentType]?.substringBefore(';')?.trim()?.lowercase()
+        when {
+            declared != null && declared > maxBytes -> Outcome.Failure(
+                DataError.InvalidPayload(PayloadFailure.TooLarge),
+            )
+
+            mediaType != null && declaredType != mediaType ->
+                Outcome.Failure(DataError.InvalidPayload(PayloadFailure.WrongContentType))
+
+            else -> readBoundedText(response, maxBytes)
         }
     }
 }

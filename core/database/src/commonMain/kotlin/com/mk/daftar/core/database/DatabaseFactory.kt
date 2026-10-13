@@ -6,6 +6,7 @@ import androidx.sqlite.SQLiteDriver
 import androidx.sqlite.SQLiteStatement
 import com.mk.daftar.core.database.schema.ValidationTriggersV1
 import com.mk.daftar.core.database.schema.ValidationTriggersV2
+import com.mk.daftar.core.database.schema.ValidationTriggersV3
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.IO
 
@@ -46,15 +47,21 @@ internal object DaftarSchemaCallback : RoomDatabase.Callback() {
     override fun onCreate(connection: SQLiteConnection) {
         ValidationTriggersV1.statements.forEach { connection.execute(it) }
         ValidationTriggersV2.statements.forEach { connection.execute(it) }
+        ValidationTriggersV3.statements.forEach { connection.execute(it) }
     }
 
     override fun onOpen(connection: SQLiteConnection) {
-        val expected = (ValidationTriggersV1.triggerNames + ValidationTriggersV2.triggerNames).size.toLong()
-        val present = connection.scalarLong(
-            "SELECT count(*) FROM sqlite_master WHERE type = 'trigger' AND " +
-                "(name LIKE 'daftar_v${ValidationTriggersV1.VERSION}_%' OR name LIKE 'daftar_v${ValidationTriggersV2.VERSION}_%')",
+        val versions = listOf(
+            ValidationTriggersV1.VERSION to ValidationTriggersV1.triggerNames,
+            ValidationTriggersV2.VERSION to ValidationTriggersV2.triggerNames,
+            ValidationTriggersV3.VERSION to ValidationTriggersV3.triggerNames,
         )
-        check(present == expected) { "validation triggers do not match schema version ${ValidationTriggersV2.VERSION}" }
+        val expected = versions.sumOf { it.second.size }.toLong()
+        val present = connection.scalarLong(
+            "SELECT count(*) FROM sqlite_master WHERE type = 'trigger' AND (" +
+                versions.joinToString(" OR ") { "name LIKE 'daftar_v${it.first}_%'" } + ")",
+        )
+        check(present == expected) { "validation triggers do not match schema version ${ValidationTriggersV3.VERSION}" }
     }
 }
 

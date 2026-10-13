@@ -29,4 +29,6 @@ enum class PayloadFailure {
     WrongUnit,
     InconsistentPrices,
     TooLarge,
+    WrongContentType,
+    RejectedPage,
 }

@@ -26,7 +26,7 @@ import com.mk.daftar.core.database.entity.ZakatPaymentEntity
 import com.mk.daftar.core.database.entity.ZakatTrackingEntity
 import com.mk.daftar.core.database.entity.ZakatYearEntity
 
-/** The private notebook database. Schema version 2, reached from version 1 by [daftarMigrations]; there is no destructive fallback. */
+/** The private notebook database. Schema version 3, reached from earlier versions by [daftarMigrations]; there is no destructive fallback. */
 @Database(
     entities = [
         GoldHoldingEntity::class,
@@ -40,7 +40,7 @@ import com.mk.daftar.core.database.entity.ZakatYearEntity
         ZakatYearEntity::class,
         ZakatTrackingEntity::class,
     ],
-    version = 2,
+    version = 3,
     exportSchema = true,
 )
 @ConstructedBy(DaftarDatabaseConstructor::class)

@@ -26,6 +26,7 @@ import com.mk.daftar.core.designsystem.resources.nav_journal
 import com.mk.daftar.core.designsystem.resources.nav_settings
 import com.mk.daftar.core.navigation.LeaveRequest
 import com.mk.daftar.core.navigation.LocalNavigator
+import com.mk.daftar.core.navigation.LocalNavigatorOrNull
 import com.mk.daftar.core.navigation.Navigator
 import com.mk.daftar.core.navigation.TopLevelDestination
 import com.mk.daftar.core.ui.motion.rememberReducedMotion
@@ -59,6 +60,7 @@ fun DaftarAppShell(navigator: Navigator, retention: ShellRetention, modifier: Mo
     CompositionLocalProvider(
         LocalSaveableStateRegistry provides registry,
         LocalNavigator provides navigator,
+        LocalNavigatorOrNull provides navigator,
     ) {
         val home = decoratedEntries(navigator, TopLevelDestination.HOME, provider)
         val assets = decoratedEntries(navigator, TopLevelDestination.ASSETS, provider)
@@ -73,7 +75,7 @@ fun DaftarAppShell(navigator: Navigator, retention: ShellRetention, modifier: Mo
         DaftarAdaptiveShell(
             destinations = shellDestinations(),
             selectedIndex = navigator.topLevel.ordinal,
-            onSelect = { index -> navigator.requestLeave(LeaveRequest.Switch(TopLevelDestination.entries[index])) },
+            onSelect = { index -> navigator.reselect(TopLevelDestination.entries[index]) },
             modifier = modifier,
         ) {
             NavDisplay(

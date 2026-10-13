@@ -18,6 +18,7 @@ import kotlin.coroutines.cancellation.CancellationException
 import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.catch
+import kotlinx.coroutines.flow.first
 import kotlinx.coroutines.flow.map
 
 /**
@@ -56,6 +57,21 @@ class DaftarPreferencesDataSource internal constructor(
     suspend fun setBiometricEnabled(enabled: Boolean): Outcome<Unit, StorageError> =
         write { it[BIOMETRIC_ENABLED] = enabled }
 
+    /**
+     * Whether the current lock episode already spent its automatic biometric request. The flag holds no secret. A read
+     * that cannot complete reports true, so a broken store never starts an automatic prompt.
+     */
+    suspend fun autoBiometricConsumed(): Boolean = try {
+        dataStore.data.first()[AUTO_BIOMETRIC_CONSUMED] ?: false
+    } catch (error: CancellationException) {
+        throw error
+    } catch (error: Throwable) {
+        true
+    }
+
+    suspend fun setAutoBiometricConsumed(consumed: Boolean): Outcome<Unit, StorageError> =
+        write { it[AUTO_BIOMETRIC_CONSUMED] = consumed }
+
     private suspend fun write(change: (MutablePreferences) -> Unit): Outcome<Unit, StorageError> = try {
         dataStore.updateData { prefs -> prefs.toMutablePreferences().also(change).toPreferences() }
         Outcome.Success(Unit)
@@ -71,6 +87,7 @@ private val THEME = stringPreferencesKey("theme_mode")
 private val LANGUAGE = stringPreferencesKey("language")
 private val INACTIVITY_TIMEOUT = intPreferencesKey("inactivity_timeout_seconds")
 private val BIOMETRIC_ENABLED = booleanPreferencesKey("biometric_enabled")
+private val AUTO_BIOMETRIC_CONSUMED = booleanPreferencesKey("biometric_auto_attempt_consumed")
 
 /** Maps stored values to domain settings. Unknown or out-of-range values fall back to the defaults. */
 internal fun Preferences.toUserPreferences(): UserPreferences {

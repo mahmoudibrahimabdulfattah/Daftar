@@ -20,6 +20,7 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.platform.LocalFocusManager
 import androidx.compose.ui.platform.LocalSoftwareKeyboardController
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
+import com.mk.daftar.core.designsystem.component.DaftarCurrencyBadge
 import com.mk.daftar.core.designsystem.component.DaftarFieldKind
 import com.mk.daftar.core.designsystem.component.DaftarFooterAction
 import com.mk.daftar.core.designsystem.component.DaftarNotePanel
@@ -294,12 +295,22 @@ private fun AccountForm(
             color = DaftarTheme.colors.muted,
         )
         val currencies = listOf(Currency.EGP, Currency.USD)
-        DaftarSegmentedControl(
-            options = currencies.map { it.name },
-            selectedIndex = currencies.indexOf(state.draft.currency),
-            onSelect = { index -> onIntent(AccountEditorIntent.CurrencyChanged(currencies[index])) },
-            enabled = editable,
-        )
+        // The selected currency's badge sits beside the choice, as on the account rows.
+        Row(
+            modifier = Modifier.fillMaxWidth(),
+            horizontalArrangement = Arrangement.spacedBy(DaftarSpacing.sm),
+            verticalAlignment = Alignment.CenterVertically,
+        ) {
+            val glyph = currencyGlyphOf(state.draft.currency)
+            DaftarCurrencyBadge(glyph = glyph.text, arabicGlyph = glyph.arabic)
+            DaftarSegmentedControl(
+                options = currencies.map { it.name },
+                selectedIndex = currencies.indexOf(state.draft.currency),
+                onSelect = { index -> onIntent(AccountEditorIntent.CurrencyChanged(currencies[index])) },
+                enabled = editable,
+                modifier = Modifier.weight(1f),
+            )
+        }
         if (state.currencyChanged) {
             DaftarNotePanel(
                 tone = DaftarNoteTone.Warning,

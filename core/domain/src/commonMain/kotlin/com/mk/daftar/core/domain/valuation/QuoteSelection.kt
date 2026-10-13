@@ -2,6 +2,7 @@ package com.mk.daftar.core.domain.valuation
 
 import com.mk.daftar.core.domain.repository.QuoteSnapshot
 import com.mk.daftar.core.model.Decimal
+import com.mk.daftar.core.model.FxBasis
 import com.mk.daftar.core.model.FxQuote
 import com.mk.daftar.core.model.GoldKarat
 import com.mk.daftar.core.model.GoldQuote
@@ -11,6 +12,7 @@ import com.mk.daftar.core.model.QuoteKey
 import com.mk.daftar.core.model.QuoteKind
 import com.mk.daftar.core.model.QuoteProvenance
 import com.mk.daftar.core.model.QuoteProvider
+import com.mk.daftar.core.model.SourceTime
 import kotlin.time.Duration
 import kotlin.time.Duration.Companion.hours
 import kotlin.time.Instant
@@ -68,6 +70,8 @@ data class SelectedQuote(
     val freshness: QuoteFreshness,
     val nextUpdateAt: Instant?,
     val attributionUrl: String?,
+    /** The basis of a USD to EGP quote. Null for gold, whose basis is its merchant side. */
+    val fxBasis: FxBasis? = null,
 ) {
     /** Warnings to show next to any value that depends on this quote. */
     val warnings: List<QuoteWarning>
@@ -140,17 +144,19 @@ private fun remoteCandidate(key: QuoteKey, snapshot: QuoteSnapshot, now: Instant
         val provenance = quote.provenance
         if (provenance.kind != QuoteKind.LIVE && provenance.kind != QuoteKind.CACHED) return@mapNotNull null
         val fetchedAt = provenance.fetchedAt ?: return@mapNotNull null
-        val freshness = freshnessOf(reference = fetchedAt, now = now)
+        val reference = referenceOf(key, provenance)
+        val freshness = freshnessOf(reference = reference, now = now)
         RemoteCandidate(
             selection = SelectedQuote(
                 key = key,
                 value = quote.valueOf(),
                 origin = QuoteOrigin.REMOTE,
                 provenance = provenance,
-                referenceAt = fetchedAt,
+                referenceAt = reference,
                 freshness = freshness,
                 nextUpdateAt = record.nextUpdateAt,
                 attributionUrl = record.attributionUrl,
+                fxBasis = (quote as? FxQuote)?.basis,
             ),
             tier = when (freshness) {
                 QuoteFreshness.FRESH -> 0
@@ -164,8 +170,8 @@ private fun remoteCandidate(key: QuoteKey, snapshot: QuoteSnapshot, now: Instant
 }
 
 /**
- * Nonstale before clock-uncertain before stale; newest fetch within a tier; exact ties prefer
- * [QuoteProvider.EXCHANGE_RATE_API] over [QuoteProvider.FAWAZ_CURRENCY_API].
+ * Nonstale before clock-uncertain before stale; newest reference within a tier; exact ties prefer the provider order
+ * of [providerRank].
  */
 private val REMOTE_ORDER: Comparator<RemoteCandidate> = Comparator { a, b ->
     val byTier = a.tier.compareTo(b.tier)
@@ -175,12 +181,27 @@ private val REMOTE_ORDER: Comparator<RemoteCandidate> = Comparator { a, b ->
     a.providerRank.compareTo(b.providerRank)
 }
 
-/** Gold is priced by ISAGHA alone, so its rank never competes; FX prefers the primary provider. */
+/**
+ * Gold is priced by ISAGHA alone, so its rank never competes. FX prefers Banque Misr, then open.er-api, then the
+ * fawazahmed0 fallback, which is the order of the refresh chain.
+ */
 private fun providerRank(provider: QuoteProvider): Int = when (provider) {
-    QuoteProvider.EXCHANGE_RATE_API -> 0
+    QuoteProvider.BANQUE_MISR -> 0
     QuoteProvider.ISAGHA -> 0
-    QuoteProvider.FAWAZ_CURRENCY_API -> 1
-    QuoteProvider.USER -> 2
+    QuoteProvider.EXCHANGE_RATE_API -> 1
+    QuoteProvider.FAWAZ_CURRENCY_API -> 2
+    QuoteProvider.USER -> 3
+}
+
+/**
+ * The instant a remote quote is judged by. Gold keeps its fetch time. An FX quote is judged by the time it describes,
+ * so an older source is never refreshed by a later fetch. A quote without a source time falls back to its fetch time,
+ * which is the "checked" meaning.
+ */
+private fun referenceOf(key: QuoteKey, provenance: QuoteProvenance): Instant {
+    val fetchedAt = checkNotNull(provenance.fetchedAt) { "remote quotes always carry a fetch time" }
+    if (key is QuoteKey.Gold) return fetchedAt
+    return (provenance.sourceTime as? SourceTime.Timestamp)?.value ?: fetchedAt
 }
 
 private fun manualSelection(quote: PriceQuote, origin: QuoteOrigin, now: Instant): SelectedQuote {
@@ -195,6 +216,7 @@ private fun manualSelection(quote: PriceQuote, origin: QuoteOrigin, now: Instant
         freshness = freshnessOf(reference = recordedAt, now = now),
         nextUpdateAt = null,
         attributionUrl = null,
+        fxBasis = (quote as? FxQuote)?.basis,
     )
 }
 

@@ -3,13 +3,14 @@ package com.mk.daftar.core.database
 import androidx.room.migration.Migration
 import androidx.sqlite.SQLiteConnection
 import androidx.sqlite.SQLiteStatement
+import com.mk.daftar.core.database.migration.Migration2To3
 import com.mk.daftar.core.database.schema.ValidationTriggersV2
 
 /**
  * Every schema migration, in order. There is no destructive fallback: a database without a path to the current version
  * fails to open rather than being replaced.
  */
-internal val daftarMigrations: Array<Migration> = arrayOf(Migration1To2)
+internal val daftarMigrations: Array<Migration> = arrayOf(Migration1To2, Migration2To3)
 
 /**
  * Version 1 to 2: the annual declarations, the tracking row, and the optional Hijri year on zakat payments. Existing

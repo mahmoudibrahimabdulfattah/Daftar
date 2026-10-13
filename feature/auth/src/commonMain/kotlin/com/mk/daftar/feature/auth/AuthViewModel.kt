@@ -47,6 +47,12 @@ class AuthViewModel(
      */
     private var pinnedUnavailable: AuthUnavailableReason? = null
 
+    /**
+     * Whether the vault opened since this screen last showed a lock. This view model outlives each session, so after a
+     * successful unlock its phase can still read Unlock; the next lock is nevertheless a new episode.
+     */
+    private var openedSinceLock = false
+
     private var work: Job? = null
     private var workToken = 0
     private var statusJob: Job? = null
@@ -72,8 +78,9 @@ class AuthViewModel(
             AuthIntent.LeaveRecovery -> leaveRecovery()
             AuthIntent.Recheck -> refreshStatus()
             AuthIntent.PrivacyInvalidated -> invalidate()
-            AuthIntent.OpenRestore -> Unit
-            AuthIntent.OpenCloudRestore -> Unit
+            AuthIntent.AutomaticBiometric -> automaticBiometric()
+            AuthIntent.OpenRestore -> dismissAutoRequest()
+            AuthIntent.OpenCloudRestore -> dismissAutoRequest()
         }
     }
 
@@ -92,6 +99,8 @@ class AuthViewModel(
     private fun digit(codePoint: Int) {
         if (!currentState.inputEnabled) return
         if (!entry.append(codePoint)) return
+        // Typing takes the PIN over from a queued automatic request, which is then spent for this lock episode.
+        dismissAutoRequest()
         reduce {
             copy(enteredCount = entry.size, error = error.takeIf { it == AuthError.PinMismatch })
         }
@@ -196,9 +205,16 @@ class AuthViewModel(
             }
             coroutineContext.ensureActive()
             when (result) {
-                AuthResult.Opened -> wipeDrafts()
+                AuthResult.Opened -> {
+                    openedSinceLock = true
+                    gateway.clearAutoAttempt()
+                    wipeDrafts()
+                }
+
                 is AuthResult.Security -> afterFailedOpen(result.error, AuthError.OpenFailed)
+
                 is AuthResult.Storage -> recheckAfterFailure(AuthError.OpenFailed)
+
                 else -> refreshNow()
             }
         }
@@ -222,7 +238,11 @@ class AuthViewModel(
             }
             coroutineContext.ensureActive()
             when (result) {
-                AuthResult.Opened -> wipeDrafts()
+                AuthResult.Opened -> {
+                    openedSinceLock = true
+                    gateway.clearAutoAttempt()
+                    wipeDrafts()
+                }
 
                 is AuthResult.EnrollmentFailed -> {
                     wipeDrafts()
@@ -249,7 +269,11 @@ class AuthViewModel(
             }
             coroutineContext.ensureActive()
             when (result) {
-                AuthResult.Opened -> wipeDrafts()
+                AuthResult.Opened -> {
+                    openedSinceLock = true
+                    gateway.clearAutoAttempt()
+                    wipeDrafts()
+                }
 
                 is AuthResult.Security -> when (result.error) {
                     SecurityError.AuthenticationFailed -> {
@@ -299,11 +323,33 @@ class AuthViewModel(
         val state = currentState
         if (state.phase != AuthPhase.Unlock || state.busy != null || !state.biometricReady) return
         if (state.retrySeconds != null || work?.isActive == true) return
+        promptBiometrics(consumesAutomaticAttempt = false)
+    }
+
+    /**
+     * The automatic request of a lock episode. It is spent before the platform is asked, so a cancelled, failed or
+     * interrupted request is never repeated in the same episode. A request that cannot be recorded does not start.
+     */
+    private fun automaticBiometric() {
+        val state = currentState
+        if (!state.biometricAutoPending) return
+        if (state.phase != AuthPhase.Unlock || state.busy != null || !state.biometricReady) return
+        if (state.retrySeconds != null || work?.isActive == true) return
+        reduce { copy(biometricAutoPending = false) }
+        promptBiometrics(consumesAutomaticAttempt = true)
+    }
+
+    private fun promptBiometrics(consumesAutomaticAttempt: Boolean) {
         run(AuthBusy.UnlockingBiometric) {
+            if (consumesAutomaticAttempt && !gateway.consumeAutoAttempt()) return@run
             val result = gateway.unlockWithBiometrics()
             coroutineContext.ensureActive()
             when (result) {
-                AuthResult.Opened -> wipeDrafts()
+                AuthResult.Opened -> {
+                    openedSinceLock = true
+                    gateway.clearAutoAttempt()
+                    wipeDrafts()
+                }
 
                 is AuthResult.Biometric -> afterBiometricFailure(result.reason)
 
@@ -378,11 +424,13 @@ class AuthViewModel(
             return
         }
         val ready = if (status is SecurityStatus.Locked) gateway.biometricReady() else false
-        applyStatus(status, failure, notice, ready)
+        val automaticDue = status is SecurityStatus.Locked && ready && !gateway.autoAttemptConsumed()
+        applyStatus(status, failure, notice, ready, automaticDue)
     }
 
     private fun showRecovery() {
         if (currentState.phase != AuthPhase.Unlock || currentState.busy != null) return
+        dismissAutoRequest()
         entry.clear()
         reduce { copy(phase = AuthPhase.Recovery, enteredCount = 0, error = null) }
     }
@@ -401,7 +449,13 @@ class AuthViewModel(
     }
 
     /** Moves to the screen the security state calls for. Only [AuthPhase.Unlock] keeps typed digits. */
-    private fun applyStatus(status: SecurityStatus, failure: AuthError?, notice: AuthNotice?, ready: Boolean) {
+    private fun applyStatus(
+        status: SecurityStatus,
+        failure: AuthError?,
+        notice: AuthNotice?,
+        ready: Boolean,
+        automaticDue: Boolean,
+    ) {
         when (status) {
             SecurityStatus.NotInitialized -> {
                 wipeDrafts()
@@ -412,6 +466,7 @@ class AuthViewModel(
                         retrySeconds = null,
                         biometricReady = false,
                         notice = null,
+                        biometricAutoPending = false,
                     )
                 }
             }
@@ -419,12 +474,20 @@ class AuthViewModel(
             is SecurityStatus.Locked -> {
                 val previous = currentState.phase
                 if (previous != AuthPhase.Unlock) wipeDrafts()
+                // An episode starts only from the first status read or from an unlocked session. Backoff expiry, a
+                // recheck on resume and a return from Recovery never start one. A request still waiting for the host to
+                // resume survives that recheck: returning from the background is exactly when it must run.
+                val episodeStart = (previous == AuthPhase.Checking || openedSinceLock) && status.retryAfter == null
+                openedSinceLock = false
+                val stillPending =
+                    previous == AuthPhase.Unlock && currentState.biometricAutoPending && status.retryAfter == null
                 reduce {
                     copy(
                         phase = AuthPhase.Unlock,
                         error = failure ?: error.takeIf { previous == AuthPhase.Unlock },
                         biometricReady = ready,
                         notice = notice ?: this.notice.takeIf { previous == AuthPhase.Unlock },
+                        biometricAutoPending = (episodeStart || stillPending) && automaticDue,
                     )
                 }
                 val retry = status.retryAfter
@@ -432,6 +495,7 @@ class AuthViewModel(
             }
 
             SecurityStatus.Unlocked -> {
+                openedSinceLock = true
                 stopCountdown()
                 wipeDrafts()
                 reduce {
@@ -441,6 +505,7 @@ class AuthViewModel(
                         retrySeconds = null,
                         biometricReady = false,
                         notice = null,
+                        biometricAutoPending = false,
                     )
                 }
             }
@@ -456,6 +521,7 @@ class AuthViewModel(
                         retrySeconds = null,
                         biometricReady = false,
                         notice = null,
+                        biometricAutoPending = false,
                     )
                 }
             }
@@ -499,6 +565,16 @@ class AuthViewModel(
                 retrySeconds = retrySeconds,
             )
         }
+    }
+
+    /**
+     * A user action on the lock screen takes over from a queued automatic request. The request is dropped and its
+     * attempt is recorded, so a later relaunch or lock does not ask again without a successful unlock in between.
+     */
+    private fun dismissAutoRequest() {
+        if (!currentState.biometricAutoPending) return
+        reduce { copy(biometricAutoPending = false) }
+        viewModelScope.launch { gateway.consumeAutoAttempt() }
     }
 
     /** Clears the entry and the candidate, and resets the count. Does not change the phase. */

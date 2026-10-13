@@ -27,6 +27,8 @@ data class RemoteQuoteEntity(
     @ColumnInfo(name = "next_update_seconds") val nextUpdateSeconds: Long?,
     @ColumnInfo(name = "next_update_nanos") val nextUpdateNanos: Int?,
     @ColumnInfo(name = "attribution_url") val attributionUrl: String?,
+    /** For USD to EGP only: the FX basis. Null for gold. Version 3. */
+    @ColumnInfo(name = "basis") val basis: String? = null,
 )
 
 /**

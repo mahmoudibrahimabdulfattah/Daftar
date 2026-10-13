@@ -183,4 +183,5 @@
     <string name="count_balances_other">⁦%1$d⁩ رصيد</string>
     <string name="count_banks_accounts_none">لا توجد بنوك أو حسابات</string>
     <string name="count_banks_accounts_summary">%1$s · %2$s</string>
+    <string name="section_identity">أيقونات البنوك وشارات العملات</string>
 </resources>

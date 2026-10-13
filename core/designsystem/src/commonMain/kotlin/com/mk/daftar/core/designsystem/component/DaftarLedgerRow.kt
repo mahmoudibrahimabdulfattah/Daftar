@@ -33,11 +33,14 @@ import com.mk.daftar.core.designsystem.theme.DaftarTheme
 enum class DaftarTileTone {
     Default,
     Gold,
+    Bank,
+    Cash,
 }
 
 /**
  * A row in a list of holdings or settings: a tile icon, title and subtitle, then a value. [value] may wrap to a
- * second line at large font sizes. With [onClick] the row is a button, shows a chevron and a focus ring.
+ * second line at large font sizes. [leading] replaces the tile icon when a row carries its own identity tile, such as
+ * a bank or a currency badge. With [onClick] the row is a button, shows a chevron and a focus ring.
  */
 @Composable
 fun DaftarLedgerRow(
@@ -46,6 +49,7 @@ fun DaftarLedgerRow(
     subtitle: String? = null,
     icon: ImageVector? = null,
     tone: DaftarTileTone = DaftarTileTone.Default,
+    leading: (@Composable () -> Unit)? = null,
     value: (@Composable () -> Unit)? = null,
     onClick: (() -> Unit)? = null,
     selected: Boolean = false,
@@ -77,7 +81,11 @@ fun DaftarLedgerRow(
             verticalAlignment = Alignment.CenterVertically,
             horizontalArrangement = Arrangement.spacedBy(10.dp),
         ) {
-            if (icon != null) DaftarTileIcon(icon = icon, tone = tone, contentDescription = null)
+            if (leading != null) {
+                leading()
+            } else if (icon != null) {
+                DaftarTileIcon(icon = icon, tone = tone, contentDescription = null)
+            }
             Column(modifier = Modifier.weight(1f)) {
                 Text(title, style = typography.ledgerTitle, color = colors.ink)
                 if (subtitle != null) {
@@ -117,19 +125,25 @@ fun DaftarTileIcon(
     tone: DaftarTileTone = DaftarTileTone.Default,
 ) {
     val colors = DaftarTheme.colors
-    val gold = tone == DaftarTileTone.Gold
     val styleState = rememberUpdatedStyleState(null)
+    val (tileStyle, tint) = when (tone) {
+        DaftarTileTone.Default -> DaftarStyles.tileIcon to colors.primary
+        DaftarTileTone.Gold -> DaftarStyles.goldTileIcon to colors.onGoldTile
+        DaftarTileTone.Bank -> DaftarStyles.bankTileIcon to colors.onBankTile
+        DaftarTileTone.Cash -> DaftarStyles.cashTileIcon to colors.onCashTile
+    }
     Box(
         modifier = modifier
             .size(DaftarSpacing.tileSize)
-            .styleable(styleState, if (gold) DaftarStyles.goldTileIcon else DaftarStyles.tileIcon),
+            .styleable(styleState, tileStyle),
         contentAlignment = Alignment.Center,
     ) {
         DaftarIcon(
             icon = icon,
             contentDescription = contentDescription,
-            tint = if (gold) colors.gold else colors.primary,
-            size = DaftarSpacing.tileIconSize,
+            tint = tint,
+            // Asset categories draw a larger glyph on their strong fill; quiet tiles keep the standard size.
+            size = if (tone == DaftarTileTone.Default) DaftarSpacing.tileIconSize else DaftarSpacing.categoryGlyphSize,
         )
     }
 }

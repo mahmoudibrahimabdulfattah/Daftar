@@ -312,4 +312,126 @@ class QuoteSelectionTest {
         assertEquals(dec("6185"), selected[gold21]!!.value)
         assertEquals(dec("6900"), selected[buy]!!.value)
     }
+
+    // Phase 23: FX freshness is judged by the time the quote describes, and ties follow the provider order.
+
+    private fun bankQuote(effective: kotlin.time.Instant?, fetched: kotlin.time.Instant = NOW - 5.minutes) = remote(
+        USD_EGP,
+        "52.77",
+        fetched,
+        provider = QuoteProvider.BANQUE_MISR,
+        cached = true,
+        sourceTime = effective?.let { SourceTime.Timestamp(it) } ?: SourceTime.Unknown,
+    )
+
+    @Test
+    fun exactlyTwentyFourHoursOldBankQuoteIsFreshAndOneMillisecondMoreIsStale() {
+        val exact = selectQuotes(snapshot(remote = listOf(bankQuote(NOW - QUOTE_STALE_AFTER))), NOW)[USD_EGP]!!
+        assertEquals(QuoteFreshness.FRESH, exact.freshness)
+
+        val over = selectQuotes(
+            snapshot(remote = listOf(bankQuote(NOW - QUOTE_STALE_AFTER - 1.milliseconds))),
+            NOW,
+        )[USD_EGP]!!
+        assertEquals(QuoteFreshness.STALE, over.freshness)
+        assertEquals(QuoteWarning.STALE, over.warnings.single())
+    }
+
+    @Test
+    fun aRepeatedFetchOfAnUnchangedPublicationDoesNotAdvanceFreshness() {
+        val publication = NOW - 30.hours
+        val first = bankQuote(publication, fetched = NOW - 30.hours)
+        val refetch = bankQuote(publication, fetched = NOW)
+
+        val selected = selectQuotes(snapshot(remote = listOf(first, refetch)), NOW)[USD_EGP]!!
+
+        assertEquals(QuoteFreshness.STALE, selected.freshness)
+        assertEquals(publication, selected.referenceAt)
+    }
+
+    @Test
+    fun aFutureDatedBankQuoteShowsClockUncertaintyAndIsNeverFresh() {
+        val selected = selectQuotes(snapshot(remote = listOf(bankQuote(NOW + 10.minutes))), NOW)[USD_EGP]!!
+
+        assertEquals(QuoteFreshness.CLOCK_UNCERTAIN, selected.freshness)
+        assertTrue(QuoteWarning.CLOCK_UNCERTAIN in selected.warnings)
+    }
+
+    @Test
+    fun aFreshFallbackOutranksAStaleBankCache() {
+        val stale = bankQuote(NOW - 25.hours)
+        val fallback = remote(
+            USD_EGP,
+            "48.50",
+            NOW,
+            provider = QuoteProvider.EXCHANGE_RATE_API,
+            cached = true,
+            sourceTime = SourceTime.Timestamp(NOW - 1.hours),
+        )
+
+        val selected = selectQuotes(snapshot(remote = listOf(stale, fallback)), NOW)[USD_EGP]!!
+
+        assertEquals(QuoteProvider.EXCHANGE_RATE_API, selected.provenance.provider)
+        assertEquals(QuoteFreshness.FRESH, selected.freshness)
+    }
+
+    @Test
+    fun theNewestEffectiveTimeWinsAmongStaleCachesEvenIfFetchedLater() {
+        // The bank's older publication was fetched after the fallback's newer one; the publication decides.
+        val olderBank = bankQuote(NOW - 50.hours, fetched = NOW - 1.hours)
+        val newerFallback = remote(
+            USD_EGP,
+            "48.50",
+            NOW - 2.hours,
+            provider = QuoteProvider.EXCHANGE_RATE_API,
+            cached = true,
+            sourceTime = SourceTime.Timestamp(NOW - 49.hours),
+        )
+
+        val selected = selectQuotes(snapshot(remote = listOf(olderBank, newerFallback)), NOW)[USD_EGP]!!
+
+        assertEquals(QuoteProvider.EXCHANGE_RATE_API, selected.provenance.provider)
+    }
+
+    @Test
+    fun anEqualEffectiveTimeTiesToBankThenOpenExchangeThenFawaz() {
+        val effective = NOW - 2.hours
+        val bank = bankQuote(effective)
+        val open = remote(
+            USD_EGP,
+            "48.50",
+            NOW,
+            provider = QuoteProvider.EXCHANGE_RATE_API,
+            cached = true,
+            sourceTime = SourceTime.Timestamp(effective),
+        )
+        val fawaz = remote(
+            USD_EGP,
+            "48.40",
+            NOW,
+            provider = QuoteProvider.FAWAZ_CURRENCY_API,
+            cached = true,
+            sourceTime = SourceTime.Timestamp(effective),
+        )
+
+        assertEquals(
+            QuoteProvider.BANQUE_MISR,
+            selectQuotes(snapshot(remote = listOf(fawaz, open, bank)), NOW)[USD_EGP]!!.provenance.provider,
+        )
+        assertEquals(
+            QuoteProvider.EXCHANGE_RATE_API,
+            selectQuotes(snapshot(remote = listOf(fawaz, open)), NOW)[USD_EGP]!!.provenance.provider,
+        )
+    }
+
+    @Test
+    fun goldKeepsItsFetchTimeReference() {
+        val fetched = NOW - 30.hours
+        val gold = remote(gold21, "6185", fetched, sourceTime = SourceTime.Timestamp(NOW))
+
+        val selected = selectQuotes(snapshot(remote = listOf(gold)), NOW)[gold21]!!
+
+        assertEquals(fetched, selected.referenceAt)
+        assertEquals(QuoteFreshness.STALE, selected.freshness)
+    }
 }

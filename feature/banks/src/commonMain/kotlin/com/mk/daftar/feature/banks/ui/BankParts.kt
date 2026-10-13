@@ -15,6 +15,7 @@ import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.unit.dp
+import com.mk.daftar.core.designsystem.component.DaftarBankTile
 import com.mk.daftar.core.designsystem.component.DaftarConfirmationContent
 import com.mk.daftar.core.designsystem.component.DaftarIconButton
 import com.mk.daftar.core.designsystem.component.DaftarLedgerRow
@@ -182,7 +183,7 @@ internal fun BankPickerDialog(
                         options.forEach { bank ->
                             DaftarLedgerRow(
                                 title = bank.name,
-                                icon = DaftarIcons.Bank,
+                                leading = { DaftarBankTile(mark = bankMarkFor(bank.institutionId)) },
                                 selected = bank.id == selectedId,
                                 onClick = { onPick(bank.id) },
                             )

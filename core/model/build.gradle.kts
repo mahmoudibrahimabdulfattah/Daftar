@@ -1,5 +1,140 @@
+import groovy.json.JsonSlurper
+
 plugins {
     id("daftar.kmp.library")
+}
+
+// Bank directory and artwork switch. The directory is the checked-in JSON in src/bankDirectory; the build turns it into
+// one immutable Kotlin object for every platform. The artwork mode is a build property, never a user preference:
+// `-Pdaftar.bankArtwork=official` (default) or `-Pdaftar.bankArtwork=monogram`. Any other value fails configuration.
+val bankArtworkMode: String = providers.gradleProperty("daftar.bankArtwork").orElse("official").get()
+check(bankArtworkMode == "official" || bankArtworkMode == "monogram") {
+    "daftar.bankArtwork must be 'official' or 'monogram', was '$bankArtworkMode'"
+}
+
+/** The v1 identities. Future countries add data only; these fourteen are fixed by the design. */
+val v1EgyptIds: Set<String> = setOf(
+    "eg.nbe", "eg.banque-misr", "eg.cib", "eg.qnb", "eg.banque-du-caire", "eg.aaib", "eg.hsbc",
+    "eg.alexbank", "eg.faisal", "eg.adib", "eg.emirates-nbd", "eg.credit-agricole", "eg.bank-abc", "eg.egebank",
+)
+
+val bankDirectorySource = layout.projectDirectory.file("src/bankDirectory/banks.json")
+val generatedBankDirectoryDir = layout.buildDirectory.dir("generated/bankDirectory/commonMain/kotlin")
+
+val generateBankDirectory = tasks.register("generateBankDirectory") {
+    // The action captures plain values only, so the configuration cache can store it.
+    val jsonFile = bankDirectorySource.asFile
+    val outputDir = generatedBankDirectoryDir.get().asFile
+    val artworkMode = bankArtworkMode
+    val egyptIds = v1EgyptIds
+    val artworkDir = rootProject.file("core/designsystem/src/officialBankArtwork/composeResources")
+    val manifestFile = rootProject.file("docs/design/bank-marks/manifest.json")
+    inputs.file(bankDirectorySource)
+    inputs.file(manifestFile)
+    inputs.dir(artworkDir)
+    inputs.property("daftar.bankArtwork", artworkMode)
+    outputs.dir(outputDir)
+    doLast {
+        val root = JsonSlurper().parse(jsonFile) as Map<*, *>
+        val manifestText = manifestFile.readText()
+        check(root["schemaVersion"] == 1) { "bank directory schemaVersion must be 1" }
+        val countries = (root["countries"] as List<*>).map { it as Map<*, *> }
+        val countryCodes = countries.map { it["code"] as String }.toSet()
+        check(countryCodes.size == countries.size) { "duplicate country code in bank directory" }
+        val institutions = (root["institutions"] as List<*>).map { it as Map<*, *> }
+        val ids = institutions.map { it["id"] as String }
+        check(ids.toSet().size == ids.size) { "duplicate institution id in bank directory" }
+        val idPattern = Regex("[a-z0-9.-]{1,64}")
+        institutions.forEach { entry ->
+            val id = entry["id"] as String
+            check(idPattern.matches(id)) { "invalid institution id '$id'" }
+            val country = entry["country"] as String
+            check(country in countryCodes) { "institution '$id' names an unknown country" }
+            check(Regex("#[0-9A-F]{6}").matches(entry["brandBackground"] as String)) { "bad brand colour for '$id'" }
+            check(entry["monogramForeground"] == "#FFFFFF") { "monogram initials must be #FFFFFF for '$id'" }
+            check((entry["monogram"] as String).length in 1..4) { "monogram must be 1 to 4 characters for '$id'" }
+            if (entry["officialAsset"] != null) {
+                check(entry["manifestRef"] != null) { "official asset of '$id' needs a manifest record" }
+                check(entry["officialBacking"] in setOf("white", "brand")) {
+                    "official asset of '$id' needs a backing of white or brand"
+                }
+                if (artworkMode == "official") {
+                    val png = artworkDir.resolve("drawable-xxhdpi/${entry["officialAsset"]}.png")
+                    check(png.isFile) { "official mode needs $png for '$id'" }
+                    check(manifestText.contains("\"institutionId\": \"$id\"")) { "no manifest record for '$id'" }
+                }
+            }
+        }
+        val egypt = institutions.filter { (it["id"] as String).startsWith("eg.") }.map { it["id"] as String }.toSet()
+        check(egypt == egyptIds) { "the Egyptian v1 directory must hold exactly the fourteen approved identities" }
+
+        fun kotlinString(text: String): String = buildString {
+            append('"')
+            text.forEach { ch ->
+                when (ch) {
+                    '\\' -> append("\\\\")
+                    '"' -> append("\\\"")
+                    '$' -> append("\\$")
+                    '\n' -> append("\\n")
+                    else -> append(ch)
+                }
+            }
+            append('"')
+        }
+        fun optional(value: Any?): String = value?.let { kotlinString(it as String) } ?: "null"
+        fun list(values: List<*>): String = values.joinToString(", ", "listOf(", ")") { kotlinString(it as String) }
+
+        val body = buildString {
+            appendLine("// Generated by generateBankDirectory from src/bankDirectory/banks.json. Do not edit.")
+            appendLine("package com.mk.daftar.core.model.bank")
+            appendLine()
+            appendLine("import com.mk.daftar.core.model.InstitutionId")
+            appendLine()
+            appendLine("/** The bundled bank directory, version ${root["directoryVersion"]}. Immutable. */")
+            appendLine("object BankDirectoryData {")
+            appendLine("    const val DIRECTORY_VERSION: Int = ${root["directoryVersion"]}")
+            appendLine()
+            appendLine("    val countries: List<BankCountry> = listOf(")
+            countries.forEach { c ->
+                appendLine(
+                    "        BankCountry(${kotlinString(
+                        c["code"] as String,
+                    )}, ${kotlinString(c["nameAr"] as String)}, ${kotlinString(c["nameEn"] as String)}),",
+                )
+            }
+            appendLine("    )")
+            appendLine()
+            appendLine("    val institutions: List<BankInstitution> = listOf(")
+            institutions.forEach { e ->
+                appendLine("        BankInstitution(")
+                appendLine("            id = InstitutionId(${kotlinString(e["id"] as String)}),")
+                appendLine("            countryCode = ${kotlinString(e["country"] as String)},")
+                appendLine("            nameAr = ${kotlinString(e["nameAr"] as String)},")
+                appendLine("            nameEn = ${kotlinString(e["nameEn"] as String)},")
+                appendLine("            aliasesAr = ${list(e["aliasesAr"] as List<*>)},")
+                appendLine("            aliasesEn = ${list(e["aliasesEn"] as List<*>)},")
+                appendLine("            monogram = ${kotlinString(e["monogram"] as String)},")
+                appendLine("            brandBackground = ${kotlinString(e["brandBackground"] as String)},")
+                appendLine("            monogramForeground = ${kotlinString(e["monogramForeground"] as String)},")
+                appendLine("            officialAsset = ${optional(e["officialAsset"])},")
+                appendLine("            manifestRef = ${optional(e["manifestRef"])},")
+                appendLine("            officialBacking = ${optional(e["officialBacking"])},")
+                appendLine("        ),")
+            }
+            appendLine("    )")
+            appendLine("}")
+            appendLine()
+            appendLine("/** The build's artwork mode, fixed at compile time. */")
+            appendLine("object BankArtworkConfig {")
+            appendLine(
+                "    val mode: BankArtworkMode = BankArtworkMode.${if (artworkMode == "monogram") "MONOGRAM" else "OFFICIAL"}",
+            )
+            appendLine("}")
+        }
+        val packageDir = outputDir.resolve("com/mk/daftar/core/model/bank")
+        packageDir.mkdirs()
+        packageDir.resolve("BankDirectoryData.kt").writeText(body, Charsets.UTF_8)
+    }
 }
 
 kotlin {
@@ -10,5 +145,8 @@ kotlin {
         }
     }
 }
+
+// Registering the task itself as a source directory gives the common compilation the dependency.
+kotlin.sourceSets.getByName("commonMain").kotlin.srcDir(generateBankDirectory)
 
 apply(from = rootProject.file("core/architecture-guard.gradle.kts"))

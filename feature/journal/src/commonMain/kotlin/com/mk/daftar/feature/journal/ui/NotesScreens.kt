@@ -226,9 +226,8 @@ fun NoteEditorScreen(target: NoteEditorTarget, modifier: Modifier = Modifier) {
         if (effect == JournalEffect.Completed) navigator.goBack()
     }
     DisposableEffect(viewModel, navigator) {
-        val unregister = navigator.leaveGuard.register(viewModel) { request, proceed ->
-            viewModel.onLeaveRequested { discarded ->
-                if (discarded && request is LeaveRequest.Switch) navigator.goBack()
+        val unregister = navigator.leaveGuard.register(viewModel) { _, proceed ->
+            viewModel.onLeaveRequested { _ ->
                 proceed()
             }
         }

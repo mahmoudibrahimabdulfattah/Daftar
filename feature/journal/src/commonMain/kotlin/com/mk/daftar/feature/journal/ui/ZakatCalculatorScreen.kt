@@ -50,6 +50,7 @@ import com.mk.daftar.core.navigation.LeaveRequest
 import com.mk.daftar.core.navigation.LocalNavigator
 import com.mk.daftar.core.ui.mvi.CollectEffects
 import com.mk.daftar.core.ui.presentation.moneyText
+import com.mk.daftar.core.ui.shell.PriceRefreshAction
 import com.mk.daftar.core.ui.shell.ShellScreen
 import com.mk.daftar.feature.journal.JournalEffect
 import com.mk.daftar.feature.journal.JournalPhase
@@ -148,7 +149,10 @@ fun ZakatCalculatorContent(
                 title = stringResource(Res.string.zakat_calc_title),
                 onBack = onBack,
                 backLabel = stringResource(DesignRes.string.btn_back),
-                actions = { VisibilityToggle(hidden = state.hidden) { onIntent(ZakatCalculatorIntent.ToggleHidden) } },
+                actions = {
+                    VisibilityToggle(hidden = state.hidden) { onIntent(ZakatCalculatorIntent.ToggleHidden) }
+                    PriceRefreshAction()
+                },
             )
             Column(
                 modifier = Modifier
@@ -425,12 +429,15 @@ private fun BasisSection(estimate: ZakatEstimate, hidden: Boolean, hiddenText: S
 
 @Composable
 private fun CategoryRow(basis: ZakatCategoryBasis, hidden: Boolean, hiddenText: String, unit: String) {
-    val gold = basis.category == AssetCategory.GOLD
     DaftarLedgerRow(
         title = stringResource(categoryTitle(basis.category)),
         subtitle = stringResource(categoryHelp(basis.category)),
         icon = categoryIcon(basis.category),
-        tone = if (gold) DaftarTileTone.Gold else DaftarTileTone.Default,
+        tone = when (basis.category) {
+            AssetCategory.GOLD -> DaftarTileTone.Gold
+            AssetCategory.BANKS -> DaftarTileTone.Bank
+            AssetCategory.CASH -> DaftarTileTone.Cash
+        },
         value = {
             DaftarAmount(
                 amount = if (hidden) null else basis.totalEgp?.moneyText(),
@@ -524,7 +531,7 @@ private fun categoryHelp(category: AssetCategory): StringResource = when (catego
 }
 
 private fun categoryIcon(category: AssetCategory): ImageVector = when (category) {
-    AssetCategory.GOLD -> DaftarIcons.Gold
+    AssetCategory.GOLD -> DaftarIcons.GoldBar
     AssetCategory.BANKS -> DaftarIcons.Bank
     AssetCategory.CASH -> DaftarIcons.Wallet
 }

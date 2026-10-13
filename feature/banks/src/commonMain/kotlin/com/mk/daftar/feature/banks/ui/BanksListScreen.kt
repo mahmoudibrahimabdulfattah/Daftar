@@ -14,6 +14,7 @@ import androidx.compose.ui.Modifier
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import com.mk.daftar.core.designsystem.component.DaftarAmount
 import com.mk.daftar.core.designsystem.component.DaftarBalanceSummary
+import com.mk.daftar.core.designsystem.component.DaftarBankTile
 import com.mk.daftar.core.designsystem.component.DaftarEmptyState
 import com.mk.daftar.core.designsystem.component.DaftarLedgerRow
 import com.mk.daftar.core.designsystem.component.DaftarNotePanel
@@ -34,6 +35,7 @@ import com.mk.daftar.core.navigation.LocalNavigator
 import com.mk.daftar.core.ui.mvi.CollectEffects
 import com.mk.daftar.core.ui.presentation.moneyText
 import com.mk.daftar.core.ui.shell.LocalSimultaneousPanes
+import com.mk.daftar.core.ui.shell.PriceRefreshAction
 import com.mk.daftar.core.ui.shell.ShellScreen
 import com.mk.daftar.feature.banks.BankListIntent
 import com.mk.daftar.feature.banks.BankListUiState
@@ -102,7 +104,10 @@ fun BankListContent(
                 title = stringResource(Res.string.banks_title),
                 onBack = if (showsBack) onBack else null,
                 backLabel = stringResource(DesignRes.string.btn_back),
-                actions = { VisibilityToggle(hidden = state.hidden) { onIntent(BankListIntent.ToggleValues) } },
+                actions = {
+                    VisibilityToggle(hidden = state.hidden) { onIntent(BankListIntent.ToggleValues) }
+                    PriceRefreshAction()
+                },
             )
             when (state.phase) {
                 BankPhase.Loading -> DaftarSkeleton(size = DaftarSkeletonSize.Big)
@@ -192,7 +197,7 @@ private fun BankListRowItem(
         } else {
             stringResource(Res.string.banks_row_summary, countText, currencies)
         },
-        icon = DaftarIcons.Bank,
+        leading = { DaftarBankTile(mark = bankMarkFor(row.institutionId)) },
         selected = selected,
         onClick = onClick,
         value = {

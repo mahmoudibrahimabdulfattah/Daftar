@@ -124,7 +124,7 @@ class BackupCodec(private val crypto: PasswordCrypto) :
 
     /**
      * Routes by the payload's own schema version before any record is read. A newer version is refused as unsupported;
-     * version one and version two each have their own exact shape, and only the canonical encoding of that shape is
+     * versions one, two and three each have their own exact shape, and only the canonical encoding of that shape is
      * accepted.
      */
     private fun parse(plaintext: ByteArray): Outcome<DecodedBackup, BackupError> {
@@ -133,6 +133,7 @@ class BackupCodec(private val crypto: PasswordCrypto) :
         return when {
             version > BackupFormat.PAYLOAD_SCHEMA_VERSION -> Outcome.Failure(BackupError.UnsupportedFormat)
             version == 1 -> parseVersionOne(text)
+            version == 2 -> parseVersionTwo(text)
             version == BackupFormat.PAYLOAD_SCHEMA_VERSION -> parseCurrent(text)
             else -> Outcome.Failure(BackupError.CorruptPayload)
         }
@@ -162,6 +163,20 @@ class BackupCodec(private val crypto: PasswordCrypto) :
             return Outcome.Failure(BackupError.CorruptPayload)
         }
         if (BackupJson.encodeToString(PayloadDocumentV1.serializer(), document) != text) {
+            return Outcome.Failure(BackupError.CorruptPayload)
+        }
+        return finish(document.toV2().toCurrent())
+    }
+
+    private fun parseVersionTwo(text: String): Outcome<DecodedBackup, BackupError> {
+        val document = try {
+            BackupJson.decodeFromString(PayloadDocumentV2.serializer(), text)
+        } catch (failure: SerializationException) {
+            return Outcome.Failure(BackupError.CorruptPayload)
+        } catch (failure: IllegalArgumentException) {
+            return Outcome.Failure(BackupError.CorruptPayload)
+        }
+        if (BackupJson.encodeToString(PayloadDocumentV2.serializer(), document) != text) {
             return Outcome.Failure(BackupError.CorruptPayload)
         }
         return finish(document.toCurrent())

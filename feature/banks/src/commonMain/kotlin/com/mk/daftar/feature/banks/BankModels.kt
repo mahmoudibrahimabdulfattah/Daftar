@@ -69,6 +69,8 @@ data class BankRow(
     val accountCount: Int,
     val currencies: List<Currency>,
     val valueEgp: Decimal?,
+    /** The catalog identity, or null for a custom bank. It only chooses the tile. */
+    val institutionId: String? = null,
 )
 
 data class BankListUiState(
@@ -104,6 +106,8 @@ data class BankDetailUiState(
     val phase: BankPhase = BankPhase.Loading,
     val bankId: String = "",
     val name: String = "",
+    /** The catalog identity of the bank, or null for a custom bank. It only chooses the tile. */
+    val institutionId: String? = null,
     val total: BankTotal? = null,
     val accounts: List<AccountRow> = emptyList(),
     val hidden: Boolean = false,
@@ -169,6 +173,20 @@ sealed interface BankEditorIntent : UiIntent {
     data object ReviewAccounts : BankEditorIntent
 
     data object DismissBlocked : BankEditorIntent
+
+    /** Opens the bank directory, to choose a bank or to change the identity of this one. */
+    data object OpenPicker : BankEditorIntent
+
+    data class PickerQueryChanged(val text: String) : BankEditorIntent
+
+    /** A catalog bank. A new bank takes its localized name as an editable draft; an existing one keeps its name. */
+    data class PickInstitution(val institutionId: String, val localizedName: String) : BankEditorIntent
+
+    /** A bank outside the directory: a custom identity with a free name. */
+    data object PickOther : BankEditorIntent
+
+    /** Back from the directory. A new bank that has not chosen yet leaves the editor instead. */
+    data object ClosePicker : BankEditorIntent
 }
 
 /**
@@ -191,13 +209,32 @@ data class BankEditorUiState(
     val dependents: List<DependentAccount> = emptyList(),
     val hidden: Boolean = false,
     val completed: Boolean = false,
+    /** The identity the record holds: a catalog institution ID, or null for a custom or not yet identified bank. */
+    val storedInstitutionId: String? = null,
+    /** Whether the user confirmed the stored identity. A migration match is not confirmed until chosen again. */
+    val storedIdentityReviewed: Boolean = false,
+    /** The identity chosen in this edit, or null when it is unchanged. */
+    val identityChoice: BankIdentityDraft? = null,
+    /** The open directory and its query, or null while the form shows. */
+    val picker: BankPickerState? = null,
 ) : UiState {
     val nameError: BankNameError?
         get() = bankNameError(draft.nameText)
 
+    /** The identity the tile and the save use: the new choice, else the stored one. */
+    val institutionId: String?
+        get() = if (identityChoice != null) identityChoice.institutionId else storedInstitutionId
+
     val dirty: Boolean
-        get() = baselineName?.let { draft.nameText.trim() != it } ?: draft.nameText.isNotBlank()
+        get() = identityChoice != null ||
+            (baselineName?.let { draft.nameText.trim() != it } ?: draft.nameText.isNotBlank())
 }
+
+/** A chosen identity: a catalog institution, or null for a custom bank. */
+data class BankIdentityDraft(val institutionId: String?)
+
+/** The directory over the form. Nothing here is saved until the form is. */
+data class BankPickerState(val query: String = "")
 
 data class AccountDraft(
     val name: String = "",
@@ -217,7 +254,7 @@ data class AccountValues(
 )
 
 /** A bank a draft can be filed under. */
-data class BankOption(val id: String, val name: String)
+data class BankOption(val id: String, val name: String, val institutionId: String? = null)
 
 sealed interface AccountEditorIntent : UiIntent {
     data class NameChanged(val text: String) : AccountEditorIntent

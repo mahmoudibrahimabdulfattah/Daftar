@@ -2,6 +2,7 @@ package com.mk.daftar.core.navigation
 
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateListOf
+import androidx.compose.runtime.mutableStateMapOf
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.setValue
 import androidx.compose.runtime.snapshots.SnapshotStateList
@@ -107,18 +108,46 @@ class Navigator(private val start: TopLevelDestination = TopLevelDestination.HOM
     val leaveGuard: LeaveGuard = LeaveGuard()
 
     /**
-     * The shell's way out of the current screen: a back action or a switch to another tab. Switching to the tab that is
-     * already shown is nothing. The innermost guard may ask first; without one the request is performed at once.
+     * The shell's way out of the current screen: a back action. The innermost guard may ask first; without one the
+     * request is performed at once.
      */
     fun requestLeave(request: LeaveRequest) {
         if (isDisposed) return
-        if (request is LeaveRequest.Switch && request.destination == topLevel) return
         leaveGuard.ask(request) {
             when (request) {
                 LeaveRequest.Back -> goBack()
-                is LeaveRequest.Switch -> select(request.destination)
+                is LeaveRequest.PopToRoot -> popToRoot(request.destination)
             }
         }
+    }
+
+    /** Root reselect counters. A root screen scrolls its primary content to the top when its counter moves. */
+    private val rootReselects = mutableStateMapOf<TopLevelDestination, Int>()
+
+    /** How many times [destination]'s root was reselected while it was already at its root. */
+    fun rootReselectTick(destination: TopLevelDestination): Int = rootReselects[destination] ?: 0
+
+    /**
+     * A tap on a tab in the bar or the rail. Another tab is shown with its own stack, scroll and filters intact, and never
+     * asks: dirty forms stay in place. Reselecting the shown tab pops it to its root, guarded by the discard prompt,
+     * or, already at the root, scrolls its primary content to the top.
+     */
+    fun reselect(destination: TopLevelDestination) {
+        if (isDisposed) return
+        if (destination != topLevel) {
+            select(destination)
+            return
+        }
+        if (stacks.getValue(destination).size > 1) {
+            requestLeave(LeaveRequest.PopToRoot(destination))
+        } else {
+            rootReselects[destination] = rootReselectTick(destination) + 1
+        }
+    }
+
+    private fun popToRoot(destination: TopLevelDestination) {
+        val stack = stacks.getValue(destination)
+        while (stack.size > 1) stack.removeAt(stack.lastIndex)
     }
 
     /** Returns every stack to its root and the start tab to the front, without marking the navigator disposed. */

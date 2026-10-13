@@ -113,6 +113,11 @@ data class AuthUiState(
     /** True when the lock screen may offer the biometric key. Never true while a penalty blocks the keypad. */
     val biometricReady: Boolean = false,
     val notice: AuthNotice? = null,
+    /**
+     * True while the lock surface is waiting for its one automatic biometric request. The lock surface sends
+     * [AuthIntent.AutomaticBiometric] only when the host is resumed. Cleared by any user action that takes the request.
+     */
+    val biometricAutoPending: Boolean = false,
 ) : UiState {
     /** Input is accepted only when no operation is running and no penalty blocks the keypad. */
     val inputEnabled: Boolean
@@ -172,6 +177,12 @@ sealed interface AuthIntent : UiIntent {
 
     /** Opens the cloud recovery screen: sign in, choose a stored version, and download it to restore. */
     data object OpenCloudRestore : AuthIntent
+
+    /**
+     * The lock surface is drawn on a resumed host and an automatic biometric request is pending. Starts at most one
+     * request per lock episode; a user action before it cancels it.
+     */
+    data object AutomaticBiometric : AuthIntent
 
     /** Background, inactivity, developer entry: drop every draft now and cancel work that has not finished. */
     data object PrivacyInvalidated : AuthIntent

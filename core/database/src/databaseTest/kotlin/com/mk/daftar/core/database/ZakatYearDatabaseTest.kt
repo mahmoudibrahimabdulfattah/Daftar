@@ -10,6 +10,7 @@ import com.mk.daftar.core.database.mapper.toModel
 import com.mk.daftar.core.database.mapper.trackingStartYear
 import com.mk.daftar.core.database.schema.ValidationTriggersV1
 import com.mk.daftar.core.database.schema.ValidationTriggersV2
+import com.mk.daftar.core.database.schema.ValidationTriggersV3
 import com.mk.daftar.core.model.ZakatYear
 import kotlin.test.Test
 import kotlin.test.assertEquals
@@ -83,8 +84,13 @@ class ZakatYearDatabaseTest {
         createDatabase(path)
         withRawConnection(path) { connection ->
             connection.execute(paymentSql("legacy", "NULL"))
-            // Return the file to its version one shape: no declarations, no tracking row, no payment year column.
+            // Return the file to its version one shape: no declarations, no tracking row, no payment year column, and
+            // none of the version two or three additions.
+            ValidationTriggersV3.triggerNames.forEach { connection.execute("DROP TRIGGER IF EXISTS $it") }
             ValidationTriggersV2.triggerNames.forEach { connection.execute("DROP TRIGGER IF EXISTS $it") }
+            connection.execute("ALTER TABLE banks DROP COLUMN identity_reviewed")
+            connection.execute("ALTER TABLE banks DROP COLUMN institution_id")
+            connection.execute("ALTER TABLE remote_quotes DROP COLUMN basis")
             connection.execute("DROP TABLE zakat_years")
             connection.execute("DROP TABLE zakat_tracking")
             connection.execute("ALTER TABLE zakat_payments DROP COLUMN for_hijri_year")
@@ -103,7 +109,10 @@ class ZakatYearDatabaseTest {
         withRawConnection(path) { connection ->
             val triggers = connection.names("SELECT name FROM sqlite_master WHERE type = 'trigger'")
             assertEquals(
-                (ValidationTriggersV1.triggerNames + ValidationTriggersV2.triggerNames).toSet(),
+                (
+                    ValidationTriggersV1.triggerNames + ValidationTriggersV2.triggerNames +
+                        ValidationTriggersV3.triggerNames
+                    ).toSet(),
                 triggers.toSet(),
             )
         }

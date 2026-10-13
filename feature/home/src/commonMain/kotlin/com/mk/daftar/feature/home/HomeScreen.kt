@@ -46,13 +46,16 @@ import com.mk.daftar.core.designsystem.icon.DaftarIcons
 import com.mk.daftar.core.designsystem.theme.DaftarSpacing
 import com.mk.daftar.core.designsystem.theme.DaftarTheme
 import com.mk.daftar.core.domain.valuation.AssetCategory
+import com.mk.daftar.core.model.FxBasis
 import com.mk.daftar.core.model.QuoteKey
 import com.mk.daftar.core.navigation.LocalNavigator
+import com.mk.daftar.core.navigation.TopLevelDestination
 import com.mk.daftar.core.ui.mvi.CollectEffects
 import com.mk.daftar.core.ui.presentation.CountNoun
 import com.mk.daftar.core.ui.presentation.bankAndAccountLabel
 import com.mk.daftar.core.ui.presentation.countLabel
 import com.mk.daftar.core.ui.presentation.moneyText
+import com.mk.daftar.core.ui.shell.RootReselectScroll
 import com.mk.daftar.core.ui.shell.ShellScreen
 import com.mk.daftar.feature.home.resources.Res
 import com.mk.daftar.feature.home.resources.badge_cached
@@ -105,6 +108,9 @@ import com.mk.daftar.feature.home.resources.home_total_previous
 import com.mk.daftar.feature.home.resources.home_unavailable
 import com.mk.daftar.feature.home.resources.home_unit_egp
 import com.mk.daftar.feature.home.resources.home_unit_short
+import com.mk.daftar.feature.home.resources.home_usd_basis_bank
+import com.mk.daftar.feature.home.resources.home_usd_basis_estimate
+import com.mk.daftar.feature.home.resources.home_usd_basis_manual
 import com.mk.daftar.feature.home.resources.home_zakat_prepare
 import com.mk.daftar.feature.home.resources.home_zakat_review
 import com.mk.daftar.feature.home.resources.zakat_due_count
@@ -140,11 +146,24 @@ fun HomeScreen(modifier: Modifier = Modifier) {
 @Composable
 fun HomeContent(state: HomeUiState, onIntent: (HomeIntent) -> Unit, modifier: Modifier = Modifier) {
     val refreshLabel = stringResource(Res.string.home_refresh)
+    val hideLabel = stringResource(if (state.valuesHidden) Res.string.home_show_values else Res.string.home_hide_values)
+    val visibilityState = stringResource(
+        if (state.valuesHidden) Res.string.home_state_hidden else Res.string.home_state_visible,
+    )
+    val scroll = rememberScrollState()
+    RootReselectScroll(TopLevelDestination.HOME) { scroll.animateScrollTo(0) }
     ShellScreen(modifier = modifier) {
         Column(modifier = Modifier.fillMaxSize()) {
+            // The privacy eye and the price refresh stay pinned in the compact bar, eye first, so neither scrolls away.
             DaftarTopBar(
                 title = stringResource(Res.string.home_brand),
                 actions = {
+                    DaftarIconButton(
+                        onClick = { onIntent(HomeIntent.ToggleValues) },
+                        icon = if (state.valuesHidden) DaftarIcons.EyeOff else DaftarIcons.Eye,
+                        contentDescription = hideLabel,
+                        modifier = Modifier.semantics { stateDescription = visibilityState },
+                    )
                     DaftarIconButton(
                         onClick = { onIntent(HomeIntent.Refresh) },
                         icon = DaftarIcons.Refresh,
@@ -161,11 +180,11 @@ fun HomeContent(state: HomeUiState, onIntent: (HomeIntent) -> Unit, modifier: Mo
                 Column(
                     modifier = Modifier
                         .fillMaxSize()
-                        .verticalScroll(rememberScrollState())
+                        .verticalScroll(scroll)
                         .padding(horizontal = DaftarSpacing.md)
                         .padding(bottom = DaftarSpacing.xl),
                 ) {
-                    Greeting(hidden = state.valuesHidden, onIntent = onIntent)
+                    Greeting()
                     when (val load = state.load) {
                         HomeLoad.Loading -> DaftarSkeleton()
 
@@ -182,27 +201,13 @@ fun HomeContent(state: HomeUiState, onIntent: (HomeIntent) -> Unit, modifier: Mo
 }
 
 @Composable
-private fun Greeting(hidden: Boolean, onIntent: (HomeIntent) -> Unit) {
-    val colors = DaftarTheme.colors
-    val label = stringResource(if (hidden) Res.string.home_show_values else Res.string.home_hide_values)
-    val state = stringResource(if (hidden) Res.string.home_state_hidden else Res.string.home_state_visible)
-    Row(
+private fun Greeting() {
+    Text(
+        stringResource(Res.string.home_greeting),
         modifier = Modifier.fillMaxWidth().padding(top = DaftarSpacing.sm),
-        verticalAlignment = Alignment.CenterVertically,
-        horizontalArrangement = Arrangement.SpaceBetween,
-    ) {
-        Text(
-            stringResource(Res.string.home_greeting),
-            style = DaftarTheme.typography.supportingBody,
-            color = colors.muted,
-        )
-        DaftarIconButton(
-            onClick = { onIntent(HomeIntent.ToggleValues) },
-            icon = if (hidden) DaftarIcons.EyeOff else DaftarIcons.Eye,
-            contentDescription = label,
-            modifier = Modifier.semantics { stateDescription = state },
-        )
-    }
+        style = DaftarTheme.typography.supportingBody,
+        color = DaftarTheme.colors.muted,
+    )
 }
 
 @Composable
@@ -339,7 +344,7 @@ private fun Categories(figures: HomeFigures, hidden: Boolean, onIntent: (HomeInt
     CategoryRow(
         title = stringResource(Res.string.home_gold),
         subtitle = countLabel(gold.count, CountNoun.HOLDINGS),
-        icon = DaftarIcons.Gold,
+        icon = DaftarIcons.GoldBar,
         tone = DaftarTileTone.Gold,
         amount = gold.total?.moneyText(),
         hidden = hidden,
@@ -352,7 +357,7 @@ private fun Categories(figures: HomeFigures, hidden: Boolean, onIntent: (HomeInt
         title = stringResource(Res.string.home_banks),
         subtitle = bankAndAccountLabel(banks = figures.bankCount, accounts = banks.count),
         icon = DaftarIcons.Bank,
-        tone = DaftarTileTone.Default,
+        tone = DaftarTileTone.Bank,
         amount = banks.total?.moneyText(),
         hidden = hidden,
         maskedDescription = masked,
@@ -364,7 +369,7 @@ private fun Categories(figures: HomeFigures, hidden: Boolean, onIntent: (HomeInt
         title = stringResource(Res.string.home_cash),
         subtitle = countLabel(cash.count, CountNoun.BALANCES),
         icon = DaftarIcons.Wallet,
-        tone = DaftarTileTone.Default,
+        tone = DaftarTileTone.Cash,
         amount = cash.total?.moneyText(),
         hidden = hidden,
         maskedDescription = masked,
@@ -454,6 +459,19 @@ private fun QuoteSection(
                 }
             },
         )
+        quotes.usdBasis?.let { basis ->
+            Text(
+                text = stringResource(
+                    when (basis) {
+                        FxBasis.BANK_TRANSFER_BUY -> Res.string.home_usd_basis_bank
+                        FxBasis.MANUAL -> Res.string.home_usd_basis_manual
+                        else -> Res.string.home_usd_basis_estimate
+                    },
+                ),
+                style = DaftarTheme.typography.caption,
+                color = DaftarTheme.colors.muted,
+            )
+        }
         if (refreshFailed) {
             Spacer(Modifier.height(DaftarSpacing.xs))
             DaftarNotePanel(tone = DaftarNoteTone.Warning) {

@@ -11,6 +11,7 @@ import com.mk.daftar.core.domain.valuation.QuoteOrigin
 import com.mk.daftar.core.domain.valuation.SelectedQuote
 import com.mk.daftar.core.domain.valuation.SelectedQuotes
 import com.mk.daftar.core.model.Decimal
+import com.mk.daftar.core.model.FxBasis
 import com.mk.daftar.core.model.GoldKarat
 import com.mk.daftar.core.model.MerchantSide
 import com.mk.daftar.core.model.QuoteKey
@@ -55,6 +56,8 @@ data class QuoteStripFigures(
     val badge: QuoteBadge?,
     /** The earliest reference time among the shown quotes: the time the oldest of them was fetched or recorded. */
     val referenceAt: Instant?,
+    /** What the USD rate is: Banque Misr's transfer buy, a mid-market estimate, or manual. Null when unknown or absent. */
+    val usdBasis: FxBasis? = null,
 )
 
 /** Everything the Home screen shows about the portfolio, derived from one valuation and one quote set. */
@@ -128,7 +131,8 @@ private fun quoteStrip(quotes: SelectedQuotes): QuoteStripFigures {
     val shown = STRIP_KEYS.mapNotNull { quotes[it] }
     val badge = shown.map { it.badge() }.maxByOrNull { it.ordinal }
     val referenceAt = shown.minOfOrNull { it.referenceAt }
-    return QuoteStripFigures(figures, badge, referenceAt)
+    val usdBasis = quotes[QuoteKey.UsdEgp]?.fxBasis?.takeIf { it != FxBasis.LEGACY_UNKNOWN }
+    return QuoteStripFigures(figures, badge, referenceAt, usdBasis)
 }
 
 /** The attribution owed when the displayed USD rate comes from the exchange-rate provider itself. */

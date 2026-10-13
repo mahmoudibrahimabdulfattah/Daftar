@@ -36,6 +36,9 @@ object DaftarSpacing {
     val smallIconSize = 18.dp
     val tileSize = 38.dp
     val tileIconSize = 20.dp
+
+    /** The glyph inside a gold, bank or cash category tile. */
+    val categoryGlyphSize = 24.dp
     val emblemSize = 94.dp
     val emblemIconSize = 45.dp
 

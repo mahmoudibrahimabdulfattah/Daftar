@@ -7,6 +7,7 @@ import com.mk.daftar.core.domain.repository.RemoteQuoteRecord
 import com.mk.daftar.core.domain.repository.isManuallyEntered
 import com.mk.daftar.core.domain.storage.Stored
 import com.mk.daftar.core.model.Decimal
+import com.mk.daftar.core.model.FxBasis
 import com.mk.daftar.core.model.FxQuote
 import com.mk.daftar.core.model.FxRate
 import com.mk.daftar.core.model.GoldPrice
@@ -43,7 +44,7 @@ fun RemoteQuoteEntity.toRecord(): RemoteQuoteRecord {
             manualPinned = false,
             note = note,
         )
-        quoteOf(key, amount, provenance)
+        quoteOf(key, amount, provenance, basisOf(key))
     }
     return RemoteQuoteRecord(
         quote = quote,
@@ -80,6 +81,7 @@ fun PriceQuote.toRemoteEntity(nextUpdateAt: Instant?, attributionUrl: String?): 
         nextUpdateSeconds = nextUpdateAt?.epochSeconds,
         nextUpdateNanos = nextUpdateAt?.nanosecondsOfSecond,
         attributionUrl = attributionUrl,
+        basis = (this as? FxQuote)?.basis?.name,
     )
 }
 
@@ -122,9 +124,16 @@ fun ManualQuoteInput.toEntity(enteredAt: Instant, pinned: Boolean, revision: Lon
 }
 
 /** The quote a stored key and value describe: a gold price for a karat and side, or the USD to EGP rate. */
-private fun quoteOf(key: QuoteKey, value: Decimal, provenance: QuoteProvenance): PriceQuote = when (key) {
-    is QuoteKey.Gold -> GoldQuote(key, GoldPrice(value), provenance)
-    QuoteKey.UsdEgp -> FxQuote(FxRate(value), provenance)
+private fun quoteOf(key: QuoteKey, value: Decimal, provenance: QuoteProvenance, basis: FxBasis? = null): PriceQuote =
+    when (key) {
+        is QuoteKey.Gold -> GoldQuote(key, GoldPrice(value), provenance)
+        QuoteKey.UsdEgp -> FxQuote(FxRate(value), provenance, basis ?: FxBasis.defaultFor(provenance.provider))
+    }
+
+/** The stored basis of a remote row: required for USD to EGP, absent for gold. */
+private fun RemoteQuoteEntity.basisOf(key: QuoteKey): FxBasis? = when (key) {
+    is QuoteKey.Gold -> if (basis == null) null else corrupt(REMOTE, "basis")
+    QuoteKey.UsdEgp -> enumOf<FxBasis>(REMOTE, "basis", basis ?: corrupt(REMOTE, "basis"))
 }
 
 private fun keyOf(quote: PriceQuote): QuoteKey = when (quote) {
@@ -139,7 +148,11 @@ private fun valueOf(quote: PriceQuote): Decimal = when (quote) {
 
 private fun providerMatches(key: QuoteKey, provider: QuoteProvider): Boolean = when (key) {
     is QuoteKey.Gold -> provider == QuoteProvider.ISAGHA
-    QuoteKey.UsdEgp -> provider == QuoteProvider.EXCHANGE_RATE_API || provider == QuoteProvider.FAWAZ_CURRENCY_API
+
+    QuoteKey.UsdEgp ->
+        provider == QuoteProvider.BANQUE_MISR ||
+            provider == QuoteProvider.EXCHANGE_RATE_API ||
+            provider == QuoteProvider.FAWAZ_CURRENCY_API
 }
 
 private fun RemoteQuoteEntity.sourceTimeOf(): SourceTime = when (sourceTimeKind) {

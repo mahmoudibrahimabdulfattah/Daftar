@@ -3,6 +3,7 @@ package com.mk.daftar.feature.banks
 import androidx.lifecycle.viewModelScope
 import com.mk.daftar.core.common.Outcome
 import com.mk.daftar.core.domain.repository.BankDetail
+import com.mk.daftar.core.domain.repository.BankIdentityChoice
 import com.mk.daftar.core.domain.repository.BankInput
 import com.mk.daftar.core.domain.storage.StorageError
 import com.mk.daftar.core.domain.storage.VaultRead
@@ -12,6 +13,7 @@ import com.mk.daftar.core.domain.usecase.ObserveBankDetailUseCase
 import com.mk.daftar.core.domain.usecase.ObserveBanksUseCase
 import com.mk.daftar.core.domain.usecase.UpdateBankUseCase
 import com.mk.daftar.core.model.BankId
+import com.mk.daftar.core.model.InstitutionId
 import com.mk.daftar.core.ui.mvi.MviViewModel
 import com.mk.daftar.core.ui.presentation.ValuesVisibility
 import com.mk.daftar.core.ui.presentation.moneyText
@@ -45,7 +47,8 @@ class BankEditorViewModel(
 
     init {
         if (bankId == null) {
-            reduce { copy(phase = BankPhase.Ready, isNew = true) }
+            // A new bank starts in the directory: choosing a bank, or Other, opens the form.
+            reduce { copy(phase = BankPhase.Ready, isNew = true, picker = BankPickerState()) }
         } else {
             reduce { copy(isNew = false) }
             viewModelScope.launch {
@@ -74,6 +77,11 @@ class BankEditorViewModel(
             BankEditorIntent.DismissConfirmation -> dismissConfirmation()
             BankEditorIntent.ReviewAccounts -> reviewAccounts()
             BankEditorIntent.DismissBlocked -> reduce { copy(blocked = false) }
+            BankEditorIntent.OpenPicker -> edit { copy(picker = BankPickerState()) }
+            is BankEditorIntent.PickerQueryChanged -> edit { copy(picker = picker?.copy(query = intent.text)) }
+            is BankEditorIntent.PickInstitution -> pick(intent.institutionId, intent.localizedName)
+            BankEditorIntent.PickOther -> pick(institutionId = null, localizedName = null)
+            BankEditorIntent.ClosePicker -> closePicker()
         }
     }
 
@@ -147,8 +155,39 @@ class BankEditorViewModel(
                 draft = BankDraft(name),
                 baselineName = name,
                 storedName = name,
+                storedInstitutionId = stored.value.institutionId?.value,
+                storedIdentityReviewed = stored.value.identityReviewed,
+                identityChoice = null,
                 conflict = false,
             )
+        }
+    }
+
+    /**
+     * Applies a directory choice. A new bank takes the catalog name as its draft (Other starts empty); an existing bank
+     * keeps the name the user gave it. Choosing the confirmed identity it already holds is no change at all; choosing
+     * an unconfirmed migration match confirms it.
+     */
+    private fun pick(institutionId: String?, localizedName: String?) {
+        edit {
+            val unchanged = !isNew && institutionId == storedInstitutionId && storedIdentityReviewed
+            copy(
+                picker = null,
+                identityChoice = if (unchanged) null else BankIdentityDraft(institutionId),
+                draft = if (isNew) BankDraft(localizedName.orEmpty()) else draft,
+                attempted = false,
+            )
+        }
+    }
+
+    /** Back from the directory: a new bank that has chosen nothing yet leaves; otherwise the form shows again. */
+    private fun closePicker() {
+        val state = currentState
+        if (state.isNew && state.identityChoice == null && state.draft.nameText.isBlank()) {
+            reduce { copy(picker = null, completed = true) }
+            emitEffect(BankEffect.Close)
+        } else {
+            edit { copy(picker = null) }
         }
     }
 
@@ -164,7 +203,12 @@ class BankEditorViewModel(
         if (state.phase != BankPhase.Ready) return
         reduce { copy(attempted = true) }
         if (state.nameError != null) return
-        val input = BankInput(name = state.draft.nameText.trim())
+        val input = BankInput(
+            name = state.draft.nameText.trim(),
+            identity = state.identityChoice?.let { choice ->
+                BankIdentityChoice(choice.institutionId?.let(::InstitutionId))
+            },
+        )
         val id = bankId
         val revision = loadedRevision
         if (id != null && revision == null) return
@@ -178,16 +222,25 @@ class BankEditorViewModel(
             }
             if (epoch != lockEpoch) return@launch
             when (outcome) {
-                is Outcome.Success -> onWritten(outcome.data.value.name, outcome.data.revision)
+                is Outcome.Success -> onWritten(
+                    outcome.data.value.name,
+                    outcome.data.revision,
+                    outcome.data.value.institutionId?.value,
+                    outcome.data.value.identityReviewed,
+                )
+
                 is Outcome.Failure -> onWriteFailed(BankAction.Save, outcome.error)
             }
         }
     }
 
-    private fun onWritten(name: String, revision: Long) {
+    private fun onWritten(name: String, revision: Long, institutionId: String?, reviewed: Boolean) {
         loadedRevision = revision
         reduce {
             copy(
+                storedInstitutionId = institutionId,
+                storedIdentityReviewed = reviewed,
+                identityChoice = null,
                 busy = null,
                 baselineName = name,
                 storedName = name,
@@ -262,6 +315,8 @@ class BankEditorViewModel(
             copy(
                 confirmation = null,
                 draft = if (isNew) BankDraft() else BankDraft(stored),
+                identityChoice = null,
+                picker = null,
                 attempted = false,
                 failure = null,
             )

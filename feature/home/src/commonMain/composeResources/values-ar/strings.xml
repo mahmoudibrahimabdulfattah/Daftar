@@ -61,4 +61,7 @@
         <item quantity="many">⁦%1$d⁩ سنة بانتظار تأكيدك</item>
         <item quantity="other">⁦%1$d⁩ سنة بانتظار تأكيدك</item>
     </plurals>
+    <string name="home_usd_basis_bank">الدولار: بنك مصر · شراء التحويلات</string>
+    <string name="home_usd_basis_estimate">الدولار: تقدير متوسط السوق</string>
+    <string name="home_usd_basis_manual">الدولار: سعر يدوي</string>
 </resources>

@@ -14,6 +14,7 @@ import com.mk.daftar.core.model.CashBalanceId
 import com.mk.daftar.core.model.CashKind
 import com.mk.daftar.core.model.Currency
 import com.mk.daftar.core.model.Decimal
+import com.mk.daftar.core.model.FxBasis
 import com.mk.daftar.core.model.FxQuote
 import com.mk.daftar.core.model.FxRate
 import com.mk.daftar.core.model.GoldForm
@@ -23,6 +24,7 @@ import com.mk.daftar.core.model.GoldKarat
 import com.mk.daftar.core.model.GoldPrice
 import com.mk.daftar.core.model.GoldQuote
 import com.mk.daftar.core.model.GoldWeight
+import com.mk.daftar.core.model.InstitutionId
 import com.mk.daftar.core.model.MerchantSide
 import com.mk.daftar.core.model.Money
 import com.mk.daftar.core.model.NoteId
@@ -41,12 +43,13 @@ import kotlinx.datetime.LocalDate
 import kotlinx.serialization.Serializable
 
 /*
- * The portable payload, schema version 2. It is plain UTF-8 JSON with the property order below, so one snapshot always
+ * The portable payload, schema version 3. It is plain UTF-8 JSON with the property order below, so one snapshot always
  * serializes to the same bytes. Decimals are canonical plain strings, timestamps are Instant.toString() text, dates are
  * ISO text, and enums are their constant names. Nothing here is a database column or a device key.
  *
- * Version 1 is kept as [PayloadDocumentV1] so that old backups still decode and re-encode to their own bytes. A version 1
- * payload has no declarations and no tracking start, and its payments have no year.
+ * Version 3 adds the bank identity and the FX basis of remote quotes. Versions 1 and 2 are kept as their own frozen
+ * documents, so old backups still decode and re-encode to their own bytes. A version 1 payload has no declarations and
+ * no tracking start, and its payments have no year. A version 2 payload has no identity and no FX basis.
  */
 
 @Serializable
@@ -67,6 +70,25 @@ internal class PayloadDocument(
     val zakatYears: List<ZakatYearPayload>,
 )
 
+/** The frozen version-two document. Banks carry no identity and remote quotes carry no FX basis. */
+@Serializable
+internal class PayloadDocumentV2(
+    val schemaVersion: Int,
+    val exportedAt: String,
+    val appVersion: String,
+    val preferences: PreferencesPayload,
+    val goldHoldings: List<GoldPayload>,
+    val banks: List<BankPayloadV2>,
+    val bankAccounts: List<BankAccountPayload>,
+    val cashBalances: List<CashPayload>,
+    val zakatPayments: List<ZakatPayload>,
+    val personalNotes: List<NotePayload>,
+    val remoteQuotes: List<RemoteQuotePayloadV2>,
+    val manualQuotes: List<ManualQuotePayload>,
+    val zakatTrackingStartYear: Int?,
+    val zakatYears: List<ZakatYearPayload>,
+)
+
 /** The frozen version-one document. Its payments carry no year, and it has no declarations. */
 @Serializable
 internal class PayloadDocumentV1(
@@ -75,12 +97,12 @@ internal class PayloadDocumentV1(
     val appVersion: String,
     val preferences: PreferencesPayload,
     val goldHoldings: List<GoldPayload>,
-    val banks: List<BankPayload>,
+    val banks: List<BankPayloadV2>,
     val bankAccounts: List<BankAccountPayload>,
     val cashBalances: List<CashPayload>,
     val zakatPayments: List<ZakatPayloadV1>,
     val personalNotes: List<NotePayload>,
-    val remoteQuotes: List<RemoteQuotePayload>,
+    val remoteQuotes: List<RemoteQuotePayloadV2>,
     val manualQuotes: List<ManualQuotePayload>,
 )
 
@@ -99,7 +121,20 @@ internal class GoldPayload(
 )
 
 @Serializable
-internal class BankPayload(val id: String, val name: String, val createdAt: String, val updatedAt: String)
+internal class BankPayload(
+    val id: String,
+    val name: String,
+    val createdAt: String,
+    val updatedAt: String,
+    /** The catalog institution ID, or null for a custom or unidentified bank. */
+    val institutionId: String?,
+    /** Whether the user made the identity choice. */
+    val identityReviewed: Boolean,
+)
+
+/** The version-two bank shape, which has no identity. */
+@Serializable
+internal class BankPayloadV2(val id: String, val name: String, val createdAt: String, val updatedAt: String)
 
 @Serializable
 internal class BankAccountPayload(
@@ -181,6 +216,24 @@ internal class RemoteQuotePayload(
     val note: String?,
     val nextUpdateAt: String?,
     val attributionUrl: String?,
+    /** The FX basis for USD to EGP, and null for gold. */
+    val basis: String?,
+)
+
+/** The version-two remote quote shape, which has no FX basis. */
+@Serializable
+internal class RemoteQuotePayloadV2(
+    val quoteKey: String,
+    val provider: String,
+    val value: String,
+    val sourceUrl: String,
+    val sourceTimeKind: String,
+    val sourceTime: String?,
+    val fetchedAt: String,
+    val recordedAt: String,
+    val note: String?,
+    val nextUpdateAt: String?,
+    val attributionUrl: String?,
 )
 
 @Serializable
@@ -207,7 +260,7 @@ internal fun BackupSnapshot.toDocument(exportedAt: Instant, appVersion: String):
     goldHoldings = goldHoldings.sortedBy { it.id.value }.map { it.toPayload() },
     banks = banks.sortedBy {
         it.id.value
-    }.map { BankPayload(it.id.value, it.name, it.createdAt.text(), it.updatedAt.text()) },
+    }.map { it.toPayload() },
     bankAccounts = bankAccounts.sortedBy { it.id.value }.map { it.toPayload() },
     cashBalances = cashBalances.sortedBy { it.id.value }.map { it.toPayload() },
     zakatPayments = zakatPayments.sortedBy { it.id.value }.map { it.toPayload() },
@@ -222,9 +275,9 @@ internal fun BackupSnapshot.toDocument(exportedAt: Instant, appVersion: String):
     zakatYears = zakatYears.sortedBy { it.hijriYear }.map { it.toPayload() },
 )
 
-/** A version-one document as the current shape: no declarations, no tracking start, and unassigned payments. */
-internal fun PayloadDocumentV1.toCurrent(): PayloadDocument = PayloadDocument(
-    schemaVersion = BackupFormat.PAYLOAD_SCHEMA_VERSION,
+/** A version-one document as version two: no declarations, no tracking start, and unassigned payments. */
+internal fun PayloadDocumentV1.toV2(): PayloadDocumentV2 = PayloadDocumentV2(
+    schemaVersion = 2,
     exportedAt = exportedAt,
     appVersion = appVersion,
     preferences = preferences,
@@ -251,6 +304,53 @@ internal fun PayloadDocumentV1.toCurrent(): PayloadDocument = PayloadDocument(
     zakatYears = emptyList(),
 )
 
+/**
+ * A version-two document as the current shape. A bank has no identity, so it is unreviewed. A stored FX rate gets the
+ * basis its provider identity proves; a rate whose identity does not prove one is legacy unknown.
+ */
+internal fun PayloadDocumentV2.toCurrent(): PayloadDocument = PayloadDocument(
+    schemaVersion = BackupFormat.PAYLOAD_SCHEMA_VERSION,
+    exportedAt = exportedAt,
+    appVersion = appVersion,
+    preferences = preferences,
+    goldHoldings = goldHoldings,
+    banks = banks.map {
+        BankPayload(it.id, it.name, it.createdAt, it.updatedAt, institutionId = null, identityReviewed = false)
+    },
+    bankAccounts = bankAccounts,
+    cashBalances = cashBalances,
+    zakatPayments = zakatPayments,
+    personalNotes = personalNotes,
+    remoteQuotes = remoteQuotes.map { it.toCurrent() },
+    manualQuotes = manualQuotes,
+    zakatTrackingStartYear = zakatTrackingStartYear,
+    zakatYears = zakatYears,
+)
+
+private fun RemoteQuotePayloadV2.toCurrent(): RemoteQuotePayload {
+    val basis = if (quoteKey != "USD_EGP") {
+        null
+    } else if (provider == "EXCHANGE_RATE_API" || provider == "FAWAZ_CURRENCY_API") {
+        "MID_MARKET_ESTIMATE"
+    } else {
+        "LEGACY_UNKNOWN"
+    }
+    return RemoteQuotePayload(
+        quoteKey = quoteKey,
+        provider = provider,
+        value = value,
+        sourceUrl = sourceUrl,
+        sourceTimeKind = sourceTimeKind,
+        sourceTime = sourceTime,
+        fetchedAt = fetchedAt,
+        recordedAt = recordedAt,
+        note = note,
+        nextUpdateAt = nextUpdateAt,
+        attributionUrl = attributionUrl,
+        basis = basis,
+    )
+}
+
 /** Rebuilds the model from a decoded payload. Every value goes through its model constructor. */
 internal fun PayloadDocument.toSnapshot(): BackupSnapshot {
     if (schemaVersion != BackupFormat.PAYLOAD_SCHEMA_VERSION) throw CorruptPayloadException()
@@ -264,7 +364,7 @@ internal fun PayloadDocument.toSnapshot(): BackupSnapshot {
                 } ?: throw CorruptPayloadException(),
             ),
             goldHoldings = goldHoldings.map { it.toModel() },
-            banks = banks.map { Bank(BankId(it.id), it.name, it.createdAt.instant(), it.updatedAt.instant()) },
+            banks = banks.map { it.toModel() },
             bankAccounts = bankAccounts.map { it.toModel() },
             cashBalances = cashBalances.map { it.toModel() },
             zakatPayments = zakatPayments.map { it.toModel() },
@@ -300,6 +400,24 @@ private fun GoldPayload.toModel(): GoldHolding = GoldHolding(
     note = note,
     createdAt = createdAt.instant(),
     updatedAt = updatedAt.instant(),
+)
+
+private fun Bank.toPayload(): BankPayload = BankPayload(
+    id = id.value,
+    name = name,
+    createdAt = createdAt.text(),
+    updatedAt = updatedAt.text(),
+    institutionId = institutionId?.value,
+    identityReviewed = identityReviewed,
+)
+
+private fun BankPayload.toModel(): Bank = Bank(
+    id = BankId(id),
+    name = name,
+    createdAt = createdAt.instant(),
+    updatedAt = updatedAt.instant(),
+    institutionId = institutionId?.let { InstitutionId.parseOrNull(it) ?: throw CorruptPayloadException() },
+    identityReviewed = identityReviewed,
 )
 
 private fun BankAccount.toPayload(): BankAccountPayload = BankAccountPayload(
@@ -384,6 +502,7 @@ private fun ZakatYearPayload.toModel(): ZakatYear = ZakatYear(
 private fun RemoteQuoteRecord.toPayload(): RemoteQuotePayload {
     val quote = quote
     val provenance = quote.provenance
+    val basis = (quote as? FxQuote)?.basis?.name
     val time = provenance.sourceTime
     val (kind, text) = when (time) {
         is SourceTime.Timestamp -> "TIMESTAMP" to time.value.text()
@@ -402,6 +521,7 @@ private fun RemoteQuoteRecord.toPayload(): RemoteQuotePayload {
         note = provenance.note,
         nextUpdateAt = nextUpdateAt?.text(),
         attributionUrl = attributionUrl,
+        basis = basis,
     )
 }
 
@@ -427,8 +547,15 @@ private fun RemoteQuotePayload.toModel(): RemoteQuoteRecord {
         note = note,
     )
     val quote: PriceQuote = when (key) {
-        is QuoteKey.Gold -> GoldQuote(key, GoldPrice(decimal(value)), provenance)
-        QuoteKey.UsdEgp -> FxQuote(FxRate(decimal(value)), provenance)
+        is QuoteKey.Gold -> {
+            if (basis != null) throw CorruptPayloadException()
+            GoldQuote(key, GoldPrice(decimal(value)), provenance)
+        }
+
+        QuoteKey.UsdEgp -> {
+            val fxBasis = enumByName<FxBasis>(basis ?: throw CorruptPayloadException())
+            FxQuote(FxRate(decimal(value)), provenance, fxBasis)
+        }
     }
     return RemoteQuoteRecord(
         quote = quote,
@@ -471,7 +598,11 @@ private fun ManualQuotePayload.toModel(): PriceQuote {
 /** The provider must match the key: ISAGHA for gold, one of the two FX providers for USD to EGP. */
 private fun providerMatches(key: QuoteKey, provider: QuoteProvider): Boolean = when (key) {
     is QuoteKey.Gold -> provider == QuoteProvider.ISAGHA
-    QuoteKey.UsdEgp -> provider == QuoteProvider.EXCHANGE_RATE_API || provider == QuoteProvider.FAWAZ_CURRENCY_API
+
+    QuoteKey.UsdEgp ->
+        provider == QuoteProvider.BANQUE_MISR ||
+            provider == QuoteProvider.EXCHANGE_RATE_API ||
+            provider == QuoteProvider.FAWAZ_CURRENCY_API
 }
 
 private fun PriceQuote.quoteKey(): QuoteKey = when (this) {

@@ -25,14 +25,17 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.SolidColor
 import androidx.compose.ui.graphics.graphicsLayer
 import androidx.compose.ui.graphics.vector.ImageVector
+import androidx.compose.ui.platform.LocalLayoutDirection
 import androidx.compose.ui.semantics.Role
 import androidx.compose.ui.semantics.error
 import androidx.compose.ui.semantics.semantics
 import androidx.compose.ui.text.input.KeyboardType
 import androidx.compose.ui.text.input.PasswordVisualTransformation
 import androidx.compose.ui.text.input.VisualTransformation
+import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.text.style.TextDirection
 import androidx.compose.ui.unit.Dp
+import androidx.compose.ui.unit.LayoutDirection
 import com.mk.daftar.core.designsystem.icon.DaftarIcons
 import com.mk.daftar.core.designsystem.theme.DaftarSpacing
 import com.mk.daftar.core.designsystem.theme.DaftarStyles
@@ -72,9 +75,12 @@ fun DaftarTextField(
         DaftarFieldKind.Decimal -> KeyboardType.Decimal
         DaftarFieldKind.Password -> KeyboardType.Password
     }
+    // Amounts read left to right in every language, and a name may be typed in either script, but every value sits at
+    // the field's start: an Arabic layout never leaves a gap before English text or a number.
     val textStyle = typography.ledgerValue.copy(
         color = colors.ink,
         textDirection = if (kind == DaftarFieldKind.Decimal) TextDirection.Ltr else TextDirection.Content,
+        textAlign = layoutStartAlign(),
     )
     DaftarFieldShell(
         label = label,
@@ -96,16 +102,21 @@ fun DaftarTextField(
             textStyle = textStyle,
             cursorBrush = SolidColor(colors.primary),
             keyboardOptions = KeyboardOptions(keyboardType = keyboardType),
-            visualTransformation = if (kind == DaftarFieldKind.Password) {
-                PasswordVisualTransformation()
-            } else {
-                VisualTransformation.None
+            visualTransformation = when (kind) {
+                DaftarFieldKind.Password -> PasswordVisualTransformation()
+                DaftarFieldKind.Decimal -> DigitGroupingTransformation
+                DaftarFieldKind.Text -> VisualTransformation.None
             },
             interactionSource = interactionSource,
             decorationBox = { inner ->
                 Box {
                     if (value.isEmpty() && placeholder != null) {
-                        Text(placeholder, style = typography.ledgerValue, color = colors.muted)
+                        Text(
+                            text = placeholder,
+                            style = typography.ledgerValue.copy(textAlign = layoutStartAlign()),
+                            color = colors.muted,
+                            modifier = Modifier.fillMaxWidth(),
+                        )
                     }
                     inner()
                 }
@@ -150,13 +161,18 @@ fun DaftarTextArea(
             readOnly = readOnly,
             minLines = 4,
             maxLines = Int.MAX_VALUE,
-            textStyle = typography.ledgerValue.copy(color = colors.ink),
+            textStyle = typography.ledgerValue.copy(color = colors.ink, textAlign = layoutStartAlign()),
             cursorBrush = SolidColor(colors.primary),
             interactionSource = interactionSource,
             decorationBox = { inner ->
                 Box {
                     if (value.isEmpty() && placeholder != null) {
-                        Text(placeholder, style = typography.ledgerValue, color = colors.muted)
+                        Text(
+                            text = placeholder,
+                            style = typography.ledgerValue.copy(textAlign = layoutStartAlign()),
+                            color = colors.muted,
+                            modifier = Modifier.fillMaxWidth(),
+                        )
                     }
                     inner()
                 }
@@ -330,3 +346,8 @@ internal fun DaftarFieldShell(
         }
     }
 }
+
+/** The start edge of the layout as an absolute alignment, so text direction alone never moves a field's value. */
+@Composable
+private fun layoutStartAlign(): TextAlign =
+    if (LocalLayoutDirection.current == LayoutDirection.Rtl) TextAlign.Right else TextAlign.Left

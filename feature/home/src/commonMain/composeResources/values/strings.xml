@@ -58,4 +58,7 @@
         <item quantity="one">⁦%1$d⁩ year awaiting your confirmation</item>
         <item quantity="other">⁦%1$d⁩ years awaiting your confirmation</item>
     </plurals>
+    <string name="home_usd_basis_bank">USD: Banque Misr · transfer buy</string>
+    <string name="home_usd_basis_estimate">USD: mid-market estimate</string>
+    <string name="home_usd_basis_manual">USD: manual rate</string>
 </resources>

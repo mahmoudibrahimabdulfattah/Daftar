@@ -64,6 +64,14 @@ mapping (`androidApp/build/outputs/mapping/release`), not a package-wide keep.
   and transfer is disabled. Staged export files live in a no-backup area and are deleted after use.
 - Cleartext traffic is prohibited. The only merged permissions are `INTERNET` and `USE_BIOMETRIC`.
 - Changing the PIN rewraps the data key; the database is not re-encrypted.
+- Biometric auto-prompt (owner-verified on a real phone, 13 Oct 2026; do not regress): with biometrics enabled the
+  system prompt appears by itself once per lock episode, on cold launch AND when the app returns from the background.
+  The auth view model outlives sessions, so every lock after a successful unlock is a new episode (`openedSinceLock`),
+  and a request queued while the app was in the background survives the resume recheck. Cancel, failure, backoff,
+  recovery and forgot-PIN never re-prompt by themselves. While the biometric unlock runs the gate keeps the lock surface
+  (no "opening" screen before the prompt), and the Android splash stays until the lock surface is ready (capped at
+  1.5 s), so the prompt follows the splash at once. Guarded by `AuthViewModelTest` (cold launch, queued request survives
+  resume, every lock after an unlock) and `VaultGateModelTest`.
 
 ## Backup and restore
 
@@ -87,6 +95,11 @@ mapping (`androidApp/build/outputs/mapping/release`), not a package-wide keep.
   navigation ownership in `core:designsystem`.
 - Fonts: Alexandria for Arabic text, Rubik for English and every numeric run (tabular figures). Both are bundled
   variable fonts with 400/500/600/700 weights, and their OFL texts ship in `feature:settings` resources.
+- Bank identities come from `core/model/src/bankDirectory/banks.json` (country-namespaced IDs such as `eg.nbe`). Official
+  marks live in `docs/design/bank-marks/` (original bytes + `manifest.json` with source, date and hashes) and are
+  rendered by `tools/bank-marks/render.py` into `core/designsystem/src/officialBankArtwork`. `-Pdaftar.bankArtwork=official`
+  (default) packages them; `monogram` packages none and shows brand-coloured initials. Run `./gradlew clean` when
+  switching modes; the build fails rather than ship stale marks. Never recolour, invert, stretch or crop a mark.
 - The catalog (`DesignCatalog`) is the living reference: every component and state, in light/dark and Arabic/English.
   Keep it current when a component changes.
 
