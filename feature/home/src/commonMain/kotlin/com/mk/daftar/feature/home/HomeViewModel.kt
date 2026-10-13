@@ -3,19 +3,28 @@ package com.mk.daftar.feature.home
 import androidx.lifecycle.viewModelScope
 import androidx.navigation3.runtime.NavKey
 import com.mk.daftar.core.domain.refresh.PriceRefreshController
+import com.mk.daftar.core.domain.repository.ZakatTrackingState
+import com.mk.daftar.core.domain.storage.VaultRead
 import com.mk.daftar.core.domain.usecase.ObserveBanksUseCase
 import com.mk.daftar.core.domain.usecase.ObservePortfolioValuationUseCase
 import com.mk.daftar.core.domain.usecase.ObserveSelectedQuotesUseCase
+import com.mk.daftar.core.domain.usecase.ObserveZakatDayUseCase
+import com.mk.daftar.core.domain.usecase.ObserveZakatTrackingUseCase
+import com.mk.daftar.core.domain.zakat.ZakatYearRules
 import com.mk.daftar.core.navigation.AssetsRoute
 import com.mk.daftar.core.navigation.BanksRoute
 import com.mk.daftar.core.navigation.CashRoute
 import com.mk.daftar.core.navigation.GoldRoute
 import com.mk.daftar.core.navigation.PricesRoute
+import com.mk.daftar.core.navigation.ZakatCalculatorRoute
+import com.mk.daftar.core.navigation.ZakatHistoryRoute
+import com.mk.daftar.core.navigation.ZakatYearRoute
 import com.mk.daftar.core.ui.mvi.MviViewModel
 import com.mk.daftar.core.ui.presentation.ValuesVisibility
 import kotlinx.coroutines.flow.combine
 import kotlinx.coroutines.flow.map
 import kotlinx.coroutines.launch
+import kotlinx.datetime.LocalDate
 
 /**
  * The Home screen. It combines the valuation, the selected quotes, the bank count, the privacy state and the refresh
@@ -26,6 +35,8 @@ class HomeViewModel(
     observePortfolio: ObservePortfolioValuationUseCase,
     observeQuotes: ObserveSelectedQuotesUseCase,
     observeBanks: ObserveBanksUseCase,
+    observeTracking: ObserveZakatTrackingUseCase,
+    observeDay: ObserveZakatDayUseCase,
     private val visibility: ValuesVisibility,
     private val refresh: PriceRefreshController,
 ) : MviViewModel<HomeUiState, HomeIntent, HomeEffect>(HomeUiState()) {
@@ -40,17 +51,33 @@ class HomeViewModel(
                 refresh.status,
             ) { valuation, quotes, bankCount, visible, status ->
                 homeStateOf(valuation, quotes, bankCount, valuesHidden = !visible, refresh = status)
-            }.collect { next -> reduce { next } }
+            }.collect { next -> reduce { next.copy(zakatDue = zakatDue) } }
+        }
+        viewModelScope.launch {
+            combine(observeTracking(), observeDay()) { tracking, day -> dueOf(tracking, day) }
+                .collect { due -> reduce { copy(zakatDue = due) } }
         }
     }
 
     override fun onIntent(intent: HomeIntent) {
         when (intent) {
             HomeIntent.ToggleValues -> visibility.toggle()
+
             HomeIntent.Refresh -> refresh.refresh()
+
             is HomeIntent.OpenCategory -> emitEffect(HomeEffect.Open(intent.category.route()))
+
             HomeIntent.OpenPrices -> emitEffect(HomeEffect.Open(PricesRoute))
+
             HomeIntent.AddFirstAsset -> emitEffect(HomeEffect.Open(AssetsRoute))
+
+            HomeIntent.OpenZakatCalculator -> emitEffect(HomeEffect.Open(ZakatCalculatorRoute))
+
+            HomeIntent.OpenZakatReview -> {
+                val due = currentState.zakatDue
+                val route: NavKey = if (due.size == 1) ZakatYearRoute(due.single().hijriYear) else ZakatHistoryRoute
+                if (due.isNotEmpty()) emitEffect(HomeEffect.Open(route))
+            }
         }
     }
 
@@ -58,5 +85,13 @@ class HomeViewModel(
         HomeCategory.GOLD -> GoldRoute
         HomeCategory.BANKS -> BanksRoute
         HomeCategory.CASH -> CashRoute
+    }
+}
+
+/** The years awaiting confirmation on the civil day, oldest first. Nothing is due while tracking is not read. */
+private fun dueOf(tracking: VaultRead<ZakatTrackingState>, today: LocalDate): List<ZakatDueYear> {
+    val ready = tracking as? VaultRead.Ready ?: return emptyList()
+    return ZakatYearRules.dueYears(ready.value.years, today).map { year ->
+        ZakatDueYear(year.hijriYear, ZakatYearRules.dateOf(year).year)
     }
 }

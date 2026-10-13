@@ -38,7 +38,8 @@ mapping (`androidApp/build/outputs/mapping/release`), not a package-wide keep.
   - `daftar.kmp.feature`: a screen feature (Compose, ViewModel, navigation, Koin, core model and design system).
   - `daftar.android.application`: the Android shell.
 - `core:common`, `core:model`: primitives, exact decimals, records. No platform code.
-- `core:domain`: pure valuation rules (gold by karat at the goldsmith sell price, USD to EGP, totals) and use cases.
+- `core:domain`: pure valuation rules (gold by karat at the goldsmith sell price, USD to EGP, totals), the civil Hijri
+  calendar and zakat rules, and use cases.
   No I/O, no clock; fully unit-tested. Prices fall back live, then last cached (with its time), then manual.
 - `core:security`: PIN and password crypto, backoff, platform key storage (Android Keystore, iOS Keychain and
   Secure Enclave). Software keys are refused in release.

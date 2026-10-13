@@ -43,6 +43,7 @@ private class ZakatRecordRepository(private val host: VaultHost) : ZakatReposito
                 note = input.note,
                 createdAt = now,
                 updatedAt = now,
+                forHijriYear = input.forHijriYear,
             )
             db.zakatPaymentDao().insert(payment.toEntity(RecordRules.FIRST_REVISION))
             Outcome.Success(Stored(payment, RecordRules.FIRST_REVISION))
@@ -69,6 +70,7 @@ private class ZakatRecordRepository(private val host: VaultHost) : ZakatReposito
             note = input.note,
             createdAt = previous.value.createdAt,
             updatedAt = RecordRules.editedAt(host.now(), previous.value.updatedAt),
+            forHijriYear = input.forHijriYear,
         )
         val next = RecordRules.nextRevision(expectedRevision)
         if (dao.updateIfRevision(updated.toEntity(next), expectedRevision) == 1) {

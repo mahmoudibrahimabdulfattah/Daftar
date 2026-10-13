@@ -36,7 +36,7 @@ class ZakatListViewModel(observePayments: ObserveZakatPaymentsUseCase, private v
 
     override fun onIntent(intent: ZakatListIntent) {
         when (intent) {
-            ZakatListIntent.OpenAdd -> open(ZakatAddRoute)
+            ZakatListIntent.OpenAdd -> open(ZakatAddRoute())
 
             is ZakatListIntent.OpenPayment -> open(ZakatEditRoute(intent.paymentId.value))
 

@@ -50,4 +50,15 @@
     <string name="home_month_10">أكتوبر</string>
     <string name="home_month_11">نوفمبر</string>
     <string name="home_month_12">ديسمبر</string>
+    <string name="home_zakat_prepare">الزكاة · جهّز لرمضان</string>
+    <string name="home_zakat_review">راجع زكاة السنة</string>
+    <string name="zakat_reminder">حلّ موعدك السنوي، ولم تعلّم زكاة السنة كمُخرَجة.</string>
+    <string name="zakat_year_label">⁦%1$d هـ⁩ · ⁦%2$d⁩</string>
+    <plurals name="zakat_due_count">
+        <item quantity="one">سنة بانتظار تأكيدك</item>
+        <item quantity="two">سنتان بانتظار تأكيدك</item>
+        <item quantity="few">⁦%1$d⁩ سنوات بانتظار تأكيدك</item>
+        <item quantity="many">⁦%1$d⁩ سنة بانتظار تأكيدك</item>
+        <item quantity="other">⁦%1$d⁩ سنة بانتظار تأكيدك</item>
+    </plurals>
 </resources>

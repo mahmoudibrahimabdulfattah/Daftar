@@ -15,11 +15,14 @@ import com.mk.daftar.core.domain.repository.ManualQuoteInput
 import com.mk.daftar.core.domain.repository.PriceRepository
 import com.mk.daftar.core.domain.repository.QuoteSnapshot
 import com.mk.daftar.core.domain.repository.RefreshReport
+import com.mk.daftar.core.domain.repository.ZakatTrackingState
+import com.mk.daftar.core.domain.repository.ZakatYearRepository
 import com.mk.daftar.core.domain.session.VaultSession
 import com.mk.daftar.core.domain.session.VaultSessionState
 import com.mk.daftar.core.domain.storage.StorageError
 import com.mk.daftar.core.domain.storage.Stored
 import com.mk.daftar.core.domain.storage.VaultRead
+import com.mk.daftar.core.domain.usecase.ObserveZakatDayUseCase
 import com.mk.daftar.core.model.Bank
 import com.mk.daftar.core.model.BankAccount
 import com.mk.daftar.core.model.BankAccountId
@@ -30,12 +33,15 @@ import com.mk.daftar.core.model.GoldHolding
 import com.mk.daftar.core.model.GoldHoldingId
 import com.mk.daftar.core.model.GoldKarat
 import com.mk.daftar.core.model.QuoteKey
+import com.mk.daftar.core.model.ZakatYear
 import kotlin.time.Clock
 import kotlin.time.Instant
 import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.asStateFlow
+import kotlinx.coroutines.flow.flowOf
+import kotlinx.datetime.LocalDate
 
 /** A session the test drives directly. Locking it returns to Locked, as the real session does. */
 internal class FakeSession : VaultSession {
@@ -168,3 +174,18 @@ internal fun readySnapshot(): QuoteSnapshot = QuoteSnapshot(
     ),
     manual = emptyList(),
 )
+
+/** A tracking read that never changes: the given state, or a locked or failed read. */
+internal class FakeZakatTracking(private val read: VaultRead<ZakatTrackingState>) : ZakatYearRepository {
+    override fun observeTracking(): Flow<VaultRead<ZakatTrackingState>> = flowOf(read)
+    override suspend fun ensureTracking(today: LocalDate): Outcome<ZakatTrackingState, StorageError> = error("unused")
+    override suspend fun setPaid(hijriYear: Int, paid: Boolean): Outcome<ZakatYear, StorageError> = error("unused")
+    override suspend fun setDateAdjustment(hijriYear: Int, overrideDays: Int): Outcome<ZakatYear, StorageError> =
+        error("unused")
+    override suspend fun addYear(hijriYear: Int, today: LocalDate): Outcome<ZakatYear, StorageError> = error("unused")
+}
+
+/** The Cairo day the Home tests see: fixed, so due years are deterministic. */
+internal fun fixedZakatDay(day: LocalDate): ObserveZakatDayUseCase = object : ObserveZakatDayUseCase(FixedClock) {
+    override operator fun invoke(): Flow<LocalDate> = flowOf(day)
+}

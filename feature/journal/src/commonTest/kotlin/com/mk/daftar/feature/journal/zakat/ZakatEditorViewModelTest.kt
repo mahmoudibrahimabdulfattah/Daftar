@@ -5,6 +5,7 @@ import com.mk.daftar.core.domain.usecase.CreateZakatPaymentUseCase
 import com.mk.daftar.core.domain.usecase.DeleteZakatPaymentUseCase
 import com.mk.daftar.core.domain.usecase.ObserveZakatPaymentUseCase
 import com.mk.daftar.core.domain.usecase.ObserveZakatPaymentsUseCase
+import com.mk.daftar.core.domain.usecase.ObserveZakatTrackingUseCase
 import com.mk.daftar.core.domain.usecase.UpdateZakatPaymentUseCase
 import com.mk.daftar.core.ui.presentation.ValuesVisibility
 import com.mk.daftar.feature.journal.JournalAction
@@ -14,9 +15,11 @@ import com.mk.daftar.feature.journal.JournalPhase
 import com.mk.daftar.feature.journal.conceal
 import com.mk.daftar.feature.journal.isHidden
 import com.mk.daftar.feature.journal.testing.FakeZakatRepository
+import com.mk.daftar.feature.journal.testing.FakeZakatYearRepository
 import com.mk.daftar.feature.journal.testing.FixedClock
 import com.mk.daftar.feature.journal.testing.NOW
 import com.mk.daftar.feature.journal.testing.TODAY
+import com.mk.daftar.feature.journal.testing.declared
 import com.mk.daftar.feature.journal.testing.payment
 import kotlin.test.AfterTest
 import kotlin.test.BeforeTest
@@ -60,18 +63,25 @@ class ZakatEditorViewModelTest {
         val viewModel: ZakatEditorViewModel,
     )
 
-    private fun rig(target: ZakatEditorTarget, repository: FakeZakatRepository = FakeZakatRepository()): Rig {
-        val visibility = ValuesVisibility()
+    private fun rig(
+        target: ZakatEditorTarget,
+        repository: FakeZakatRepository = FakeZakatRepository(),
+        years: FakeZakatYearRepository = FakeZakatYearRepository(),
+        launch: ZakatEditorLaunch = ZakatEditorLaunch(),
+        visibility: ValuesVisibility = ValuesVisibility(),
+    ): Rig {
         val viewModel = ZakatEditorViewModel(
             target = target,
             observePayment = ObserveZakatPaymentUseCase(repository),
             observePayments = ObserveZakatPaymentsUseCase(repository),
+            observeTracking = ObserveZakatTrackingUseCase(years),
             createPayment = CreateZakatPaymentUseCase(repository),
             updatePayment = UpdateZakatPaymentUseCase(repository),
             deletePayment = DeleteZakatPaymentUseCase(repository),
             visibility = visibility,
             clock = FixedClock(NOW),
             timeZone = TimeZone.UTC,
+            launch = launch,
         )
         return Rig(repository, visibility, viewModel)
     }
@@ -509,5 +519,88 @@ class ZakatEditorViewModelTest {
 
         assertEquals(JournalPhase.Missing, vm.state.value.phase)
         assertTrue(repository.createdInputs.isEmpty())
+    }
+
+    @Test
+    fun aCalculatorPrefillIsAnEditableDraftWhileValuesAreVisible() = runTest(dispatcher) {
+        val vm = newPayment(rig(ZakatEditorTarget.New, launch = ZakatEditorLaunch(prefillAmount = "26905.32")))
+
+        assertEquals("26905.32", vm.state.value.draft.amountText)
+        assertTrue(vm.state.value.prefilled)
+        assertTrue(vm.state.value.dirty, "a prefilled draft is unsaved, so leaving asks before it is dropped")
+    }
+
+    @Test
+    fun aPrefillIsNeverTakenWhileValuesAreHidden() = runTest(dispatcher) {
+        val visibility = ValuesVisibility()
+        visibility.conceal()
+        val vm = newPayment(
+            rig(ZakatEditorTarget.New, launch = ZakatEditorLaunch(prefillAmount = "26905.32"), visibility = visibility),
+        )
+
+        assertEquals("", vm.state.value.draft.amountText)
+        assertFalse(vm.state.value.prefilled)
+    }
+
+    @Test
+    fun theDefaultYearIsTheOldestDueYearWhenOneAwaitsConfirmation() = runTest(dispatcher) {
+        val years = FakeZakatYearRepository(startYear = 1447, years = listOf(declared(1447), declared(1448)))
+        val vm = newPayment(rig(ZakatEditorTarget.New, years = years))
+
+        assertEquals(1447, vm.state.value.draft.forHijriYear)
+        assertFalse(vm.state.value.dirty, "the default is a baseline, not an edit")
+    }
+
+    @Test
+    fun theDefaultYearIsTheNextRamadanWhenNothingIsDue() = runTest(dispatcher) {
+        val years = FakeZakatYearRepository(startYear = 1448, years = listOf(declared(1448)))
+        val vm = newPayment(rig(ZakatEditorTarget.New, years = years))
+
+        assertEquals(1448, vm.state.value.draft.forHijriYear)
+    }
+
+    @Test
+    fun anExplicitYearFromTheRouteBeatsTheDefault() = runTest(dispatcher) {
+        val years = FakeZakatYearRepository(startYear = 1447, years = listOf(declared(1447)))
+        val vm = newPayment(rig(ZakatEditorTarget.New, years = years, launch = ZakatEditorLaunch(initialYear = 1446)))
+
+        assertEquals(1446, vm.state.value.draft.forHijriYear)
+        assertFalse(vm.state.value.dirty)
+    }
+
+    @Test
+    fun aPaymentSavedUnassignedIsLinkedToNoYear() = runTest(dispatcher) {
+        val repository = FakeZakatRepository()
+        val vm = newPayment(rig(ZakatEditorTarget.New, repository))
+
+        vm.onIntent(ZakatEditorIntent.YearSelected(null))
+        vm.fill(date = "2026-03-20", amount = "5000")
+        vm.onIntent(ZakatEditorIntent.Save)
+        settle()
+
+        assertNull(repository.createdInputs.single().forHijriYear)
+        assertTrue(vm.state.value.completed)
+    }
+
+    @Test
+    fun aPaymentSavedWithAChosenYearIsLinkedToIt() = runTest(dispatcher) {
+        val repository = FakeZakatRepository()
+        val years = FakeZakatYearRepository(startYear = 1447, years = listOf(declared(1447), declared(1448)))
+        val vm = newPayment(rig(ZakatEditorTarget.New, repository, years = years))
+
+        vm.onIntent(ZakatEditorIntent.YearSelected(1448))
+        vm.fill(date = "2026-03-20", amount = "5000")
+        vm.onIntent(ZakatEditorIntent.Save)
+        settle()
+
+        assertEquals(1448, repository.createdInputs.single().forHijriYear)
+    }
+
+    @Test
+    fun theYearPickerOffersEveryDeclaredYearNewestFirst() = runTest(dispatcher) {
+        val years = FakeZakatYearRepository(startYear = 1447, years = listOf(declared(1447), declared(1448)))
+        val vm = newPayment(rig(ZakatEditorTarget.New, years = years))
+
+        assertEquals(listOf(1448, 1447), vm.state.value.yearChoices.map { it.hijriYear })
     }
 }

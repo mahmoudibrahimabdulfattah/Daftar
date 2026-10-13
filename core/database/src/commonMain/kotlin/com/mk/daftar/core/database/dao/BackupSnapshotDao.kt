@@ -11,6 +11,8 @@ import com.mk.daftar.core.database.entity.ManualQuoteEntity
 import com.mk.daftar.core.database.entity.PersonalNoteEntity
 import com.mk.daftar.core.database.entity.RemoteQuoteEntity
 import com.mk.daftar.core.database.entity.ZakatPaymentEntity
+import com.mk.daftar.core.database.entity.ZakatTrackingEntity
+import com.mk.daftar.core.database.entity.ZakatYearEntity
 
 /** Every stored row of one snapshot, read inside one transaction so no write can fall between two tables. */
 data class BackupRows(
@@ -22,12 +24,14 @@ data class BackupRows(
     val personalNotes: List<PersonalNoteEntity>,
     val remoteQuotes: List<RemoteQuoteEntity>,
     val manualQuotes: List<ManualQuoteEntity>,
+    val zakatYears: List<ZakatYearEntity>,
+    val zakatTracking: List<ZakatTrackingEntity>,
 )
 
 /** The read side of a backup. It only reads; writes never go through this DAO. */
 @Dao
 abstract class BackupSnapshotDao {
-    /** One transaction over all eight tables. Room runs it on the write connection, so the rows agree with each other. */
+    /** One transaction over all ten tables. Room runs it on the write connection, so the rows agree with each other. */
     @Transaction
     open suspend fun readAll(): BackupRows = BackupRows(
         goldHoldings = goldHoldings(),
@@ -38,6 +42,8 @@ abstract class BackupSnapshotDao {
         personalNotes = personalNotes(),
         remoteQuotes = remoteQuotes(),
         manualQuotes = manualQuotes(),
+        zakatYears = zakatYears(),
+        zakatTracking = zakatTracking(),
     )
 
     @Query("SELECT * FROM gold_holdings ORDER BY id ASC")
@@ -63,4 +69,10 @@ abstract class BackupSnapshotDao {
 
     @Query("SELECT * FROM manual_quotes ORDER BY quote_key ASC")
     protected abstract suspend fun manualQuotes(): List<ManualQuoteEntity>
+
+    @Query("SELECT * FROM zakat_years ORDER BY hijri_year ASC")
+    protected abstract suspend fun zakatYears(): List<ZakatYearEntity>
+
+    @Query("SELECT * FROM zakat_tracking WHERE id = 1")
+    protected abstract suspend fun zakatTracking(): List<ZakatTrackingEntity>
 }

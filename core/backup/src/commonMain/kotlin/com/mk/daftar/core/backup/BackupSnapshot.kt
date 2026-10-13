@@ -12,6 +12,7 @@ import com.mk.daftar.core.model.GoldHolding
 import com.mk.daftar.core.model.PersonalNote
 import com.mk.daftar.core.model.PriceQuote
 import com.mk.daftar.core.model.ZakatPayment
+import com.mk.daftar.core.model.ZakatYear
 
 /**
  * The non-sensitive preferences a backup carries. The biometric flag is absent on purpose: it describes a device key,
@@ -39,11 +40,15 @@ data class BackupSnapshot(
     val remoteQuotes: List<RemoteQuoteRecord>,
     /** Manual quotes. Their pinned state lives in the provenance. */
     val manualQuotes: List<PriceQuote>,
+    /** Annual declarations. Empty for a version-one payload, which predates them. */
+    val zakatYears: List<ZakatYear> = emptyList(),
+    /** The first tracked Hijri year, or null when tracking has not started. Null means no declarations exist. */
+    val zakatTrackingStartYear: Int? = null,
 ) {
-    /** Every record across all collections. Preferences are not counted. */
+    /** Every record across all collections. Preferences and the tracking start are not counted. */
     val recordCount: Int
         get() = goldHoldings.size + banks.size + bankAccounts.size + cashBalances.size + zakatPayments.size +
-            personalNotes.size + remoteQuotes.size + manualQuotes.size
+            personalNotes.size + remoteQuotes.size + manualQuotes.size + zakatYears.size
 }
 
 /**

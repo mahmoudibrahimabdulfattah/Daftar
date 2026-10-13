@@ -5,11 +5,12 @@ import androidx.sqlite.SQLiteConnection
 import androidx.sqlite.SQLiteDriver
 import androidx.sqlite.SQLiteStatement
 import com.mk.daftar.core.database.schema.ValidationTriggersV1
+import com.mk.daftar.core.database.schema.ValidationTriggersV2
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.IO
 
 /**
- * Builds the v1 database over [driver]. The platform supplies [builder] because Room needs its own location: the
+ * Builds the current database over [driver]. The platform supplies [builder] because Room needs its own location: the
  * Android builder takes a Context, the iOS builder takes a path. Each connection enables foreign keys, so the RESTRICT
  * rules hold on every pooled connection, and the schema callback installs the validation triggers when the file is
  * created and checks they are present when it is opened.
@@ -17,6 +18,7 @@ import kotlinx.coroutines.IO
 fun buildDaftarDatabase(builder: RoomDatabase.Builder<DaftarDatabase>, driver: SQLiteDriver): DaftarDatabase = builder
     .setDriver(ForeignKeyEnforcingDriver(driver))
     .setQueryCoroutineContext(Dispatchers.IO)
+    .addMigrations(*daftarMigrations)
     .addCallback(DaftarSchemaCallback)
     .build()
 
@@ -37,21 +39,22 @@ internal class ForeignKeyEnforcingDriver(private val delegate: SQLiteDriver) : S
 }
 
 /**
- * Installs the versioned validation triggers when the database is created, and refuses to open a file whose trigger
- * set does not match this schema version.
+ * Installs every versioned validation trigger when the database is created, and refuses to open a file whose trigger
+ * set does not match the current schema. Migrations install the triggers of each version they add.
  */
 internal object DaftarSchemaCallback : RoomDatabase.Callback() {
     override fun onCreate(connection: SQLiteConnection) {
         ValidationTriggersV1.statements.forEach { connection.execute(it) }
+        ValidationTriggersV2.statements.forEach { connection.execute(it) }
     }
 
     override fun onOpen(connection: SQLiteConnection) {
-        val expected = ValidationTriggersV1.triggerNames.size.toLong()
+        val expected = (ValidationTriggersV1.triggerNames + ValidationTriggersV2.triggerNames).size.toLong()
         val present = connection.scalarLong(
             "SELECT count(*) FROM sqlite_master WHERE type = 'trigger' AND " +
-                "name LIKE 'daftar_v${ValidationTriggersV1.VERSION}_%'",
+                "(name LIKE 'daftar_v${ValidationTriggersV1.VERSION}_%' OR name LIKE 'daftar_v${ValidationTriggersV2.VERSION}_%')",
         )
-        check(present == expected) { "validation triggers do not match schema version ${ValidationTriggersV1.VERSION}" }
+        check(present == expected) { "validation triggers do not match schema version ${ValidationTriggersV2.VERSION}" }
     }
 }
 

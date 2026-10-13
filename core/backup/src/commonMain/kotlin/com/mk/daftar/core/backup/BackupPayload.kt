@@ -35,14 +35,18 @@ import com.mk.daftar.core.model.QuoteProvider
 import com.mk.daftar.core.model.SourceTime
 import com.mk.daftar.core.model.ZakatPayment
 import com.mk.daftar.core.model.ZakatPaymentId
+import com.mk.daftar.core.model.ZakatYear
 import kotlin.time.Instant
 import kotlinx.datetime.LocalDate
 import kotlinx.serialization.Serializable
 
 /*
- * The portable payload, schema version 1. It is plain UTF-8 JSON with the property order below, so one snapshot always
+ * The portable payload, schema version 2. It is plain UTF-8 JSON with the property order below, so one snapshot always
  * serializes to the same bytes. Decimals are canonical plain strings, timestamps are Instant.toString() text, dates are
  * ISO text, and enums are their constant names. Nothing here is a database column or a device key.
+ *
+ * Version 1 is kept as [PayloadDocumentV1] so that old backups still decode and re-encode to their own bytes. A version 1
+ * payload has no declarations and no tracking start, and its payments have no year.
  */
 
 @Serializable
@@ -56,6 +60,25 @@ internal class PayloadDocument(
     val bankAccounts: List<BankAccountPayload>,
     val cashBalances: List<CashPayload>,
     val zakatPayments: List<ZakatPayload>,
+    val personalNotes: List<NotePayload>,
+    val remoteQuotes: List<RemoteQuotePayload>,
+    val manualQuotes: List<ManualQuotePayload>,
+    val zakatTrackingStartYear: Int?,
+    val zakatYears: List<ZakatYearPayload>,
+)
+
+/** The frozen version-one document. Its payments carry no year, and it has no declarations. */
+@Serializable
+internal class PayloadDocumentV1(
+    val schemaVersion: Int,
+    val exportedAt: String,
+    val appVersion: String,
+    val preferences: PreferencesPayload,
+    val goldHoldings: List<GoldPayload>,
+    val banks: List<BankPayload>,
+    val bankAccounts: List<BankAccountPayload>,
+    val cashBalances: List<CashPayload>,
+    val zakatPayments: List<ZakatPayloadV1>,
     val personalNotes: List<NotePayload>,
     val remoteQuotes: List<RemoteQuotePayload>,
     val manualQuotes: List<ManualQuotePayload>,
@@ -103,6 +126,17 @@ internal class CashPayload(
 )
 
 @Serializable
+internal class ZakatPayloadV1(
+    val id: String,
+    val paidOn: String,
+    val amount: String,
+    val currency: String,
+    val note: String?,
+    val createdAt: String,
+    val updatedAt: String,
+)
+
+@Serializable
 internal class ZakatPayload(
     val id: String,
     val paidOn: String,
@@ -111,6 +145,17 @@ internal class ZakatPayload(
     val note: String?,
     val createdAt: String,
     val updatedAt: String,
+    /** The linked Hijri year, or null for an unassigned payment. */
+    val forHijriYear: Int?,
+)
+
+@Serializable
+internal class ZakatYearPayload(
+    val hijriYear: Int,
+    val paid: Boolean,
+    val markedAt: String?,
+    val overrideDays: Int,
+    val userAdjusted: Boolean,
 )
 
 @Serializable
@@ -173,6 +218,37 @@ internal fun BackupSnapshot.toDocument(exportedAt: Instant, appVersion: String):
         compareBy<RemoteQuotePayload> { it.quoteKey }.thenBy { it.provider },
     ),
     manualQuotes = manualQuotes.map { it.toManualPayload() }.sortedBy { it.quoteKey },
+    zakatTrackingStartYear = zakatTrackingStartYear,
+    zakatYears = zakatYears.sortedBy { it.hijriYear }.map { it.toPayload() },
+)
+
+/** A version-one document as the current shape: no declarations, no tracking start, and unassigned payments. */
+internal fun PayloadDocumentV1.toCurrent(): PayloadDocument = PayloadDocument(
+    schemaVersion = BackupFormat.PAYLOAD_SCHEMA_VERSION,
+    exportedAt = exportedAt,
+    appVersion = appVersion,
+    preferences = preferences,
+    goldHoldings = goldHoldings,
+    banks = banks,
+    bankAccounts = bankAccounts,
+    cashBalances = cashBalances,
+    zakatPayments = zakatPayments.map {
+        ZakatPayload(
+            id = it.id,
+            paidOn = it.paidOn,
+            amount = it.amount,
+            currency = it.currency,
+            note = it.note,
+            createdAt = it.createdAt,
+            updatedAt = it.updatedAt,
+            forHijriYear = null,
+        )
+    },
+    personalNotes = personalNotes,
+    remoteQuotes = remoteQuotes,
+    manualQuotes = manualQuotes,
+    zakatTrackingStartYear = null,
+    zakatYears = emptyList(),
 )
 
 /** Rebuilds the model from a decoded payload. Every value goes through its model constructor. */
@@ -197,6 +273,8 @@ internal fun PayloadDocument.toSnapshot(): BackupSnapshot {
             },
             remoteQuotes = remoteQuotes.map { it.toModel() },
             manualQuotes = manualQuotes.map { it.toModel() },
+            zakatYears = zakatYears.map { it.toModel() },
+            zakatTrackingStartYear = zakatTrackingStartYear,
         )
     } catch (failure: IllegalArgumentException) {
         // A model constructor refused the value. The message could name a record, so it is dropped here.
@@ -274,6 +352,7 @@ private fun ZakatPayment.toPayload(): ZakatPayload = ZakatPayload(
     note = note,
     createdAt = createdAt.text(),
     updatedAt = updatedAt.text(),
+    forHijriYear = forHijriYear,
 )
 
 private fun ZakatPayload.toModel(): ZakatPayment = ZakatPayment(
@@ -283,6 +362,23 @@ private fun ZakatPayload.toModel(): ZakatPayment = ZakatPayment(
     note = note,
     createdAt = createdAt.instant(),
     updatedAt = updatedAt.instant(),
+    forHijriYear = forHijriYear,
+)
+
+private fun ZakatYear.toPayload(): ZakatYearPayload = ZakatYearPayload(
+    hijriYear = hijriYear,
+    paid = paid,
+    markedAt = markedAt?.text(),
+    overrideDays = overrideDays,
+    userAdjusted = userAdjusted,
+)
+
+private fun ZakatYearPayload.toModel(): ZakatYear = ZakatYear(
+    hijriYear = hijriYear,
+    paid = paid,
+    markedAt = markedAt?.instant(),
+    overrideDays = overrideDays,
+    userAdjusted = userAdjusted,
 )
 
 private fun RemoteQuoteRecord.toPayload(): RemoteQuotePayload {

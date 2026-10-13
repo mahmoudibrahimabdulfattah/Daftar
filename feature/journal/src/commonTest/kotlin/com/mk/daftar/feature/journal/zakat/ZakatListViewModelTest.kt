@@ -178,7 +178,7 @@ class ZakatListViewModelTest {
         vm.onIntent(ZakatListIntent.OpenAdd)
         advanceUntilIdle()
 
-        assertEquals(listOf<JournalEffect>(JournalEffect.Navigate(ZakatAddRoute)), effects)
+        assertEquals(listOf<JournalEffect>(JournalEffect.Navigate(ZakatAddRoute())), effects)
         collector.cancel()
     }
 

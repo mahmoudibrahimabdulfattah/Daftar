@@ -11,6 +11,7 @@ import com.mk.daftar.core.model.BankId
 import com.mk.daftar.core.model.Currency
 import com.mk.daftar.core.model.Decimal
 import com.mk.daftar.core.model.Money
+import com.mk.daftar.core.model.ZakatYear
 import kotlin.test.Test
 import kotlin.test.assertEquals
 import kotlin.time.Instant
@@ -44,5 +45,28 @@ class RestoreRowsTest {
         assertEquals(ThemeMode.DARK, emptySnapshot().preferences.themeMode)
         assertEquals(AppLanguage.EN, emptySnapshot().preferences.language)
         assertEquals(InactivityTimeout.SECONDS_300, emptySnapshot().preferences.inactivityTimeout)
+    }
+
+    @Test
+    fun declarationsAndTheTrackingStartBecomeRestoredRows() {
+        val marked = Instant.parse("2026-02-20T08:00:00Z")
+        val years = listOf(
+            ZakatYear(1447, paid = true, markedAt = marked, overrideDays = 0, userAdjusted = false),
+            ZakatYear.unchecked(1448),
+        )
+        val withYears = emptySnapshot().copy(zakatYears = years, zakatTrackingStartYear = 1447)
+
+        val rows = withYears.toRestoreRows()
+
+        assertEquals(listOf(1447, 1448), rows.zakatYears.map { it.hijriYear })
+        assertEquals(1447, rows.zakatTracking?.trackingStartYear)
+        assertEquals(marked.epochSeconds, rows.zakatYears.first().markedSeconds)
+    }
+
+    @Test
+    fun aSnapshotWithoutTrackingWritesNoTrackingRow() {
+        val rows = emptySnapshot().toRestoreRows()
+        assertEquals(emptyList(), rows.zakatYears)
+        assertEquals(null, rows.zakatTracking)
     }
 }

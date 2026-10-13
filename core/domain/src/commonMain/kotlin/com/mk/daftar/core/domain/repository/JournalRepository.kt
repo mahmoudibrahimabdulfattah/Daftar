@@ -7,7 +7,8 @@ import com.mk.daftar.core.model.ZakatPayment
 import com.mk.daftar.core.model.ZakatPaymentId
 import kotlinx.datetime.LocalDate
 
-data class ZakatPaymentInput(val paidOn: LocalDate, val amount: Money, val note: String?)
+/** [forHijriYear] links the payment to a declared year, or leaves it unassigned when null. It never marks the year paid. */
+data class ZakatPaymentInput(val paidOn: LocalDate, val amount: Money, val note: String?, val forHijriYear: Int? = null)
 
 data class PersonalNoteInput(val title: String, val body: String)
 

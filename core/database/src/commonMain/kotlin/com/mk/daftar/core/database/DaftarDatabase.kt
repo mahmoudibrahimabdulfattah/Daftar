@@ -14,6 +14,7 @@ import com.mk.daftar.core.database.dao.PersonalNoteDao
 import com.mk.daftar.core.database.dao.RemoteQuoteDao
 import com.mk.daftar.core.database.dao.RestoreWriteDao
 import com.mk.daftar.core.database.dao.ZakatPaymentDao
+import com.mk.daftar.core.database.dao.ZakatYearDao
 import com.mk.daftar.core.database.entity.BankAccountEntity
 import com.mk.daftar.core.database.entity.BankEntity
 import com.mk.daftar.core.database.entity.CashBalanceEntity
@@ -22,8 +23,10 @@ import com.mk.daftar.core.database.entity.ManualQuoteEntity
 import com.mk.daftar.core.database.entity.PersonalNoteEntity
 import com.mk.daftar.core.database.entity.RemoteQuoteEntity
 import com.mk.daftar.core.database.entity.ZakatPaymentEntity
+import com.mk.daftar.core.database.entity.ZakatTrackingEntity
+import com.mk.daftar.core.database.entity.ZakatYearEntity
 
-/** The private notebook database. Schema version 1; there is no destructive fallback. */
+/** The private notebook database. Schema version 2, reached from version 1 by [daftarMigrations]; there is no destructive fallback. */
 @Database(
     entities = [
         GoldHoldingEntity::class,
@@ -34,8 +37,10 @@ import com.mk.daftar.core.database.entity.ZakatPaymentEntity
         PersonalNoteEntity::class,
         RemoteQuoteEntity::class,
         ManualQuoteEntity::class,
+        ZakatYearEntity::class,
+        ZakatTrackingEntity::class,
     ],
-    version = 1,
+    version = 2,
     exportSchema = true,
 )
 @ConstructedBy(DaftarDatabaseConstructor::class)
@@ -59,6 +64,8 @@ abstract class DaftarDatabase : RoomDatabase() {
     abstract fun backupSnapshotDao(): BackupSnapshotDao
 
     abstract fun restoreWriteDao(): RestoreWriteDao
+
+    abstract fun zakatYearDao(): ZakatYearDao
 }
 
 /** Room generates the implementation for each platform. */
