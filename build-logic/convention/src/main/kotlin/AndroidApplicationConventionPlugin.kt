@@ -15,7 +15,8 @@ class AndroidApplicationConventionPlugin : Plugin<Project> {
         pluginManager.apply("org.jetbrains.kotlin.plugin.compose")
 
         extensions.configure<ApplicationExtension> {
-            compileSdk = libs.int("android-compileSdk")
+            // The SDK installs API 37 as `android-37.0`; naming the minor level lets Android Studio resolve it too.
+            compileSdk { version = release(libs.int("android-compileSdk")) { minorApiLevel = 0 } }
             defaultConfig {
                 minSdk = libs.int("android-minSdk")
                 targetSdk = libs.int("android-targetSdk")
