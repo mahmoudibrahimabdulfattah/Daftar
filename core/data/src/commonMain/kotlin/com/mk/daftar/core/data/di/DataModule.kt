@@ -11,6 +11,7 @@ import com.mk.daftar.core.data.repository.GoldRecordRepository
 import com.mk.daftar.core.data.repository.JournalRecordRepository
 import com.mk.daftar.core.data.repository.PriceRecordRepository
 import com.mk.daftar.core.data.repository.UserPreferencesRecordRepository
+import com.mk.daftar.core.data.repository.ZakatYearRecordRepository
 import com.mk.daftar.core.data.restore.GenerationRestoreEngine
 import com.mk.daftar.core.data.restore.RestorePreferences
 import com.mk.daftar.core.data.restore.RestorePreferencesInstaller
@@ -25,6 +26,7 @@ import com.mk.daftar.core.domain.repository.GoldRepository
 import com.mk.daftar.core.domain.repository.JournalRepository
 import com.mk.daftar.core.domain.repository.PriceRepository
 import com.mk.daftar.core.domain.repository.UserPreferencesRepository
+import com.mk.daftar.core.domain.repository.ZakatYearRepository
 import com.mk.daftar.core.domain.session.VaultSession
 import com.mk.daftar.core.network.FxNetworkDataSource
 import com.mk.daftar.core.network.GoldNetworkDataSource
@@ -61,6 +63,7 @@ val dataModule: Module = module {
     single<BankRepository> { BankRecordRepository(get<DaftarVaultSession>().host) }
     single<CashRepository> { CashRecordRepository(get<DaftarVaultSession>().host) }
     single<JournalRepository> { JournalRecordRepository(get<DaftarVaultSession>().host) }
+    single<ZakatYearRepository> { ZakatYearRecordRepository(get<DaftarVaultSession>().host) }
     single<PriceRepository> {
         PriceRecordRepository(
             host = get<DaftarVaultSession>().host,

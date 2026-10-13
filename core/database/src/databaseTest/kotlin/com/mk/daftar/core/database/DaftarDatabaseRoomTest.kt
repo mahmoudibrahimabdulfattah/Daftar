@@ -9,6 +9,7 @@ import com.mk.daftar.core.database.mapper.toEntity
 import com.mk.daftar.core.database.mapper.toRemoteEntity
 import com.mk.daftar.core.database.mapper.toStored
 import com.mk.daftar.core.database.schema.ValidationTriggersV1
+import com.mk.daftar.core.database.schema.ValidationTriggersV2
 import com.mk.daftar.core.domain.repository.ManualQuoteInput
 import com.mk.daftar.core.model.Bank
 import com.mk.daftar.core.model.BankAccount
@@ -291,7 +292,10 @@ class DaftarDatabaseRoomTest {
             ).forEach { name -> assertTrue(name in indexes, "missing index $name") }
 
             val triggers = connection.names("SELECT name FROM sqlite_master WHERE type = 'trigger'")
-            assertEquals(ValidationTriggersV1.triggerNames.toSet(), triggers.toSet())
+            assertEquals(
+                (ValidationTriggersV1.triggerNames + ValidationTriggersV2.triggerNames).toSet(),
+                triggers.toSet(),
+            )
         }
     }
 

@@ -132,7 +132,10 @@ data class CashBalance(
     }
 }
 
-/** A zakat payment made in Egyptian pounds. Notes and payments are never assets. */
+/**
+ * A zakat payment made in Egyptian pounds. Notes and payments are never assets. [forHijriYear] links the payment to a
+ * declared year; null means unassigned. A payment never changes the year's declaration.
+ */
 data class ZakatPayment(
     val id: ZakatPaymentId,
     val paidOn: LocalDate,
@@ -140,6 +143,7 @@ data class ZakatPayment(
     val note: String?,
     val createdAt: Instant,
     val updatedAt: Instant,
+    val forHijriYear: Int? = null,
 ) : JournalEntry {
     init {
         requireOrdered(createdAt, updatedAt)
@@ -147,6 +151,9 @@ data class ZakatPayment(
         require(amount.amount > Decimal.ZERO) { "zakat payment must be positive" }
         require(amount.amount.fractionDigits <= USER_FRACTION_DIGITS) { "zakat payment allows at most two decimals" }
         note?.let { requireTrimmed(it, "note") }
+        forHijriYear?.let {
+            require(it in HIJRI_MIN_YEAR..HIJRI_MAX_YEAR) { "linked Hijri year is outside the supported range" }
+        }
     }
 
     companion object {
@@ -157,7 +164,8 @@ data class ZakatPayment(
             note: String?,
             createdAt: Instant,
             updatedAt: Instant,
-        ): ZakatPayment = ZakatPayment(id, paidOn, amount, normalizeNote(note), createdAt, updatedAt)
+            forHijriYear: Int? = null,
+        ): ZakatPayment = ZakatPayment(id, paidOn, amount, normalizeNote(note), createdAt, updatedAt, forHijriYear)
     }
 }
 

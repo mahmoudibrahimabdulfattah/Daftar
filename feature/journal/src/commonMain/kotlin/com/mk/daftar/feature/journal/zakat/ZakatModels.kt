@@ -33,6 +33,12 @@ internal fun groupByYear(payments: List<ZakatPayment>): List<ZakatYear> =
         )
     }
 
+/**
+ * How a new payment was started: an amount from the calculator and a year chosen by the route. Both come from route
+ * arguments, which are dropped on lock; the amount is passed only while values are visible.
+ */
+data class ZakatEditorLaunch(val prefillAmount: String? = null, val initialYear: Int? = null)
+
 /** What the zakat editor opens for: a new payment, or one recorded payment by its ID. */
 sealed interface ZakatEditorTarget {
     data object New : ZakatEditorTarget
@@ -40,11 +46,19 @@ sealed interface ZakatEditorTarget {
     data class Existing(val paymentId: String) : ZakatEditorTarget
 }
 
-/** The text the user typed. Nothing here is a number until it is normalized. */
-data class ZakatDraft(val dateText: String = "", val amountText: String = "", val noteText: String = "")
+/**
+ * The text the user typed, plus the year the payment is linked to. Nothing here is a number until it is normalized.
+ * [forHijriYear] null means unassigned.
+ */
+data class ZakatDraft(
+    val dateText: String = "",
+    val amountText: String = "",
+    val noteText: String = "",
+    val forHijriYear: Int? = null,
+)
 
 /** A draft in its normalized meaning. Two drafts with the same meaning are equal, so dirtiness is a value comparison. */
-data class ZakatValues(val date: String, val amount: String, val note: String?)
+data class ZakatValues(val date: String, val amount: String, val note: String?, val forHijriYear: Int? = null)
 
 internal fun ZakatDraft.values(): ZakatValues = ZakatValues(
     date = parseIsoDate(dateText)?.isoText() ?: dateText.trim(),
@@ -53,6 +67,7 @@ internal fun ZakatDraft.values(): ZakatValues = ZakatValues(
         is Outcome.Failure -> amountText.trim()
     },
     note = noteText.trim().ifEmpty { null },
+    forHijriYear = forHijriYear,
 )
 
 /** The payment a draft describes, or null while its amount is not a valid payment. */
@@ -62,7 +77,7 @@ internal fun ZakatDraft.paymentAmount(): Decimal? {
     return amount.takeIf { EntryLimits.isValidPayment(it) }
 }
 
-internal fun ZakatValues.toDraft(): ZakatDraft = ZakatDraft(date, amount, note.orEmpty())
+internal fun ZakatValues.toDraft(): ZakatDraft = ZakatDraft(date, amount, note.orEmpty(), forHijriYear)
 
 enum class ZakatDateError { Required, Invalid, Future }
 
@@ -123,6 +138,9 @@ sealed interface ZakatEditorIntent : UiIntent {
 
     data class NoteChanged(val text: String) : ZakatEditorIntent
 
+    /** The payment's year; null is unassigned. Choosing a year never marks it paid. */
+    data class YearSelected(val hijriYear: Int?) : ZakatEditorIntent
+
     data object Save : ZakatEditorIntent
 
     data object DismissFailure : ZakatEditorIntent
@@ -154,6 +172,14 @@ data class ZakatEditorUiState(
     val today: LocalDate? = null,
     /** Errors appear only after the first save attempt, so intermediate typing such as `1.` is never flagged early. */
     val attempted: Boolean = false,
+    /** The years the picker offers, newest first: every declared year, and the linked year when it is not declared. */
+    val yearChoices: List<ZakatYearSummary> = emptyList(),
+    /** False until the year default is known. Saving waits for it, so a payment is never saved with a guessed year. */
+    val yearReady: Boolean = true,
+    /** The user picked the year, so a later tracking read must not replace it. */
+    val yearTouched: Boolean = false,
+    /** The amount came from the calculator and is an editable draft, not a saved payment. */
+    val prefilled: Boolean = false,
     val conflict: Boolean = false,
     val busy: JournalBusy? = null,
     val failure: JournalFailure? = null,

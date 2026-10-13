@@ -7,8 +7,10 @@ import com.mk.daftar.core.backup.BackupSnapshotSource
 import com.mk.daftar.core.common.Outcome
 import com.mk.daftar.core.data.session.VaultHost
 import com.mk.daftar.core.database.dao.BackupRows
+import com.mk.daftar.core.database.mapper.toModel
 import com.mk.daftar.core.database.mapper.toRecord
 import com.mk.daftar.core.database.mapper.toStored
+import com.mk.daftar.core.database.mapper.trackingStartYear
 import com.mk.daftar.core.domain.repository.PreferencesRead
 import com.mk.daftar.core.domain.repository.UserPreferences
 import com.mk.daftar.core.domain.repository.UserPreferencesRepository
@@ -61,4 +63,6 @@ internal fun BackupRows.toSnapshot(settings: UserPreferences): BackupSnapshot = 
     personalNotes = personalNotes.map { it.toStored().value },
     remoteQuotes = remoteQuotes.map { it.toRecord() },
     manualQuotes = manualQuotes.map { it.toStored().value },
+    zakatYears = zakatYears.map { it.toModel() },
+    zakatTrackingStartYear = zakatTracking.trackingStartYear(),
 )

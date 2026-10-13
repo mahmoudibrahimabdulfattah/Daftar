@@ -105,10 +105,16 @@ import com.mk.daftar.feature.home.resources.home_total_previous
 import com.mk.daftar.feature.home.resources.home_unavailable
 import com.mk.daftar.feature.home.resources.home_unit_egp
 import com.mk.daftar.feature.home.resources.home_unit_short
+import com.mk.daftar.feature.home.resources.home_zakat_prepare
+import com.mk.daftar.feature.home.resources.home_zakat_review
+import com.mk.daftar.feature.home.resources.zakat_due_count
+import com.mk.daftar.feature.home.resources.zakat_reminder
+import com.mk.daftar.feature.home.resources.zakat_year_label
 import kotlin.time.Instant
 import kotlinx.datetime.TimeZone
 import kotlinx.datetime.toLocalDateTime
 import org.jetbrains.compose.resources.StringResource
+import org.jetbrains.compose.resources.pluralStringResource
 import org.jetbrains.compose.resources.stringResource
 import org.koin.compose.viewmodel.koinViewModel
 
@@ -213,6 +219,7 @@ private fun ReadyBody(figures: HomeFigures, state: HomeUiState, onIntent: (HomeI
         Total(figures = figures, hidden = state.valuesHidden, refreshing = state.refreshing)
         Categories(figures = figures, hidden = state.valuesHidden, onIntent = onIntent)
     }
+    ZakatSection(due = state.zakatDue, onIntent = onIntent)
     QuoteSection(
         quotes = figures.quotes,
         refreshing = state.refreshing,
@@ -520,3 +527,32 @@ private val MONTHS: List<StringResource> = listOf(
     Res.string.home_month_11,
     Res.string.home_month_12,
 )
+
+/**
+ * The zakat entry. Normally a neutral row to the calculator. When years await confirmation, a warning reminder and a review
+ * row replace it: one year opens its declaration, several open the yearly status. No amount appears here.
+ */
+@Composable
+private fun ZakatSection(due: List<ZakatDueYear>, onIntent: (HomeIntent) -> Unit) {
+    if (due.isEmpty()) {
+        DaftarLedgerRow(
+            title = stringResource(Res.string.home_zakat_prepare),
+            icon = DaftarIcons.Heart,
+            onClick = { onIntent(HomeIntent.OpenZakatCalculator) },
+        )
+        return
+    }
+    DaftarNotePanel(tone = DaftarNoteTone.Warning, icon = DaftarIcons.Clock) {
+        Text(stringResource(Res.string.zakat_reminder))
+    }
+    DaftarLedgerRow(
+        title = stringResource(Res.string.home_zakat_review),
+        subtitle = if (due.size == 1) {
+            stringResource(Res.string.zakat_year_label, due.single().hijriYear, due.single().gregorianYear)
+        } else {
+            pluralStringResource(Res.plurals.zakat_due_count, due.size, due.size)
+        },
+        icon = DaftarIcons.Heart,
+        onClick = { onIntent(HomeIntent.OpenZakatReview) },
+    )
+}

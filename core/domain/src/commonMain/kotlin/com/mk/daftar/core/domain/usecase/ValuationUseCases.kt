@@ -24,7 +24,10 @@ class ObserveSelectedQuotesUseCase(
     private val clock: Clock,
 ) {
     operator fun invoke(): Flow<VaultRead<SelectedQuotes>> = observeInSession(session) { generation ->
-        combine(prices.observeQuotes(), clockTicks(clock)) { read, now ->
+        combine(prices.observeQuotes(), clockTicks(clock)) { read, _ ->
+            // The tick only re-evaluates ages. The instant is read now, so a quote fetched since the last tick is never
+            // judged to be in the future.
+            val now = clock.now()
             when (read) {
                 is VaultRead.Failed -> read
 
@@ -78,7 +81,8 @@ class ObservePortfolioValuationUseCase(
             cash.observeAll(),
             prices.observeQuotes(),
             clockTicks(clock),
-        ) { goldRead, accountRead, cashRead, quoteRead, now ->
+        ) { goldRead, accountRead, cashRead, quoteRead, _ ->
+            val now = clock.now()
             val failure = listOf(goldRead, accountRead, cashRead, quoteRead)
                 .filterIsInstance<VaultRead.Failed>()
                 .firstOrNull()

@@ -13,6 +13,8 @@ import com.mk.daftar.core.database.entity.ManualQuoteEntity
 import com.mk.daftar.core.database.entity.PersonalNoteEntity
 import com.mk.daftar.core.database.entity.RemoteQuoteEntity
 import com.mk.daftar.core.database.entity.ZakatPaymentEntity
+import com.mk.daftar.core.database.entity.ZakatTrackingEntity
+import com.mk.daftar.core.database.entity.ZakatYearEntity
 
 /** Every row of a restored vault, in the order the foreign keys need: banks before their accounts. */
 data class RestoreRows(
@@ -24,6 +26,8 @@ data class RestoreRows(
     val personalNotes: List<PersonalNoteEntity>,
     val remoteQuotes: List<RemoteQuoteEntity>,
     val manualQuotes: List<ManualQuoteEntity>,
+    val zakatYears: List<ZakatYearEntity>,
+    val zakatTracking: ZakatTrackingEntity?,
 )
 
 /** The number of rows in each table. Used to confirm a staged vault before it can be committed. */
@@ -36,6 +40,8 @@ data class RestoreCounts(
     val personalNotes: Int,
     val remoteQuotes: Int,
     val manualQuotes: Int,
+    val zakatYears: Int,
+    val zakatTracking: Int,
 )
 
 /**
@@ -55,6 +61,8 @@ abstract class RestoreWriteDao {
         rows.personalNotes.forEach { insertPersonalNote(it) }
         rows.remoteQuotes.forEach { insertRemoteQuote(it) }
         rows.manualQuotes.forEach { insertManualQuote(it) }
+        rows.zakatYears.forEach { insertZakatYear(it) }
+        rows.zakatTracking?.let { insertZakatTracking(it) }
     }
 
     @Query(
@@ -66,7 +74,9 @@ abstract class RestoreWriteDao {
             "(SELECT COUNT(*) FROM zakat_payments) AS zakatPayments, " +
             "(SELECT COUNT(*) FROM personal_notes) AS personalNotes, " +
             "(SELECT COUNT(*) FROM remote_quotes) AS remoteQuotes, " +
-            "(SELECT COUNT(*) FROM manual_quotes) AS manualQuotes",
+            "(SELECT COUNT(*) FROM manual_quotes) AS manualQuotes, " +
+            "(SELECT COUNT(*) FROM zakat_years) AS zakatYears, " +
+            "(SELECT COUNT(*) FROM zakat_tracking) AS zakatTracking",
     )
     abstract suspend fun counts(): RestoreCounts
 
@@ -93,4 +103,10 @@ abstract class RestoreWriteDao {
 
     @Insert(onConflict = OnConflictStrategy.ABORT)
     protected abstract suspend fun insertManualQuote(entity: ManualQuoteEntity): Long
+
+    @Insert(onConflict = OnConflictStrategy.ABORT)
+    protected abstract suspend fun insertZakatYear(entity: ZakatYearEntity): Long
+
+    @Insert(onConflict = OnConflictStrategy.ABORT)
+    protected abstract suspend fun insertZakatTracking(entity: ZakatTrackingEntity): Long
 }

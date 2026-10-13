@@ -7,7 +7,7 @@ import androidx.room.Index
 import androidx.room.PrimaryKey
 
 /*
- * Schema version 1 tables. Every column is NOT NULL unless it is nullable below. Instants are stored as seconds and
+ * Schema version 1 tables, plus the version 2 annual declarations and the payment year link (ZakatYearEntity, ZakatTrackingEntity). Every column is NOT NULL unless it is nullable below. Instants are stored as seconds and
  * nanoseconds, enums by name, decimals as canonical text, and dates as ISO text. Room annotations carry the keys and
  * indexes; enum membership, timestamp ordering, revisions and numeric text are enforced by the validation triggers.
  */
@@ -102,6 +102,7 @@ data class ZakatPaymentEntity(
     @ColumnInfo(name = "amount") val amount: String,
     @ColumnInfo(name = "currency") val currency: String,
     @ColumnInfo(name = "note") val note: String?,
+    @ColumnInfo(name = "for_hijri_year") val forHijriYear: Int? = null,
 )
 
 @Entity(
@@ -117,4 +118,25 @@ data class PersonalNoteEntity(
     @ColumnInfo(name = "revision") val revision: Long,
     @ColumnInfo(name = "title") val title: String,
     @ColumnInfo(name = "body") val body: String,
+)
+
+/*
+ * Schema version 2. One row per Hijri year of Ramadan. [paid] is the declaration; [markedSeconds] and [markedNanos] are
+ * both set exactly when it is paid. [overrideDays] is -1, 0 or +1; [userAdjusted] is true exactly when it is not 0.
+ */
+@Entity(tableName = "zakat_years")
+data class ZakatYearEntity(
+    @PrimaryKey @ColumnInfo(name = "hijri_year") val hijriYear: Int,
+    @ColumnInfo(name = "paid") val paid: Boolean,
+    @ColumnInfo(name = "marked_seconds") val markedSeconds: Long?,
+    @ColumnInfo(name = "marked_nanos") val markedNanos: Int?,
+    @ColumnInfo(name = "override_days") val overrideDays: Int,
+    @ColumnInfo(name = "user_adjusted") val userAdjusted: Boolean,
+)
+
+/** The single tracking row. Its [id] is always 1, enforced by a validation trigger. */
+@Entity(tableName = "zakat_tracking")
+data class ZakatTrackingEntity(
+    @PrimaryKey @ColumnInfo(name = "id") val id: Int,
+    @ColumnInfo(name = "tracking_start_year") val trackingStartYear: Int,
 )

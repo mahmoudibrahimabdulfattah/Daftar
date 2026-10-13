@@ -30,6 +30,7 @@ import kotlin.test.assertIs
 import kotlin.test.assertTrue
 import kotlin.time.Duration.Companion.hours
 import kotlin.time.Duration.Companion.minutes
+import kotlin.time.Duration.Companion.seconds
 import kotlin.time.Instant
 import kotlinx.coroutines.ExperimentalCoroutinesApi
 import kotlinx.coroutines.flow.Flow
@@ -265,6 +266,23 @@ class ValuationFlowTest {
 
         val value = readyOf(values.last()).value
         assertTrue(value.warnings.any { it.warning == QuoteWarning.STALE })
+    }
+
+    @Test
+    fun aQuoteFetchedBetweenTicksIsFreshNotAheadOfTheClock() = runTest {
+        val h = Harness(NOW)
+        h.readyAll(generation = 1)
+        val portfolio = collect(h.portfolio())
+        val selected = collect(h.selectedQuotes())
+        runCurrent()
+
+        // A refresh lands 30 seconds after the last tick, before the next one.
+        h.clock.instant = NOW + 30.seconds
+        h.prices.quotes.value = VaultRead.Ready(1, designQuotes(NOW + 30.seconds))
+        runCurrent()
+
+        assertFalse(readyOf(portfolio.last()).value.warnings.any { it.warning == QuoteWarning.CLOCK_UNCERTAIN })
+        assertEquals(QuoteFreshness.FRESH, readyOf(selected.last()).value[USD_EGP]!!.freshness)
     }
 
     @Test

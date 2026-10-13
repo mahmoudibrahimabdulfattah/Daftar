@@ -25,7 +25,12 @@ data class HomeUiState(
     val valuesHidden: Boolean = false,
     val refreshing: Boolean = false,
     val refreshFailed: Boolean = false,
+    /** The declared years awaiting confirmation, oldest first. Empty when none is due or tracking is not read. */
+    val zakatDue: List<ZakatDueYear> = emptyList(),
 ) : UiState
+
+/** A year awaiting confirmation: its Hijri key and the Gregorian year of its Ramadan. Never an amount. */
+data class ZakatDueYear(val hijriYear: Int, val gregorianYear: Int)
 
 sealed interface HomeIntent : UiIntent {
     data object ToggleValues : HomeIntent
@@ -38,6 +43,12 @@ sealed interface HomeIntent : UiIntent {
 
     /** The empty state's action: Assets, where the first record is added. */
     data object AddFirstAsset : HomeIntent
+
+    /** The neutral zakat entry: the calculator. */
+    data object OpenZakatCalculator : HomeIntent
+
+    /** The reminder's action: one due year, or the yearly status when several are due. */
+    data object OpenZakatReview : HomeIntent
 }
 
 sealed interface HomeEffect : UiEffect {

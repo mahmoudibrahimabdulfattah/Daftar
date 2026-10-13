@@ -157,6 +157,7 @@ fun ZakatPaymentEntity.toStored(): Stored<ZakatPayment> {
             note = note,
             createdAt = instantOf(ZAKAT, "created", createdSeconds, createdNanos),
             updatedAt = instantOf(ZAKAT, "updated", updatedSeconds, updatedNanos),
+            forHijriYear = forHijriYear,
         )
     }
     return Stored(payment, checkRevision(ZAKAT, revision))
@@ -173,6 +174,7 @@ fun ZakatPayment.toEntity(revision: Long): ZakatPaymentEntity = ZakatPaymentEnti
     amount = amount.amount.toPlainString(),
     currency = amount.currency.name,
     note = note,
+    forHijriYear = forHijriYear,
 )
 
 fun PersonalNoteEntity.toStored(): Stored<PersonalNote> {

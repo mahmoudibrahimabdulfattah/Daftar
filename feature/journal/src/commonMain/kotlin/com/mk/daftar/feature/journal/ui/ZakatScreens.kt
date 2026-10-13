@@ -30,6 +30,7 @@ import com.mk.daftar.core.designsystem.component.DaftarNotePanel
 import com.mk.daftar.core.designsystem.component.DaftarNoteTone
 import com.mk.daftar.core.designsystem.component.DaftarResultState
 import com.mk.daftar.core.designsystem.component.DaftarResultTone
+import com.mk.daftar.core.designsystem.component.DaftarSelectField
 import com.mk.daftar.core.designsystem.component.DaftarSkeleton
 import com.mk.daftar.core.designsystem.component.DaftarSkeletonSize
 import com.mk.daftar.core.designsystem.component.DaftarTextArea
@@ -46,6 +47,8 @@ import com.mk.daftar.core.designsystem.theme.DaftarSpacing
 import com.mk.daftar.core.designsystem.theme.DaftarTheme
 import com.mk.daftar.core.navigation.LeaveRequest
 import com.mk.daftar.core.navigation.LocalNavigator
+import com.mk.daftar.core.navigation.Navigator
+import com.mk.daftar.core.navigation.ZakatYearRoute
 import com.mk.daftar.core.ui.mvi.CollectEffects
 import com.mk.daftar.core.ui.presentation.moneyText
 import com.mk.daftar.core.ui.shell.ShellScreen
@@ -71,6 +74,7 @@ import com.mk.daftar.feature.journal.resources.journal_missing_message
 import com.mk.daftar.feature.journal.resources.journal_missing_title
 import com.mk.daftar.feature.journal.resources.journal_months
 import com.mk.daftar.feature.journal.resources.journal_reload
+import com.mk.daftar.feature.journal.resources.journal_unit_short
 import com.mk.daftar.feature.journal.resources.zakat_add
 import com.mk.daftar.feature.journal.resources.zakat_add_title
 import com.mk.daftar.feature.journal.resources.zakat_amount
@@ -86,18 +90,23 @@ import com.mk.daftar.feature.journal.resources.zakat_error_date_future
 import com.mk.daftar.feature.journal.resources.zakat_error_date_invalid
 import com.mk.daftar.feature.journal.resources.zakat_error_date_required
 import com.mk.daftar.feature.journal.resources.zakat_error_note_long
+import com.mk.daftar.feature.journal.resources.zakat_for_year
 import com.mk.daftar.feature.journal.resources.zakat_heading
 import com.mk.daftar.feature.journal.resources.zakat_note
-import com.mk.daftar.feature.journal.resources.zakat_notice
+import com.mk.daftar.feature.journal.resources.zakat_payment_help
+import com.mk.daftar.feature.journal.resources.zakat_prefill_help
 import com.mk.daftar.feature.journal.resources.zakat_record
 import com.mk.daftar.feature.journal.resources.zakat_recording_only
 import com.mk.daftar.feature.journal.resources.zakat_save
 import com.mk.daftar.feature.journal.resources.zakat_title
+import com.mk.daftar.feature.journal.resources.zakat_unassigned
+import com.mk.daftar.feature.journal.resources.zakat_year_label
 import com.mk.daftar.feature.journal.resources.zakat_year_recorded
 import com.mk.daftar.feature.journal.zakat.ZakatAmountError
 import com.mk.daftar.feature.journal.zakat.ZakatConfirmation
 import com.mk.daftar.feature.journal.zakat.ZakatDateError
 import com.mk.daftar.feature.journal.zakat.ZakatEditorIntent
+import com.mk.daftar.feature.journal.zakat.ZakatEditorLaunch
 import com.mk.daftar.feature.journal.zakat.ZakatEditorTarget
 import com.mk.daftar.feature.journal.zakat.ZakatEditorUiState
 import com.mk.daftar.feature.journal.zakat.ZakatEditorViewModel
@@ -107,14 +116,16 @@ import com.mk.daftar.feature.journal.zakat.ZakatListUiState
 import com.mk.daftar.feature.journal.zakat.ZakatListViewModel
 import com.mk.daftar.feature.journal.zakat.ZakatNoteError
 import com.mk.daftar.feature.journal.zakat.ZakatYear
+import com.mk.daftar.feature.journal.zakat.unrecordedSummary
 import org.jetbrains.compose.resources.StringResource
 import org.jetbrains.compose.resources.stringArrayResource
 import org.jetbrains.compose.resources.stringResource
 import org.koin.compose.viewmodel.koinViewModel
 import org.koin.core.parameter.parametersOf
 
-/** The currency unit shown beside every zakat amount. */
-internal const val EGP_UNIT: String = "EGP"
+/** The currency unit beside every zakat amount: the short unit Home uses, EGP or ج.م. */
+@Composable
+internal fun egpUnit(): String = stringResource(Res.string.journal_unit_short)
 
 /** The zakat log: payments grouped by calendar year, each year with its exact EGP total. */
 @Composable
@@ -206,7 +217,7 @@ fun ZakatListContent(
                                 value = {
                                     DaftarAmount(
                                         amount = if (state.hidden) null else (payment.amount).moneyText(),
-                                        unit = EGP_UNIT,
+                                        unit = egpUnit(),
                                         masked = state.hidden,
                                         maskedDescription = hiddenText,
                                         style = typography.ledgerValue,
@@ -241,7 +252,7 @@ private fun ZakatYearSummary(year: ZakatYear, hidden: Boolean, hiddenText: Strin
         )
         DaftarAmount(
             amount = if (hidden) null else (year.total).moneyText(),
-            unit = EGP_UNIT,
+            unit = egpUnit(),
             masked = hidden,
             maskedDescription = hiddenText,
             style = DaftarTheme.typography.heroAmount,
@@ -252,15 +263,19 @@ private fun ZakatYearSummary(year: ZakatYear, hidden: Boolean, hiddenText: Strin
 
 /** The zakat editor: opened for a new payment or for one recorded payment. It leaves only through a confirmed path. */
 @Composable
-fun ZakatEditorScreen(target: ZakatEditorTarget, modifier: Modifier = Modifier) {
+fun ZakatEditorScreen(
+    target: ZakatEditorTarget,
+    modifier: Modifier = Modifier,
+    launch: ZakatEditorLaunch = ZakatEditorLaunch(),
+) {
     val navigator = LocalNavigator.current
     val viewModel: ZakatEditorViewModel = koinViewModel(
-        key = "zakat-editor-$target",
-        parameters = { parametersOf(target) },
+        key = "zakat-editor-$target-$launch",
+        parameters = { parametersOf(target, launch) },
     )
     val state by viewModel.state.collectAsStateWithLifecycle()
     CollectEffects(viewModel.effects) { effect ->
-        if (effect == JournalEffect.Completed) navigator.goBack()
+        if (effect == JournalEffect.Completed) returnAfterSave(navigator, state.draft.forHijriYear)
     }
     // The shell asks before it leaves: a back action, a gesture or a tab change. Only unsaved edits make it ask.
     DisposableEffect(viewModel, navigator) {
@@ -281,6 +296,19 @@ fun ZakatEditorScreen(target: ZakatEditorTarget, modifier: Modifier = Modifier) 
 }
 
 /**
+ * After a confirmed write the editor closes. A payment linked to a year returns to that year, so its declaration is at hand;
+ * an unassigned payment simply goes back.
+ */
+private fun returnAfterSave(navigator: Navigator, hijriYear: Int?) {
+    if (hijriYear == null) {
+        navigator.goBack()
+    } else if (!navigator.returnTo { it == ZakatYearRoute(hijriYear) }) {
+        navigator.goBack()
+        navigator.goTo(ZakatYearRoute(hijriYear))
+    }
+}
+
+/**
  * The zakat editor as it is drawn. A concealed form shows no field and no keyboard. Save sits in the footer, above the
  * keyboard, because the shell applies the IME inset to the whole screen.
  */
@@ -294,6 +322,7 @@ fun ZakatEditorContent(
     val focusManager = LocalFocusManager.current
     val keyboard = LocalSoftwareKeyboardController.current
     var pickingDate by remember { mutableStateOf(false) }
+    var pickingYear by remember { mutableStateOf(false) }
     LaunchedEffect(state.concealed) {
         if (state.concealed) {
             focusManager.clearFocus()
@@ -351,6 +380,7 @@ fun ZakatEditorContent(
                             editable = editable,
                             onIntent = onIntent,
                             onPickDate = { pickingDate = true },
+                            onPickYear = { pickingYear = true },
                         )
                     }
                 }
@@ -410,6 +440,17 @@ fun ZakatEditorContent(
 
         null -> Unit
     }
+    if (pickingYear) {
+        ZakatYearPickerDialog(
+            choices = state.yearChoices,
+            selected = state.draft.forHijriYear,
+            onSelect = { year ->
+                onIntent(ZakatEditorIntent.YearSelected(year))
+                pickingYear = false
+            },
+            onDismiss = { pickingYear = false },
+        )
+    }
     val today = state.today
     if (pickingDate && today != null) {
         JournalDatePicker(
@@ -430,6 +471,7 @@ private fun ZakatForm(
     editable: Boolean,
     onIntent: (ZakatEditorIntent) -> Unit,
     onPickDate: () -> Unit,
+    onPickYear: () -> Unit,
 ) {
     val errors = state.errors
     val reveal = state.attempted
@@ -482,9 +524,19 @@ private fun ZakatForm(
         value = state.draft.amountText,
         onValueChange = { onIntent(ZakatEditorIntent.AmountChanged(it)) },
         kind = DaftarFieldKind.Decimal,
-        helper = if (reveal) amountHelper(errors)?.let { stringResource(it) } else null,
+        helper = when {
+            reveal && errors.amount != null -> amountHelper(errors)?.let { stringResource(it) }
+            state.prefilled -> stringResource(Res.string.zakat_prefill_help)
+            else -> null
+        },
         invalid = reveal && errors.amount != null,
         enabled = editable,
+    )
+    DaftarSelectField(
+        label = stringResource(Res.string.zakat_for_year),
+        selectedText = yearSelectionText(state),
+        onClick = onPickYear,
+        enabled = editable && state.yearReady,
     )
     DaftarTextArea(
         label = stringResource(Res.string.zakat_note),
@@ -495,7 +547,7 @@ private fun ZakatForm(
         enabled = editable,
     )
     DaftarNotePanel(tone = DaftarNoteTone.Context) {
-        Text(stringResource(Res.string.zakat_notice))
+        Text(stringResource(Res.string.zakat_payment_help))
     }
     if (!state.isNew) {
         DaftarTextButton(
@@ -519,4 +571,13 @@ private fun amountHelper(errors: ZakatErrors): StringResource? = when (errors.am
     null -> null
     ZakatAmountError.Required -> Res.string.zakat_error_amount_required
     ZakatAmountError.Invalid -> Res.string.zakat_error_amount_invalid
+}
+
+/** The picker's text: the chosen year's label, or Unassigned. Empty while the default is still being read. */
+@Composable
+private fun yearSelectionText(state: ZakatEditorUiState): String? {
+    val year =
+        state.draft.forHijriYear ?: return if (state.yearReady) stringResource(Res.string.zakat_unassigned) else null
+    val summary = state.yearChoices.firstOrNull { it.hijriYear == year } ?: unrecordedSummary(year)
+    return stringResource(Res.string.zakat_year_label, summary.hijriYear, summary.gregorianYear)
 }

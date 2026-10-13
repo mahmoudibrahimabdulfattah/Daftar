@@ -3,6 +3,7 @@ package com.mk.daftar.di
 import com.mk.daftar.core.domain.repository.JournalRepository
 import com.mk.daftar.core.domain.repository.NoteRepository
 import com.mk.daftar.core.domain.repository.ZakatRepository
+import com.mk.daftar.core.domain.usecase.AddZakatYearUseCase
 import com.mk.daftar.core.domain.usecase.CreateBankAccountUseCase
 import com.mk.daftar.core.domain.usecase.CreateBankUseCase
 import com.mk.daftar.core.domain.usecase.CreateCashBalanceUseCase
@@ -16,6 +17,7 @@ import com.mk.daftar.core.domain.usecase.DeleteGoldHoldingUseCase
 import com.mk.daftar.core.domain.usecase.DeleteManualQuoteUseCase
 import com.mk.daftar.core.domain.usecase.DeletePersonalNoteUseCase
 import com.mk.daftar.core.domain.usecase.DeleteZakatPaymentUseCase
+import com.mk.daftar.core.domain.usecase.EnsureZakatTrackingUseCase
 import com.mk.daftar.core.domain.usecase.ObserveBankAccountUseCase
 import com.mk.daftar.core.domain.usecase.ObserveBankAccountsUseCase
 import com.mk.daftar.core.domain.usecase.ObserveBankDetailUseCase
@@ -31,14 +33,19 @@ import com.mk.daftar.core.domain.usecase.ObservePortfolioValuationUseCase
 import com.mk.daftar.core.domain.usecase.ObservePreferencesUseCase
 import com.mk.daftar.core.domain.usecase.ObserveQuoteSnapshotUseCase
 import com.mk.daftar.core.domain.usecase.ObserveSelectedQuotesUseCase
+import com.mk.daftar.core.domain.usecase.ObserveZakatDayUseCase
+import com.mk.daftar.core.domain.usecase.ObserveZakatEstimateUseCase
 import com.mk.daftar.core.domain.usecase.ObserveZakatPaymentUseCase
 import com.mk.daftar.core.domain.usecase.ObserveZakatPaymentsUseCase
+import com.mk.daftar.core.domain.usecase.ObserveZakatTrackingUseCase
 import com.mk.daftar.core.domain.usecase.RefreshPricesUseCase
 import com.mk.daftar.core.domain.usecase.RemoveOverrideUseCase
 import com.mk.daftar.core.domain.usecase.SetInactivityTimeoutUseCase
 import com.mk.daftar.core.domain.usecase.SetLanguageUseCase
 import com.mk.daftar.core.domain.usecase.SetManualQuoteUseCase
 import com.mk.daftar.core.domain.usecase.SetThemeModeUseCase
+import com.mk.daftar.core.domain.usecase.SetZakatDateAdjustmentUseCase
+import com.mk.daftar.core.domain.usecase.SetZakatYearPaidUseCase
 import com.mk.daftar.core.domain.usecase.UpdateBankAccountUseCase
 import com.mk.daftar.core.domain.usecase.UpdateBankUseCase
 import com.mk.daftar.core.domain.usecase.UpdateCashBalanceUseCase
@@ -90,6 +97,13 @@ val domainModule = module {
     factoryOf(::ObserveSelectedQuotesUseCase)
     factoryOf(::ObserveQuoteSnapshotUseCase)
     factoryOf(::ObservePortfolioValuationUseCase)
+    factoryOf(::ObserveZakatEstimateUseCase)
+    factoryOf(::ObserveZakatTrackingUseCase)
+    factoryOf(::ObserveZakatDayUseCase)
+    factoryOf(::EnsureZakatTrackingUseCase)
+    factoryOf(::SetZakatYearPaidUseCase)
+    factoryOf(::SetZakatDateAdjustmentUseCase)
+    factoryOf(::AddZakatYearUseCase)
     factoryOf(::ObservePreferencesUseCase)
     factoryOf(::SetThemeModeUseCase)
     factoryOf(::SetLanguageUseCase)

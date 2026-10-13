@@ -87,9 +87,32 @@ data object PricesRoute : NavKey
 @Serializable
 data object ZakatRoute : NavKey
 
-/** A new zakat payment. */
+/**
+ * A new zakat payment. [prefillAmount] is an editable draft from the calculator, passed only while values are visible
+ * and dropped with every other route on lock. [forHijriYear] preselects the year; null lets the editor choose.
+ */
 @Serializable
-data object ZakatAddRoute : NavKey
+data class ZakatAddRoute(val prefillAmount: String? = null, val forHijriYear: Int? = null) : NavKey
+
+/** The zakat calculator: the next Ramadan and today's planning estimate. Reached from Journal and Home. */
+@Serializable
+data object ZakatCalculatorRoute : NavKey
+
+/** Yearly status: every tracked year with its declaration. Reached when several years await confirmation. */
+@Serializable
+data object ZakatHistoryRoute : NavKey
+
+/** One declared year, keyed by its Hijri year of Ramadan: its declaration, payments and date. */
+@Serializable
+data class ZakatYearRoute(val hijriYear: Int) : NavKey
+
+/** Adds a past or advance year to tracking, by its Hijri year. */
+@Serializable
+data object ZakatYearAddRoute : NavKey
+
+/** The Ramadan date of one declared year, with its -1, 0 or +1 day adjustment. */
+@Serializable
+data class ZakatDateRoute(val hijriYear: Int) : NavKey
 
 /** One recorded zakat payment, edited or deleted. */
 @Serializable

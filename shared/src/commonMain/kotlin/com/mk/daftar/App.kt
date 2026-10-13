@@ -46,6 +46,7 @@ import com.mk.daftar.core.domain.session.VaultSession
 import com.mk.daftar.gate.VaultGate
 import com.mk.daftar.lifecycle.InactivityMonitor
 import com.mk.daftar.platform.applyAppLanguage
+import com.mk.daftar.refresh.ZakatTrackingRefresh
 import com.mk.daftar.shared.resources.Res
 import com.mk.daftar.shared.resources.app_name
 import com.mk.daftar.shell.ShellStateOwner
@@ -74,6 +75,8 @@ fun App(
     LaunchedEffect(inactivity) { inactivity.start() }
     val refresh: PriceRefreshController = koinInject()
     LaunchedEffect(refresh) { refresh.start() }
+    val zakatTracking: ZakatTrackingRefresh = koinInject()
+    LaunchedEffect(zakatTracking) { zakatTracking.start() }
     val preferences = rememberUserPreferences()
     val mode = preferences?.themeMode ?: ThemeMode.SYSTEM
     val dark = when (mode) {

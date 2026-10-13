@@ -36,15 +36,17 @@ import com.mk.daftar.feature.journal.resources.journal_heading
 import com.mk.daftar.feature.journal.resources.journal_ledger
 import com.mk.daftar.feature.journal.resources.journal_load_failed_message
 import com.mk.daftar.feature.journal.resources.journal_load_failed_title
-import com.mk.daftar.feature.journal.resources.journal_months
 import com.mk.daftar.feature.journal.resources.journal_notes
 import com.mk.daftar.feature.journal.resources.journal_notes_count
 import com.mk.daftar.feature.journal.resources.journal_title
-import com.mk.daftar.feature.journal.resources.journal_zakat
-import com.mk.daftar.feature.journal.resources.journal_zakat_last
-import com.mk.daftar.feature.journal.resources.journal_zakat_none
+import com.mk.daftar.feature.journal.resources.journal_zakat_calculator
+import com.mk.daftar.feature.journal.resources.journal_zakat_calculator_help
+import com.mk.daftar.feature.journal.resources.journal_zakat_review
+import com.mk.daftar.feature.journal.resources.zakat_due_count
+import com.mk.daftar.feature.journal.resources.zakat_reminder
+import com.mk.daftar.feature.journal.resources.zakat_year_label
+import com.mk.daftar.feature.journal.zakat.ZakatYearSummary
 import org.jetbrains.compose.resources.pluralStringResource
-import org.jetbrains.compose.resources.stringArrayResource
 import org.jetbrains.compose.resources.stringResource
 import org.koin.compose.viewmodel.koinViewModel
 
@@ -65,7 +67,6 @@ fun JournalScreen(modifier: Modifier = Modifier) {
 fun JournalContent(state: JournalUiState, onIntent: (JournalIntent) -> Unit, modifier: Modifier = Modifier) {
     val colors = DaftarTheme.colors
     val typography = DaftarTheme.typography
-    val months = stringArrayResource(Res.array.journal_months)
     ShellScreen(modifier = modifier) {
         Column(
             modifier = Modifier
@@ -95,16 +96,22 @@ fun JournalContent(state: JournalUiState, onIntent: (JournalIntent) -> Unit, mod
                 }
 
                 JournalPhase.Ready, JournalPhase.Empty, JournalPhase.Missing -> {
-                    val lastPayment = state.lastPaymentOn
+                    if (state.dueYears.isNotEmpty()) {
+                        DaftarNotePanel(tone = DaftarNoteTone.Warning, icon = DaftarIcons.Clock) {
+                            Text(stringResource(Res.string.zakat_reminder))
+                        }
+                        DaftarLedgerRow(
+                            title = stringResource(Res.string.journal_zakat_review),
+                            subtitle = reviewSubtitle(state.dueYears),
+                            icon = DaftarIcons.Heart,
+                            onClick = { onIntent(JournalIntent.OpenReview) },
+                        )
+                    }
                     DaftarLedgerRow(
-                        title = stringResource(Res.string.journal_zakat),
-                        subtitle = if (lastPayment != null) {
-                            stringResource(Res.string.journal_zakat_last, journalDateText(lastPayment, months))
-                        } else {
-                            stringResource(Res.string.journal_zakat_none)
-                        },
+                        title = stringResource(Res.string.journal_zakat_calculator),
+                        subtitle = stringResource(Res.string.journal_zakat_calculator_help),
                         icon = DaftarIcons.Heart,
-                        onClick = { onIntent(JournalIntent.OpenZakat) },
+                        onClick = { onIntent(JournalIntent.OpenCalculator) },
                     )
                     DaftarLedgerRow(
                         title = stringResource(Res.string.journal_notes),
@@ -123,4 +130,16 @@ fun JournalContent(state: JournalUiState, onIntent: (JournalIntent) -> Unit, mod
             }
         }
     }
+}
+
+/**
+ * The review row's subtitle: the year's label when one year awaits confirmation, its count when several do. The count
+ * is never shown with an amount, and no English suffix is concatenated.
+ */
+@Composable
+private fun reviewSubtitle(due: List<ZakatYearSummary>): String = if (due.size == 1) {
+    val year = due.single()
+    stringResource(Res.string.zakat_year_label, year.hijriYear, year.gregorianYear)
+} else {
+    pluralStringResource(Res.plurals.zakat_due_count, due.size, due.size)
 }

@@ -19,6 +19,7 @@ import com.mk.daftar.gate.VaultSettingsSecurityGateway
 import com.mk.daftar.lifecycle.InactivityMonitor
 import com.mk.daftar.lifecycle.VaultLifecycleCoordinator
 import com.mk.daftar.refresh.SessionPriceRefresh
+import com.mk.daftar.refresh.ZakatTrackingRefresh
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.SupervisorJob
@@ -65,6 +66,14 @@ val platformServicesModule: Module = module {
         SessionPriceRefresh(
             session = get<VaultSession>(),
             refreshPrices = get(),
+            scope = CoroutineScope(SupervisorJob() + Dispatchers.Main),
+        )
+    }
+    single {
+        ZakatTrackingRefresh(
+            session = get<VaultSession>(),
+            ensure = get(),
+            days = get(),
             scope = CoroutineScope(SupervisorJob() + Dispatchers.Main),
         )
     }

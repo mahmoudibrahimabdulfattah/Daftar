@@ -2,7 +2,9 @@ package com.mk.daftar.feature.journal.zakat
 
 import androidx.lifecycle.viewModelScope
 import com.mk.daftar.core.common.Outcome
+import com.mk.daftar.core.domain.hijri.HijriCalendar
 import com.mk.daftar.core.domain.repository.ZakatPaymentInput
+import com.mk.daftar.core.domain.repository.ZakatTrackingState
 import com.mk.daftar.core.domain.storage.StorageError
 import com.mk.daftar.core.domain.storage.Stored
 import com.mk.daftar.core.domain.storage.VaultRead
@@ -10,7 +12,10 @@ import com.mk.daftar.core.domain.usecase.CreateZakatPaymentUseCase
 import com.mk.daftar.core.domain.usecase.DeleteZakatPaymentUseCase
 import com.mk.daftar.core.domain.usecase.ObserveZakatPaymentUseCase
 import com.mk.daftar.core.domain.usecase.ObserveZakatPaymentsUseCase
+import com.mk.daftar.core.domain.usecase.ObserveZakatTrackingUseCase
 import com.mk.daftar.core.domain.usecase.UpdateZakatPaymentUseCase
+import com.mk.daftar.core.domain.zakat.ZakatYearStatus
+import com.mk.daftar.core.domain.zakat.zakatToday
 import com.mk.daftar.core.model.Currency
 import com.mk.daftar.core.model.Money
 import com.mk.daftar.core.model.ZakatPayment
@@ -23,11 +28,13 @@ import com.mk.daftar.feature.journal.JournalEffect
 import com.mk.daftar.feature.journal.JournalFailure
 import com.mk.daftar.feature.journal.JournalPhase
 import com.mk.daftar.feature.journal.hiddenFlow
+import com.mk.daftar.feature.journal.isHidden
 import com.mk.daftar.feature.journal.isoText
 import com.mk.daftar.feature.journal.localDate
 import com.mk.daftar.feature.journal.parseIsoDate
 import com.mk.daftar.feature.journal.reveal
 import kotlin.time.Clock
+import kotlinx.coroutines.flow.collect
 import kotlinx.coroutines.launch
 import kotlinx.datetime.TimeZone
 
@@ -42,12 +49,15 @@ class ZakatEditorViewModel(
     private val target: ZakatEditorTarget,
     observePayment: ObserveZakatPaymentUseCase,
     observePayments: ObserveZakatPaymentsUseCase,
+    observeTracking: ObserveZakatTrackingUseCase,
     private val createPayment: CreateZakatPaymentUseCase,
     private val updatePayment: UpdateZakatPaymentUseCase,
     private val deletePayment: DeleteZakatPaymentUseCase,
     private val visibility: ValuesVisibility,
     private val clock: Clock,
     private val timeZone: TimeZone,
+    /** What the route asked for: an estimate draft and a preselected year. Both are optional. */
+    private val launch: ZakatEditorLaunch = ZakatEditorLaunch(),
 ) : MviViewModel<ZakatEditorUiState, ZakatEditorIntent, JournalEffect>(ZakatEditorUiState()) {
 
     private val paymentId: ZakatPaymentId? = (target as? ZakatEditorTarget.Existing)?.let {
@@ -63,18 +73,30 @@ class ZakatEditorViewModel(
     /** Completes a pending leave. The flag says whether the draft was discarded to allow it. */
     private var pendingLeave: ((Boolean) -> Unit)? = null
 
+    /** The year the route chose, or null when the editor chooses the default. */
+    private val initialYear: Int? = launch.initialYear
+
     init {
         val today = clock.now().localDate(timeZone)
         if (paymentId == null) {
             val iso = today.isoText()
+            // A prefilled amount is an editable draft: it differs from the baseline, so leaving asks before discarding it.
+            // It is taken only while values are visible, so a concealed amount never reaches the form.
+            val prefill = launch.prefillAmount?.takeIf { !visibility.isHidden() }
             reduce {
                 copy(
                     phase = JournalPhase.Ready,
                     isNew = true,
                     today = today,
-                    draft = ZakatDraft(dateText = iso),
-                    baseline = ZakatValues(date = iso, amount = "", note = null),
+                    draft = ZakatDraft(dateText = iso, amountText = prefill.orEmpty(), forHijriYear = initialYear),
+                    baseline = ZakatValues(date = iso, amount = "", note = null, forHijriYear = initialYear),
+                    yearReady = initialYear != null,
+                    yearTouched = initialYear != null,
+                    prefilled = prefill != null,
                 )
+            }
+            viewModelScope.launch {
+                observeTracking().collect { read -> onTracking(read) }
             }
             // A new payment has no record to observe, so it follows the session through the list: a lock drops its draft.
             viewModelScope.launch {
@@ -84,6 +106,9 @@ class ZakatEditorViewModel(
             reduce { copy(isNew = false, today = today) }
             viewModelScope.launch {
                 observePayment(paymentId).collect { read -> onRead(read) }
+            }
+            viewModelScope.launch {
+                observeTracking().collect { read -> onTracking(read) }
             }
         }
         viewModelScope.launch {
@@ -96,6 +121,7 @@ class ZakatEditorViewModel(
             is ZakatEditorIntent.DateChanged -> edit { copy(dateText = intent.text) }
             is ZakatEditorIntent.AmountChanged -> edit { copy(amountText = intent.text) }
             is ZakatEditorIntent.NoteChanged -> edit { copy(noteText = intent.text) }
+            is ZakatEditorIntent.YearSelected -> selectYear(intent.hijriYear)
             ZakatEditorIntent.Save -> save()
             ZakatEditorIntent.DismissFailure -> reduce { copy(failure = null) }
             ZakatEditorIntent.RequestDelete -> requestConfirmation(ZakatConfirmation.Delete)
@@ -122,6 +148,44 @@ class ZakatEditorViewModel(
         }
         pendingLeave = proceed
         reduce { copy(confirmation = ZakatConfirmation.Discard) }
+    }
+
+    /**
+     * Learns the declared years for the picker. A new payment also takes its default year from the first read that
+     * succeeds: the explicit year, else the oldest due year, else the next Ramadan year. A user's own choice is kept.
+     */
+    private fun onTracking(read: VaultRead<ZakatTrackingState>) {
+        val tracking = (read as? VaultRead.Ready)?.value
+        val state = currentState
+        if (tracking == null) {
+            if (!state.yearReady && read !is VaultRead.Loading) reduce { copy(yearReady = true) }
+            return
+        }
+        val today = zakatToday(clock.now())
+        reduce {
+            val declared = tracking.summariesNewestFirst(today)
+            val linked = draft.forHijriYear?.takeIf { year -> declared.none { it.hijriYear == year } }
+            val choices = (declared + listOfNotNull(linked?.let { unrecordedSummary(it) }))
+                .sortedByDescending { it.hijriYear }
+            if (!yearReady && !yearTouched && isNew) {
+                val default = tracking.dueYears(today).firstOrNull()
+                    ?: nextRamadanOf(today, tracking.adjustments())?.hijriYear
+                copy(
+                    yearChoices = choices,
+                    yearReady = true,
+                    draft = draft.copy(forHijriYear = default),
+                    baseline = baseline?.copy(forHijriYear = default),
+                )
+            } else {
+                copy(yearChoices = choices, yearReady = true)
+            }
+        }
+    }
+
+    private fun selectYear(hijriYear: Int?) {
+        val state = currentState
+        if (state.busy != null || state.completed || state.concealed) return
+        reduce { copy(draft = draft.copy(forHijriYear = hijriYear), yearTouched = true) }
     }
 
     private fun onRead(read: VaultRead<Stored<ZakatPayment>?>) {
@@ -183,7 +247,7 @@ class ZakatEditorViewModel(
         val state = currentState
         val today = state.today ?: return
         if (state.busy != null || state.completed || state.concealed || state.conflict) return
-        if (state.phase != JournalPhase.Ready) return
+        if (state.phase != JournalPhase.Ready || !state.yearReady) return
         reduce { copy(attempted = true) }
         if (state.draft.errors(today).any) return
         val draft = state.draft
@@ -193,6 +257,7 @@ class ZakatEditorViewModel(
             paidOn = date,
             amount = Money(amount, Currency.EGP),
             note = draft.noteText.trim().ifEmpty { null },
+            forHijriYear = draft.forHijriYear,
         )
         val id = paymentId
         val revision = loadedRevision
@@ -312,4 +377,17 @@ internal fun ZakatPayment.toValues(): ZakatValues = ZakatValues(
     date = paidOn.isoText(),
     amount = amount.amount.toPlainString(),
     note = note,
+    forHijriYear = forHijriYear,
 )
+
+/** A year a payment is linked to but the declarations do not list. It is shown once, unchecked, with its calculated date. */
+internal fun unrecordedSummary(hijriYear: Int): ZakatYearSummary {
+    val date = checkNotNull(HijriCalendar.ramadanStart(hijriYear)) { "linked years are validated" }
+    return ZakatYearSummary(
+        hijriYear = hijriYear,
+        gregorianYear = date.year,
+        status = ZakatYearStatus.UPCOMING,
+        date = date,
+        adjusted = false,
+    )
+}

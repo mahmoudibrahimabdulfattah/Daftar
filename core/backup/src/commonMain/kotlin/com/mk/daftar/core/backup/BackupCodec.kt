@@ -6,6 +6,9 @@ import com.mk.daftar.core.security.SecretBytes
 import kotlin.time.Instant
 import kotlinx.serialization.SerializationException
 import kotlinx.serialization.json.Json
+import kotlinx.serialization.json.intOrNull
+import kotlinx.serialization.json.jsonObject
+import kotlinx.serialization.json.jsonPrimitive
 
 /** A decrypted and validated backup. Its header-level facts are returned with the snapshot. */
 class DecodedBackup(val snapshot: BackupSnapshot, val exportedAt: Instant, val appVersion: String)
@@ -119,8 +122,23 @@ class BackupCodec(private val crypto: PasswordCrypto) :
         }
     }
 
+    /**
+     * Routes by the payload's own schema version before any record is read. A newer version is refused as unsupported;
+     * version one and version two each have their own exact shape, and only the canonical encoding of that shape is
+     * accepted.
+     */
     private fun parse(plaintext: ByteArray): Outcome<DecodedBackup, BackupError> {
         val text = plaintext.decodeToString()
+        val version = schemaVersionOf(text) ?: return Outcome.Failure(BackupError.CorruptPayload)
+        return when {
+            version > BackupFormat.PAYLOAD_SCHEMA_VERSION -> Outcome.Failure(BackupError.UnsupportedFormat)
+            version == 1 -> parseVersionOne(text)
+            version == BackupFormat.PAYLOAD_SCHEMA_VERSION -> parseCurrent(text)
+            else -> Outcome.Failure(BackupError.CorruptPayload)
+        }
+    }
+
+    private fun parseCurrent(text: String): Outcome<DecodedBackup, BackupError> {
         val document = try {
             BackupJson.decodeFromString(PayloadDocument.serializer(), text)
         } catch (failure: SerializationException) {
@@ -128,15 +146,29 @@ class BackupCodec(private val crypto: PasswordCrypto) :
         } catch (failure: IllegalArgumentException) {
             return Outcome.Failure(BackupError.CorruptPayload)
         }
-        if (document.schemaVersion >
-            BackupFormat.PAYLOAD_SCHEMA_VERSION
-        ) {
-            return Outcome.Failure(BackupError.UnsupportedFormat)
-        }
         // Only the one canonical encoding is accepted: re-encoding must reproduce the authenticated bytes exactly.
         if (BackupJson.encodeToString(PayloadDocument.serializer(), document) != text) {
             return Outcome.Failure(BackupError.CorruptPayload)
         }
+        return finish(document)
+    }
+
+    private fun parseVersionOne(text: String): Outcome<DecodedBackup, BackupError> {
+        val document = try {
+            BackupJson.decodeFromString(PayloadDocumentV1.serializer(), text)
+        } catch (failure: SerializationException) {
+            return Outcome.Failure(BackupError.CorruptPayload)
+        } catch (failure: IllegalArgumentException) {
+            return Outcome.Failure(BackupError.CorruptPayload)
+        }
+        if (BackupJson.encodeToString(PayloadDocumentV1.serializer(), document) != text) {
+            return Outcome.Failure(BackupError.CorruptPayload)
+        }
+        return finish(document.toCurrent())
+    }
+
+    /** The shared tail: the export time, the model values, the record limit and the cross-record rules. */
+    private fun finish(document: PayloadDocument): Outcome<DecodedBackup, BackupError> {
         val exportedAt = try {
             Instant.parse(document.exportedAt)
         } catch (failure: IllegalArgumentException) {
@@ -150,6 +182,15 @@ class BackupCodec(private val crypto: PasswordCrypto) :
         if (snapshot.recordCount > BackupFormat.MAX_RECORDS) return Outcome.Failure(BackupError.TooManyRecords)
         if (!snapshot.isConsistent()) return Outcome.Failure(BackupError.CorruptPayload)
         return Outcome.Success(DecodedBackup(snapshot, exportedAt, document.appVersion))
+    }
+
+    /** The payload's declared schema version, or null when the text is not a JSON object carrying one. */
+    private fun schemaVersionOf(text: String): Int? = try {
+        BackupJson.parseToJsonElement(text).jsonObject["schemaVersion"]?.jsonPrimitive?.intOrNull
+    } catch (failure: SerializationException) {
+        null
+    } catch (failure: IllegalArgumentException) {
+        null
     }
 
     private fun fail(password: ByteArray, error: BackupError): Outcome<ByteArray, BackupError> {

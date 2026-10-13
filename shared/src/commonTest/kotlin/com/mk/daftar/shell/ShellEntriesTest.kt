@@ -25,8 +25,13 @@ import com.mk.daftar.core.navigation.NotesRoute
 import com.mk.daftar.core.navigation.PricesRoute
 import com.mk.daftar.core.navigation.SettingsRoute
 import com.mk.daftar.core.navigation.ZakatAddRoute
+import com.mk.daftar.core.navigation.ZakatCalculatorRoute
+import com.mk.daftar.core.navigation.ZakatDateRoute
 import com.mk.daftar.core.navigation.ZakatEditRoute
+import com.mk.daftar.core.navigation.ZakatHistoryRoute
 import com.mk.daftar.core.navigation.ZakatRoute
+import com.mk.daftar.core.navigation.ZakatYearAddRoute
+import com.mk.daftar.core.navigation.ZakatYearRoute
 import com.mk.daftar.feature.assets.di.assetsModule
 import com.mk.daftar.feature.banks.di.banksModule
 import com.mk.daftar.feature.gold.di.goldModule
@@ -83,8 +88,14 @@ class ShellEntriesTest {
             AccountAddRoute("sample-a"),
             AccountEditRoute("sample-account"),
             ZakatRoute,
-            ZakatAddRoute,
+            ZakatAddRoute(),
+            ZakatAddRoute(prefillAmount = "26905.32", forHijriYear = 1447),
             ZakatEditRoute("sample-payment"),
+            ZakatCalculatorRoute,
+            ZakatHistoryRoute,
+            ZakatYearRoute(1447),
+            ZakatYearAddRoute,
+            ZakatDateRoute(1447),
             NotesRoute,
             NoteAddRoute,
             NoteEditRoute("sample-note"),

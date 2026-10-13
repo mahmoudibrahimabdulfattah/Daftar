@@ -125,7 +125,7 @@ internal fun JournalFrameContent(name: String) {
         )
 
         "zakat_reveal" -> ZakatListContent(
-            state = ZakatListUiState(JournalPhase.Ready, populatedYears, hidden = true, pendingRoute = ZakatAddRoute),
+            state = ZakatListUiState(JournalPhase.Ready, populatedYears, hidden = true, pendingRoute = ZakatAddRoute()),
             onIntent = {},
             onBack = {},
         )

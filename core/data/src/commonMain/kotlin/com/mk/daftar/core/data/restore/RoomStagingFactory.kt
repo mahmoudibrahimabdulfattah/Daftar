@@ -10,6 +10,7 @@ import com.mk.daftar.core.data.session.DaftarDatabaseBuilderProvider
 import com.mk.daftar.core.data.session.openDaftarDatabase
 import com.mk.daftar.core.database.DaftarDatabase
 import com.mk.daftar.core.database.dao.RestoreRows
+import com.mk.daftar.core.database.mapper.startYearRow
 import com.mk.daftar.core.database.mapper.toEntity
 import com.mk.daftar.core.database.mapper.toManualEntity
 import com.mk.daftar.core.database.mapper.toRemoteEntity
@@ -117,4 +118,6 @@ internal fun BackupSnapshot.toRestoreRows(): RestoreRows = RestoreRows(
     personalNotes = personalNotes.map { it.toEntity(RecordRules.FIRST_REVISION) },
     remoteQuotes = remoteQuotes.map { it.quote.toRemoteEntity(it.nextUpdateAt, it.attributionUrl) },
     manualQuotes = manualQuotes.map { it.toManualEntity(RecordRules.FIRST_REVISION) },
+    zakatYears = zakatYears.map { it.toEntity() },
+    zakatTracking = zakatTrackingStartYear?.let { startYearRow(it) },
 )

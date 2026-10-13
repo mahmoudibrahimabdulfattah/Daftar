@@ -6,12 +6,18 @@ import com.mk.daftar.core.domain.storage.StorageError
 import com.mk.daftar.core.domain.storage.VaultRead
 import com.mk.daftar.core.domain.usecase.ObservePersonalNotesUseCase
 import com.mk.daftar.core.domain.usecase.ObserveZakatPaymentsUseCase
+import com.mk.daftar.core.domain.usecase.ObserveZakatTrackingUseCase
 import com.mk.daftar.core.navigation.NotesRoute
-import com.mk.daftar.core.navigation.ZakatRoute
+import com.mk.daftar.core.navigation.ZakatCalculatorRoute
+import com.mk.daftar.core.navigation.ZakatHistoryRoute
+import com.mk.daftar.core.navigation.ZakatYearRoute
 import com.mk.daftar.core.ui.presentation.ValuesVisibility
 import com.mk.daftar.feature.journal.testing.FakeNoteRepository
 import com.mk.daftar.feature.journal.testing.FakeZakatRepository
+import com.mk.daftar.feature.journal.testing.FakeZakatYearRepository
 import com.mk.daftar.feature.journal.testing.TODAY
+import com.mk.daftar.feature.journal.testing.declared
+import com.mk.daftar.feature.journal.testing.fixedDay
 import com.mk.daftar.feature.journal.testing.note
 import com.mk.daftar.feature.journal.testing.payment
 import kotlin.test.AfterTest
@@ -49,7 +55,14 @@ class JournalOverviewViewModelTest {
         zakat: ZakatRepository,
         notes: NoteRepository,
         visibility: ValuesVisibility = ValuesVisibility(),
-    ) = JournalViewModel(ObserveZakatPaymentsUseCase(zakat), ObservePersonalNotesUseCase(notes), visibility)
+        years: FakeZakatYearRepository = FakeZakatYearRepository(),
+    ) = JournalViewModel(
+        observePayments = ObserveZakatPaymentsUseCase(zakat),
+        observeNotes = ObservePersonalNotesUseCase(notes),
+        observeTracking = ObserveZakatTrackingUseCase(years),
+        observeDay = fixedDay(TODAY),
+        visibility = visibility,
+    )
 
     @Test
     fun theLastPaymentDateAndNoteCountComeFromTheJournal() = runTest(dispatcher) {
@@ -104,14 +117,14 @@ class JournalOverviewViewModelTest {
         val collector = launch { vm.effects.collect { effects += it } }
 
         vm.onIntent(JournalIntent.ToggleHidden)
-        vm.onIntent(JournalIntent.OpenZakat)
+        vm.onIntent(JournalIntent.OpenCalculator)
         vm.onIntent(JournalIntent.OpenNotes)
         advanceUntilIdle()
 
         assertTrue(visibility.isHidden())
         assertTrue(vm.state.value.hidden)
         assertEquals(
-            listOf<JournalEffect>(JournalEffect.Navigate(ZakatRoute), JournalEffect.Navigate(NotesRoute)),
+            listOf<JournalEffect>(JournalEffect.Navigate(ZakatCalculatorRoute), JournalEffect.Navigate(NotesRoute)),
             effects,
         )
         collector.cancel()
@@ -136,5 +149,51 @@ class JournalOverviewViewModelTest {
         val vm = overview(zakat, FakeNoteRepository())
         advanceUntilIdle()
         assertEquals(JournalPhase.Locked, vm.state.value.phase)
+    }
+
+    @Test
+    fun aSingleDueYearOpensItsOwnReview() = runTest(dispatcher) {
+        val years = FakeZakatYearRepository(startYear = 1447, years = listOf(declared(1447)))
+        val vm = overview(FakeZakatRepository(), FakeNoteRepository(), years = years)
+        advanceUntilIdle()
+        val effects = mutableListOf<JournalEffect>()
+        val collector = launch { vm.effects.collect { effects += it } }
+
+        assertEquals(listOf(1447), vm.state.value.dueYears.map { it.hijriYear })
+        vm.onIntent(JournalIntent.OpenReview)
+        advanceUntilIdle()
+
+        assertEquals(listOf<JournalEffect>(JournalEffect.Navigate(ZakatYearRoute(1447))), effects)
+        collector.cancel()
+    }
+
+    @Test
+    fun severalDueYearsOpenTheHistoryOldestFirstInTheReminder() = runTest(dispatcher) {
+        val years = FakeZakatYearRepository(
+            startYear = 1446,
+            years = listOf(declared(1446), declared(1447), declared(1448, paid = true)),
+        )
+        val vm = overview(FakeZakatRepository(), FakeNoteRepository(), years = years)
+        advanceUntilIdle()
+        val effects = mutableListOf<JournalEffect>()
+        val collector = launch { vm.effects.collect { effects += it } }
+
+        // 1448 is paid, so only 1446 and 1447 are due on 2026-10-12 — both have passed their Ramadan dates.
+        assertEquals(listOf(1446, 1447), vm.state.value.dueYears.map { it.hijriYear })
+        vm.onIntent(JournalIntent.OpenReview)
+        advanceUntilIdle()
+
+        assertEquals(listOf<JournalEffect>(JournalEffect.Navigate(ZakatHistoryRoute)), effects)
+        collector.cancel()
+    }
+
+    @Test
+    fun noReminderWhileTrackingIsNotReadable() = runTest(dispatcher) {
+        val years = FakeZakatYearRepository(startYear = 1447, years = listOf(declared(1447)))
+        years.lock()
+        val vm = overview(FakeZakatRepository(), FakeNoteRepository(), years = years)
+        advanceUntilIdle()
+
+        assertTrue(vm.state.value.dueYears.isEmpty())
     }
 }

@@ -50,4 +50,12 @@
     <string name="home_month_10">Oct</string>
     <string name="home_month_11">Nov</string>
     <string name="home_month_12">Dec</string>
+    <string name="home_zakat_prepare">Zakat · Prepare for Ramadan</string>
+    <string name="home_zakat_review">Review this year’s zakat</string>
+    <string name="zakat_reminder">Your annual date has arrived; this year is not marked paid.</string>
+    <string name="zakat_year_label">⁦%1$d AH⁩ · ⁦%2$d⁩</string>
+    <plurals name="zakat_due_count">
+        <item quantity="one">⁦%1$d⁩ year awaiting your confirmation</item>
+        <item quantity="other">⁦%1$d⁩ years awaiting your confirmation</item>
+    </plurals>
 </resources>
