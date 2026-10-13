@@ -24,7 +24,9 @@ import com.mk.daftar.core.designsystem.icon.DaftarIcons
 import com.mk.daftar.core.designsystem.theme.DaftarSpacing
 import com.mk.daftar.core.designsystem.theme.DaftarTheme
 import com.mk.daftar.core.navigation.LocalNavigator
+import com.mk.daftar.core.navigation.TopLevelDestination
 import com.mk.daftar.core.ui.mvi.CollectEffects
+import com.mk.daftar.core.ui.shell.RootReselectScroll
 import com.mk.daftar.core.ui.shell.ShellScreen
 import com.mk.daftar.feature.journal.JournalEffect
 import com.mk.daftar.feature.journal.JournalIntent
@@ -67,11 +69,13 @@ fun JournalScreen(modifier: Modifier = Modifier) {
 fun JournalContent(state: JournalUiState, onIntent: (JournalIntent) -> Unit, modifier: Modifier = Modifier) {
     val colors = DaftarTheme.colors
     val typography = DaftarTheme.typography
+    val scroll = rememberScrollState()
+    RootReselectScroll(TopLevelDestination.JOURNAL) { scroll.animateScrollTo(0) }
     ShellScreen(modifier = modifier) {
         Column(
             modifier = Modifier
                 .fillMaxSize()
-                .verticalScroll(rememberScrollState())
+                .verticalScroll(scroll)
                 .padding(horizontal = DaftarSpacing.md),
             verticalArrangement = Arrangement.spacedBy(DaftarSpacing.sm),
         ) {

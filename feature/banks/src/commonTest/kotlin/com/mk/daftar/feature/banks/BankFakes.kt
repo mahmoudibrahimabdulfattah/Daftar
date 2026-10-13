@@ -76,6 +76,7 @@ internal class FakeBankRepository : BankRepository {
 
     val createdBankInputs = mutableListOf<BankInput>()
     val updatedBankRevisions = mutableListOf<Long>()
+    val updatedBankInputs = mutableListOf<BankInput>()
     val deletedBankRevisions = mutableListOf<Long>()
     val createdAccountInputs = mutableListOf<BankAccountInput>()
     val updatedAccountRevisions = mutableListOf<Long>()
@@ -168,7 +169,15 @@ internal class FakeBankRepository : BankRepository {
         writeGate?.await()
         bankWriteFailure?.let { return Outcome.Failure(it) }
         counter++
-        val bank = Bank.create(BankId("bank-$counter"), input.name, FIXTURE_NOW, FIXTURE_NOW)
+        // A chosen identity, catalog or custom, is reviewed; no choice creates an unreviewed custom bank.
+        val bank = Bank.create(
+            BankId("bank-$counter"),
+            input.name,
+            FIXTURE_NOW,
+            FIXTURE_NOW,
+            institutionId = input.identity?.institutionId,
+            identityReviewed = input.identity != null,
+        )
         val stored = Stored(bank, 1)
         banks.update { it + stored }
         return Outcome.Success(stored)
@@ -180,12 +189,20 @@ internal class FakeBankRepository : BankRepository {
         input: BankInput,
     ): Outcome<Stored<Bank>, StorageError> {
         updatedBankRevisions += expectedRevision
+        updatedBankInputs += input
         writeGate?.await()
         bankWriteFailure?.let { return Outcome.Failure(it) }
         val current = banks.value.firstOrNull { it.value.id == id } ?: return Outcome.Failure(StorageError.NotFound)
         if (current.revision != expectedRevision) return Outcome.Failure(StorageError.Conflict)
         val updated = Stored(
-            Bank.create(id, input.name, current.value.createdAt, FIXTURE_NOW),
+            Bank.create(
+                id,
+                input.name,
+                current.value.createdAt,
+                FIXTURE_NOW,
+                institutionId = input.identity?.let { it.institutionId } ?: current.value.institutionId,
+                identityReviewed = input.identity != null || current.value.identityReviewed,
+            ),
             current.revision + 1,
         )
         banks.update { list -> list.map { if (it === current) updated else it } }

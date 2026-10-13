@@ -42,7 +42,15 @@ internal class BankRecordRepository(private val host: VaultHost) : BankRepositor
 
     override suspend fun create(input: BankInput): Outcome<Stored<Bank>, StorageError> = host.write { db ->
         val now = host.now()
-        val bank = Bank.create(BankId(host.ids.nextId()), input.name, now, now)
+        val identity = input.identity
+        val bank = Bank.create(
+            id = BankId(host.ids.nextId()),
+            name = input.name,
+            createdAt = now,
+            updatedAt = now,
+            institutionId = identity?.institutionId,
+            identityReviewed = identity != null,
+        )
         db.bankDao().insert(bank.toEntity(RecordRules.FIRST_REVISION))
         Outcome.Success(Stored(bank, RecordRules.FIRST_REVISION))
     }
@@ -61,11 +69,15 @@ internal class BankRecordRepository(private val host: VaultHost) : BankRepositor
         ) {
             return@write Outcome.Failure(StorageError.Conflict)
         }
+        // A name edit keeps the stored identity; only an explicit identity choice changes it.
+        val identity = input.identity
         val updated = Bank.create(
             id = id,
             name = input.name,
             createdAt = previous.value.createdAt,
             updatedAt = RecordRules.editedAt(host.now(), previous.value.updatedAt),
+            institutionId = if (identity != null) identity.institutionId else previous.value.institutionId,
+            identityReviewed = if (identity != null) true else previous.value.identityReviewed,
         )
         val next = RecordRules.nextRevision(expectedRevision)
         if (dao.updateIfRevision(updated.toEntity(next), expectedRevision) == 1) {

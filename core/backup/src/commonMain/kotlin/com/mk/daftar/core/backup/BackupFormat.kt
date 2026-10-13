@@ -39,7 +39,7 @@ object BackupFormat {
     const val CONTAINER_VERSION: Int = 1
 
     /** Version 2 adds the annual declarations, the tracking start and the payment year links. Version 1 still decodes. */
-    const val PAYLOAD_SCHEMA_VERSION: Int = 2
+    const val PAYLOAD_SCHEMA_VERSION: Int = 3
 
     /** Largest plaintext payload, before encryption, in bytes. Larger exports fail explicitly. */
     const val MAX_PLAINTEXT_BYTES: Int = 16 * 1024 * 1024

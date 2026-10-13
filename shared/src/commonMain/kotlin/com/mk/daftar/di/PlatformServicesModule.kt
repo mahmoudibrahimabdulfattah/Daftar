@@ -3,6 +3,7 @@ package com.mk.daftar.di
 import com.mk.daftar.core.common.MonotonicTime
 import com.mk.daftar.core.common.SystemMonotonicTime
 import com.mk.daftar.core.data.session.VaultAuthenticator
+import com.mk.daftar.core.datastore.DaftarPreferencesDataSource
 import com.mk.daftar.core.domain.refresh.PriceRefreshController
 import com.mk.daftar.core.domain.repository.UserPreferencesRepository
 import com.mk.daftar.core.domain.session.VaultSession
@@ -37,6 +38,7 @@ val platformServicesModule: Module = module {
             security = get<VaultSecurity>(),
             authenticator = get<VaultAuthenticator>(),
             prompter = get<BiometricPrompter>(),
+            preferences = get<DaftarPreferencesDataSource>(),
         )
     }
     single<SettingsSecurityGateway> {

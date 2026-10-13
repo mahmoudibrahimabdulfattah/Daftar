@@ -22,6 +22,7 @@ import com.mk.daftar.core.model.GoldHolding
 import com.mk.daftar.core.model.GoldHoldingId
 import com.mk.daftar.core.model.GoldKarat
 import com.mk.daftar.core.model.GoldWeight
+import com.mk.daftar.core.model.InstitutionId
 import com.mk.daftar.core.model.Money
 import com.mk.daftar.core.model.NoteId
 import com.mk.daftar.core.model.PersonalNote
@@ -69,12 +70,15 @@ fun GoldHolding.toEntity(revision: Long): GoldHoldingEntity = GoldHoldingEntity(
 )
 
 fun BankEntity.toStored(): Stored<Bank> {
+    val institution = institutionId?.let { InstitutionId.parseOrNull(it) ?: corrupt(BANKS, "institution_id") }
     val bank = rowGuard(BANKS) {
         Bank(
             id = BankId(id),
             name = name,
             createdAt = instantOf(BANKS, "created", createdSeconds, createdNanos),
             updatedAt = instantOf(BANKS, "updated", updatedSeconds, updatedNanos),
+            institutionId = institution,
+            identityReviewed = identityReviewed,
         )
     }
     return Stored(bank, checkRevision(BANKS, revision))
@@ -88,6 +92,8 @@ fun Bank.toEntity(revision: Long): BankEntity = BankEntity(
     updatedNanos = updatedAt.nanosecondsOfSecond,
     revision = revision,
     name = name,
+    institutionId = institutionId?.value,
+    identityReviewed = identityReviewed,
 )
 
 fun BankAccountEntity.toStored(): Stored<BankAccount> {

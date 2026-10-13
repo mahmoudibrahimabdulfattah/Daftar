@@ -35,6 +35,7 @@ import com.mk.daftar.core.designsystem.component.DaftarSwitch
 import com.mk.daftar.core.designsystem.component.DaftarTextArea
 import com.mk.daftar.core.designsystem.component.DaftarTextButton
 import com.mk.daftar.core.designsystem.component.DaftarTextField
+import com.mk.daftar.core.designsystem.component.DaftarTileTone
 import com.mk.daftar.core.designsystem.component.DaftarTopBar
 import com.mk.daftar.core.designsystem.component.PrimaryButton
 import com.mk.daftar.core.designsystem.icon.DaftarIcons
@@ -51,6 +52,7 @@ import com.mk.daftar.core.navigation.LeaveRequest
 import com.mk.daftar.core.navigation.LocalNavigator
 import com.mk.daftar.core.ui.mvi.CollectEffects
 import com.mk.daftar.core.ui.presentation.moneyText
+import com.mk.daftar.core.ui.shell.PriceRefreshAction
 import com.mk.daftar.core.ui.shell.ShellScreen
 import com.mk.daftar.feature.cash.CashAction
 import com.mk.daftar.feature.cash.CashBalanceError
@@ -162,7 +164,10 @@ fun CashListContent(
                 title = stringResource(Res.string.cash_title),
                 onBack = onBack,
                 backLabel = stringResource(DesignRes.string.btn_back),
-                actions = { VisibilityToggle(hidden = state.hidden) { onIntent(CashListIntent.ToggleHidden) } },
+                actions = {
+                    VisibilityToggle(hidden = state.hidden) { onIntent(CashListIntent.ToggleHidden) }
+                    PriceRefreshAction()
+                },
             )
             state.pendingRoute?.let {
                 RevealPrompt(
@@ -259,6 +264,7 @@ private fun CashBalanceRow(row: CashRow, hidden: Boolean, hiddenText: String, on
         title = row.name,
         subtitle = rowSubtitle(row = row, hidden = hidden),
         icon = DaftarIcons.Wallet,
+        tone = DaftarTileTone.Cash,
         onClick = onOpen,
         value = {
             Column(horizontalAlignment = Alignment.End) {
@@ -318,9 +324,8 @@ fun CashEditorScreen(target: CashEditorTarget, modifier: Modifier = Modifier) {
     }
     // The shell asks before it leaves: a back action, a gesture or a tab change. Only unsaved edits make it ask.
     DisposableEffect(viewModel, navigator) {
-        val unregister = navigator.leaveGuard.register(viewModel) { request, proceed ->
-            viewModel.onLeaveRequested { discarded ->
-                if (discarded && request is LeaveRequest.Switch) navigator.goBack()
+        val unregister = navigator.leaveGuard.register(viewModel) { _, proceed ->
+            viewModel.onLeaveRequested { _ ->
                 proceed()
             }
         }

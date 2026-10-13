@@ -38,8 +38,11 @@ import com.mk.daftar.core.designsystem.component.DaftarAllocationBar
 import com.mk.daftar.core.designsystem.component.DaftarAllocationSegment
 import com.mk.daftar.core.designsystem.component.DaftarAmount
 import com.mk.daftar.core.designsystem.component.DaftarBalanceSummary
+import com.mk.daftar.core.designsystem.component.DaftarBankMark
+import com.mk.daftar.core.designsystem.component.DaftarBankTile
 import com.mk.daftar.core.designsystem.component.DaftarCard
 import com.mk.daftar.core.designsystem.component.DaftarConfirmationContent
+import com.mk.daftar.core.designsystem.component.DaftarCurrencyBadge
 import com.mk.daftar.core.designsystem.component.DaftarDateField
 import com.mk.daftar.core.designsystem.component.DaftarEmptyState
 import com.mk.daftar.core.designsystem.component.DaftarFieldKind
@@ -186,6 +189,7 @@ import com.mk.daftar.core.designsystem.resources.section_buttons
 import com.mk.daftar.core.designsystem.resources.section_cards
 import com.mk.daftar.core.designsystem.resources.section_confirm
 import com.mk.daftar.core.designsystem.resources.section_fields
+import com.mk.daftar.core.designsystem.resources.section_identity
 import com.mk.daftar.core.designsystem.resources.section_ledger
 import com.mk.daftar.core.designsystem.resources.section_navigation
 import com.mk.daftar.core.designsystem.resources.section_notes
@@ -279,6 +283,7 @@ fun DesignCatalog(modifier: Modifier = Modifier) {
                 CatalogSection(Res.string.section_topbar) { TopBarSection() }
                 CatalogSection(Res.string.section_navigation) { NavigationSection() }
                 CatalogSection(Res.string.section_ledger) { LedgerSection() }
+                CatalogSection(Res.string.section_identity) { IdentitySection() }
                 CatalogSection(Res.string.section_cards) { CardSection() }
                 CatalogSection(Res.string.section_status) { StatusSection() }
                 CatalogSection(Res.string.section_notes) { NoteSection() }
@@ -730,7 +735,7 @@ private fun LedgerSection() {
         DaftarLedgerRow(
             title = stringResource(Res.string.ledger_gold),
             subtitle = stringResource(Res.string.ledger_gold_sub),
-            icon = DaftarIcons.Gold,
+            icon = DaftarIcons.GoldBar,
             tone = DaftarTileTone.Gold,
             value = { DaftarAmount(amount = "677,812.74", unit = "EGP", style = typography.ledgerValue) },
         )
@@ -738,6 +743,7 @@ private fun LedgerSection() {
             title = stringResource(Res.string.ledger_bank_misr),
             subtitle = stringResource(Res.string.ledger_bank_misr_sub),
             icon = DaftarIcons.Bank,
+            tone = DaftarTileTone.Bank,
             value = { DaftarAmount(amount = "163,500.00", unit = "EGP", style = typography.ledgerValue) },
             onClick = {},
         )
@@ -745,6 +751,7 @@ private fun LedgerSection() {
             title = stringResource(Res.string.ledger_cash),
             subtitle = stringResource(Res.string.ledger_cash_sub),
             icon = DaftarIcons.Wallet,
+            tone = DaftarTileTone.Cash,
             value = { DaftarAmount(amount = "9,900.00", unit = "EGP", style = typography.ledgerValue) },
             onClick = {},
             selected = true,
@@ -752,7 +759,7 @@ private fun LedgerSection() {
         DaftarLedgerRow(
             title = stringResource(Res.string.ledger_gold),
             subtitle = stringResource(Res.string.ledger_gold_sub),
-            icon = DaftarIcons.Gold,
+            icon = DaftarIcons.GoldBar,
             tone = DaftarTileTone.Gold,
             value = {
                 Text(
@@ -763,6 +770,37 @@ private fun LedgerSection() {
                 )
             },
             onClick = {},
+        )
+    }
+}
+
+/** Bank identity tiles (monogram on brand colour, neutral outline) and typographic currency badges. */
+@Composable
+private fun IdentitySection() {
+    Column(verticalArrangement = Arrangement.spacedBy(DaftarSpacing.sm)) {
+        val typography = DaftarTheme.typography
+        Row(
+            horizontalArrangement = Arrangement.spacedBy(DaftarSpacing.sm),
+            verticalAlignment = Alignment.CenterVertically,
+        ) {
+            DaftarBankTile(mark = DaftarBankMark.Monogram("NBE", Color(0xFF006341)))
+            DaftarBankTile(mark = DaftarBankMark.Monogram("CIB", Color(0xFF003B71)))
+            DaftarBankTile(mark = DaftarBankMark.Monogram("ALEX", Color(0xFFA64000)))
+            DaftarBankTile(mark = DaftarBankMark.Neutral)
+        }
+        Row(
+            horizontalArrangement = Arrangement.spacedBy(DaftarSpacing.sm),
+            verticalAlignment = Alignment.CenterVertically,
+        ) {
+            DaftarCurrencyBadge(glyph = "$")
+            DaftarCurrencyBadge(glyph = "E£")
+            DaftarCurrencyBadge(glyph = "ج.م", arabicGlyph = true)
+        }
+        DaftarLedgerRow(
+            title = stringResource(Res.string.ledger_bank_misr),
+            subtitle = stringResource(Res.string.ledger_bank_misr_sub),
+            leading = { DaftarBankTile(mark = DaftarBankMark.Monogram("BM", Color(0xFF9D1535))) },
+            value = { DaftarAmount(amount = "163,500.00", unit = "EGP", style = typography.ledgerValue) },
         )
     }
 }

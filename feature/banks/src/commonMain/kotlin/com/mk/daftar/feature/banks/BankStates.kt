@@ -77,6 +77,7 @@ internal fun bankListStateOf(
                 accountCount = mine.size,
                 currencies = mine.map { it.balance.currency }.distinct().sortedBy { it != Currency.USD },
                 valueEgp = valueBankAccounts(mine, selected).totalEgp,
+                institutionId = bank.institutionId?.value,
             )
         }
         BankListUiState(
@@ -131,6 +132,7 @@ internal fun bankDetailStateOf(
                 phase = if (rows.isEmpty()) BankPhase.Empty else BankPhase.Ready,
                 bankId = bankId,
                 name = record.bank.value.name,
+                institutionId = record.bank.value.institutionId?.value,
                 total = valuation.toTotal(),
                 accounts = rows,
                 hidden = hidden,

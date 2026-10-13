@@ -20,8 +20,10 @@ import androidx.compose.material3.CircularProgressIndicator
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
+import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.remember
+import androidx.compose.runtime.rememberUpdatedState
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.focus.FocusRequester
@@ -38,6 +40,8 @@ import androidx.compose.ui.semantics.heading
 import androidx.compose.ui.semantics.semantics
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
+import androidx.lifecycle.Lifecycle
+import androidx.lifecycle.compose.LocalLifecycleOwner
 import com.mk.daftar.core.designsystem.component.DaftarIcon
 import com.mk.daftar.core.designsystem.component.DaftarKeypad
 import com.mk.daftar.core.designsystem.component.DaftarMark
@@ -133,6 +137,14 @@ fun AuthContent(
     val colors = DaftarTheme.colors
     val focus = remember { FocusRequester() }
     LaunchedEffect(Unit) { runCatching { focus.requestFocus() } }
+    // The automatic biometric request starts only after this surface is drawn on a resumed host. Recomposition,
+    // rotation and focus changes of the OS prompt do not repeat it: the view model clears the pending request.
+    val resumed = LocalLifecycleOwner.current.lifecycle.currentStateFlow
+        .collectAsState().value.isAtLeast(Lifecycle.State.RESUMED)
+    val latestIntent by rememberUpdatedState(onIntent)
+    LaunchedEffect(state.biometricAutoPending, resumed) {
+        if (state.biometricAutoPending && resumed) latestIntent(AuthIntent.AutomaticBiometric)
+    }
     Column(
         modifier = modifier
             .fillMaxSize()

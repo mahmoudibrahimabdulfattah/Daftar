@@ -43,6 +43,7 @@ import com.mk.daftar.core.designsystem.theme.DaftarSpacing
 import com.mk.daftar.core.designsystem.theme.DaftarTheme
 import com.mk.daftar.core.domain.valuation.QuoteOrigin
 import com.mk.daftar.core.domain.valuation.SelectedQuote
+import com.mk.daftar.core.model.FxBasis
 import com.mk.daftar.core.model.GoldForm
 import com.mk.daftar.core.model.QuoteKey
 import com.mk.daftar.core.model.QuoteKind
@@ -54,6 +55,13 @@ import com.mk.daftar.core.ui.mvi.CollectEffects
 import com.mk.daftar.core.ui.presentation.moneyText
 import com.mk.daftar.core.ui.shell.ShellScreen
 import com.mk.daftar.feature.prices.resources.Res
+import com.mk.daftar.feature.prices.resources.fx_basis_bank
+import com.mk.daftar.feature.prices.resources.fx_basis_bank_explanation
+import com.mk.daftar.feature.prices.resources.fx_basis_estimate
+import com.mk.daftar.feature.prices.resources.fx_basis_fallback
+import com.mk.daftar.feature.prices.resources.fx_basis_manual
+import com.mk.daftar.feature.prices.resources.fx_time_checked
+import com.mk.daftar.feature.prices.resources.fx_time_published_checked
 import com.mk.daftar.feature.prices.resources.prices_attribution
 import com.mk.daftar.feature.prices.resources.prices_badge_cached
 import com.mk.daftar.feature.prices.resources.prices_badge_clock
@@ -100,6 +108,7 @@ import com.mk.daftar.feature.prices.resources.prices_notice_missing
 import com.mk.daftar.feature.prices.resources.prices_notice_offline
 import com.mk.daftar.feature.prices.resources.prices_notice_partial
 import com.mk.daftar.feature.prices.resources.prices_notice_rate_limited
+import com.mk.daftar.feature.prices.resources.prices_provider_banque_misr
 import com.mk.daftar.feature.prices.resources.prices_provider_exchange
 import com.mk.daftar.feature.prices.resources.prices_provider_fawaz
 import com.mk.daftar.feature.prices.resources.prices_provider_isagha
@@ -565,10 +574,60 @@ private fun UsdSection(usd: SelectedQuote?, source: SelectedQuote?) {
         Spacer(Modifier.height(DaftarSpacing.xxs))
         QuoteCaption(usd)
         SourceLine(quote = usd, label = stringResource(providerResource(usd.provenance.provider)))
+        FxBasisBlock(usd)
         if (source != null) {
             Spacer(Modifier.height(DaftarSpacing.xs))
             SourceBeneath(source)
             SourceLine(quote = source, label = stringResource(providerResource(source.provenance.provider)))
+        }
+    }
+}
+
+/**
+ * What the USD reference measures. Banque Misr's transfer buy is named as such, a market-rate fallback is marked as an
+ * estimate, and a manual rate says when it was entered. Legacy quotes of unproven basis show no basis line.
+ */
+@Composable
+private fun FxBasisBlock(quote: SelectedQuote) {
+    val colors = DaftarTheme.colors
+    val typography = DaftarTheme.typography
+    val basis = quote.fxBasis
+    if (basis == null || basis == FxBasis.LEGACY_UNKNOWN) return
+    val label = when (basis) {
+        FxBasis.MID_MARKET_ESTIMATE -> stringResource(
+            Res.string.fx_basis_estimate,
+            stringResource(providerResource(quote.provenance.provider)),
+        )
+
+        FxBasis.MANUAL -> stringResource(Res.string.fx_basis_manual, stampOf(quote.referenceAt))
+
+        else -> stringResource(Res.string.fx_basis_bank)
+    }
+    val published = (quote.provenance.sourceTime as? SourceTime.Timestamp)?.value
+    val times = when {
+        basis != FxBasis.BANK_TRANSFER_BUY -> null
+
+        published != null -> stringResource(
+            Res.string.fx_time_published_checked,
+            stampOf(published),
+            stampOf(quote.referenceAt),
+        )
+
+        else -> stringResource(Res.string.fx_time_checked, stampOf(quote.referenceAt))
+    }
+    Column(modifier = Modifier.fillMaxWidth()) {
+        Spacer(Modifier.height(DaftarSpacing.xxs))
+        Text(label, style = typography.caption, color = colors.ink)
+        if (basis == FxBasis.BANK_TRANSFER_BUY) {
+            Text(
+                stringResource(Res.string.fx_basis_bank_explanation),
+                style = typography.fineText,
+                color = colors.muted,
+            )
+        }
+        if (times != null) Text(times, style = typography.fineText, color = colors.muted)
+        if (basis == FxBasis.MID_MARKET_ESTIMATE) {
+            Text(stringResource(Res.string.fx_basis_fallback), style = typography.fineText, color = colors.warning)
         }
     }
 }
@@ -654,6 +713,7 @@ private fun badgeResource(badge: PriceBadge): StringResource = when (badge) {
 
 private fun providerResource(provider: QuoteProvider): StringResource = when (provider) {
     QuoteProvider.ISAGHA -> Res.string.prices_provider_isagha
+    QuoteProvider.BANQUE_MISR -> Res.string.prices_provider_banque_misr
     QuoteProvider.EXCHANGE_RATE_API -> Res.string.prices_provider_exchange
     QuoteProvider.FAWAZ_CURRENCY_API -> Res.string.prices_provider_fawaz
     QuoteProvider.USER -> Res.string.prices_provider_manual

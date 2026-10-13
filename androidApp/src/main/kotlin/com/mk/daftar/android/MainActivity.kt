@@ -2,6 +2,7 @@ package com.mk.daftar.android
 
 import android.graphics.Color
 import android.os.Bundle
+import android.os.SystemClock
 import android.view.WindowManager
 import androidx.activity.SystemBarStyle
 import androidx.activity.compose.setContent
@@ -13,6 +14,7 @@ import androidx.core.splashscreen.SplashScreen.Companion.installSplashScreen
 import com.mk.daftar.App
 import com.mk.daftar.core.account.CloudActivity
 import com.mk.daftar.platform.BiometricPromptHost
+import com.mk.daftar.platform.LaunchReadiness
 import com.mk.daftar.platform.backup.AndroidBackupPicker
 import com.mk.daftar.platform.backup.AndroidRestorePicker
 
@@ -39,8 +41,12 @@ class MainActivity : AppCompatActivity() {
     }
 
     override fun onCreate(savedInstanceState: Bundle?) {
-        // The splash is the static starting theme; it never waits for the vault or the network.
-        installSplashScreen()
+        // The splash stays until the lock surface knows the vault status, so the biometric prompt can follow it at
+        // once. It never waits on the network, and a capped wait keeps a slow status read from holding the launch.
+        val splashStart = SystemClock.uptimeMillis()
+        installSplashScreen().setKeepOnScreenCondition {
+            !LaunchReadiness.ready.value && SystemClock.uptimeMillis() - splashStart < SPLASH_READY_CAP_MILLIS
+        }
         enableEdgeToEdge()
         window.addFlags(WindowManager.LayoutParams.FLAG_SECURE)
         super.onCreate(savedInstanceState)
@@ -90,5 +96,8 @@ class MainActivity : AppCompatActivity() {
 
     private companion object {
         const val SURFACE = "main-activity"
+
+        /** The longest the splash waits for the lock surface. */
+        const val SPLASH_READY_CAP_MILLIS = 1_500L
     }
 }

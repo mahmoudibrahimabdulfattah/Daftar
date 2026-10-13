@@ -1,0 +1,241 @@
+{
+  "schemaVersion": 1,
+  "directoryVersion": 1,
+  "countries": [
+    {
+      "code": "EG",
+      "nameAr": "مصر",
+      "nameEn": "Egypt"
+    }
+  ],
+  "institutions": [
+    {
+      "id": "eg.nbe",
+      "country": "EG",
+      "nameAr": "البنك الأهلي المصري",
+      "nameEn": "National Bank of Egypt",
+      "aliasesAr": [
+        "الأهلي"
+      ],
+      "aliasesEn": [
+        "NBE",
+        "AlAhli"
+      ],
+      "monogram": "NBE",
+      "brandBackground": "#006341",
+      "monogramForeground": "#FFFFFF",
+      "officialAsset": "bank_eg_nbe",
+      "manifestRef": "eg.nbe",
+      "officialBacking": "white"
+    },
+    {
+      "id": "eg.banque-misr",
+      "country": "EG",
+      "nameAr": "بنك مصر",
+      "nameEn": "Banque Misr",
+      "aliasesAr": [],
+      "aliasesEn": [
+        "Bank Misr",
+        "BM"
+      ],
+      "monogram": "BM",
+      "brandBackground": "#9D1535",
+      "monogramForeground": "#FFFFFF",
+      "officialAsset": "bank_eg_banque_misr",
+      "manifestRef": "eg.banque-misr",
+      "officialBacking": "white"
+    },
+    {
+      "id": "eg.cib",
+      "country": "EG",
+      "nameAr": "البنك التجاري الدولي",
+      "nameEn": "Commercial International Bank",
+      "aliasesAr": [],
+      "aliasesEn": [
+        "CIB"
+      ],
+      "monogram": "CIB",
+      "brandBackground": "#003B71",
+      "monogramForeground": "#FFFFFF",
+      "officialAsset": "bank_eg_cib",
+      "manifestRef": "eg.cib",
+      "officialBacking": "brand"
+    },
+    {
+      "id": "eg.qnb",
+      "country": "EG",
+      "nameAr": "كيو إن بي مصر",
+      "nameEn": "QNB Egypt",
+      "aliasesAr": [
+        "الأهلي"
+      ],
+      "aliasesEn": [
+        "QNB Alahli"
+      ],
+      "monogram": "QNB",
+      "brandBackground": "#621344",
+      "monogramForeground": "#FFFFFF",
+      "officialAsset": "bank_eg_qnb",
+      "manifestRef": "eg.qnb",
+      "officialBacking": "white"
+    },
+    {
+      "id": "eg.banque-du-caire",
+      "country": "EG",
+      "nameAr": "بنك القاهرة",
+      "nameEn": "Banque du Caire",
+      "aliasesAr": [],
+      "aliasesEn": [
+        "BDC"
+      ],
+      "monogram": "BDC",
+      "brandBackground": "#A53B12",
+      "monogramForeground": "#FFFFFF",
+      "officialAsset": "bank_eg_banque_du_caire",
+      "manifestRef": "eg.banque-du-caire",
+      "officialBacking": "brand"
+    },
+    {
+      "id": "eg.aaib",
+      "country": "EG",
+      "nameAr": "البنك العربي الأفريقي الدولي",
+      "nameEn": "Arab African International Bank",
+      "aliasesAr": [],
+      "aliasesEn": [
+        "AAIB"
+      ],
+      "monogram": "AAIB",
+      "brandBackground": "#00594C",
+      "monogramForeground": "#FFFFFF",
+      "officialAsset": "bank_eg_aaib",
+      "manifestRef": "eg.aaib",
+      "officialBacking": "white"
+    },
+    {
+      "id": "eg.hsbc",
+      "country": "EG",
+      "nameAr": "إتش إس بي سي مصر",
+      "nameEn": "HSBC Egypt",
+      "aliasesAr": [],
+      "aliasesEn": [],
+      "monogram": "HSBC",
+      "brandBackground": "#DB0011",
+      "monogramForeground": "#FFFFFF",
+      "officialAsset": "bank_eg_hsbc",
+      "manifestRef": "eg.hsbc",
+      "officialBacking": "white"
+    },
+    {
+      "id": "eg.alexbank",
+      "country": "EG",
+      "nameAr": "بنك الإسكندرية",
+      "nameEn": "ALEXBANK",
+      "aliasesAr": [],
+      "aliasesEn": [
+        "Alex Bank"
+      ],
+      "monogram": "ALEX",
+      "brandBackground": "#A64000",
+      "monogramForeground": "#FFFFFF",
+      "officialAsset": "bank_eg_alexbank",
+      "manifestRef": "eg.alexbank",
+      "officialBacking": "brand"
+    },
+    {
+      "id": "eg.faisal",
+      "country": "EG",
+      "nameAr": "بنك فيصل الإسلامي المصري",
+      "nameEn": "Faisal Islamic Bank of Egypt",
+      "aliasesAr": [],
+      "aliasesEn": [
+        "Faisal"
+      ],
+      "monogram": "FIB",
+      "brandBackground": "#006A3C",
+      "monogramForeground": "#FFFFFF",
+      "officialAsset": "bank_eg_faisal",
+      "manifestRef": "eg.faisal",
+      "officialBacking": "white"
+    },
+    {
+      "id": "eg.adib",
+      "country": "EG",
+      "nameAr": "مصرف أبوظبي الإسلامي مصر",
+      "nameEn": "Abu Dhabi Islamic Bank Egypt",
+      "aliasesAr": [],
+      "aliasesEn": [
+        "ADIB"
+      ],
+      "monogram": "ADIB",
+      "brandBackground": "#003B5C",
+      "monogramForeground": "#FFFFFF",
+      "officialAsset": "bank_eg_adib",
+      "manifestRef": "eg.adib",
+      "officialBacking": "white"
+    },
+    {
+      "id": "eg.emirates-nbd",
+      "country": "EG",
+      "nameAr": "بنك الإمارات دبي الوطني مصر",
+      "nameEn": "Emirates NBD Egypt",
+      "aliasesAr": [],
+      "aliasesEn": [
+        "ENBD"
+      ],
+      "monogram": "ENBD",
+      "brandBackground": "#003B71",
+      "monogramForeground": "#FFFFFF",
+      "officialAsset": "bank_eg_emirates_nbd",
+      "manifestRef": "eg.emirates-nbd",
+      "officialBacking": "white"
+    },
+    {
+      "id": "eg.credit-agricole",
+      "country": "EG",
+      "nameAr": "كريدي أجريكول مصر",
+      "nameEn": "Crédit Agricole Egypt",
+      "aliasesAr": [],
+      "aliasesEn": [
+        "Credit Agricole"
+      ],
+      "monogram": "CA",
+      "brandBackground": "#006B5E",
+      "monogramForeground": "#FFFFFF",
+      "officialAsset": "bank_eg_credit_agricole",
+      "manifestRef": "eg.credit-agricole",
+      "officialBacking": "white"
+    },
+    {
+      "id": "eg.bank-abc",
+      "country": "EG",
+      "nameAr": "بنك ABC مصر",
+      "nameEn": "Bank ABC Egypt",
+      "aliasesAr": [],
+      "aliasesEn": [
+        "Arab Banking Corporation"
+      ],
+      "monogram": "ABC",
+      "brandBackground": "#005D83",
+      "monogramForeground": "#FFFFFF",
+      "officialAsset": "bank_eg_bank_abc",
+      "manifestRef": "eg.bank-abc",
+      "officialBacking": "white"
+    },
+    {
+      "id": "eg.egebank",
+      "country": "EG",
+      "nameAr": "إي جي بنك",
+      "nameEn": "EGBANK",
+      "aliasesAr": [],
+      "aliasesEn": [
+        "Egyptian Gulf Bank"
+      ],
+      "monogram": "EG",
+      "brandBackground": "#9A4300",
+      "monogramForeground": "#FFFFFF",
+      "officialAsset": "bank_eg_egebank",
+      "manifestRef": "eg.egebank",
+      "officialBacking": "brand"
+    }
+  ]
+}

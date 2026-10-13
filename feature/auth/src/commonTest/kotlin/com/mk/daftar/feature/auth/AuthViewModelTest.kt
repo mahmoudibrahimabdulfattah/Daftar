@@ -77,6 +77,25 @@ private class FakeGateway : AuthGateway {
     override suspend fun biometricCapability(): BiometricCapability = capability
 
     override suspend fun biometricReady(): Boolean = ready
+
+    /** The automatic-attempt flag, standing in for the non-sensitive store that survives restarts. */
+    var autoConsumed = false
+    var consumeSucceeds = true
+    var consumeCalls = 0
+    var clearCalls = 0
+
+    override suspend fun autoAttemptConsumed(): Boolean = autoConsumed
+
+    override suspend fun consumeAutoAttempt(): Boolean {
+        consumeCalls++
+        if (consumeSucceeds) autoConsumed = true
+        return consumeSucceeds
+    }
+
+    override suspend fun clearAutoAttempt() {
+        clearCalls++
+        autoConsumed = false
+    }
 }
 
 class AuthViewModelTest {
@@ -673,5 +692,193 @@ class AuthViewModelTest {
 
         assertEquals(AuthPhase.Create, vm.state.value.phase)
         assertEquals(AuthError.OpenFailed, vm.state.value.error)
+    }
+
+    private fun TestScope.lockedWithBiometrics(gateway: FakeGateway): AuthViewModel {
+        gateway.status = SecurityStatus.Locked(null)
+        gateway.ready = true
+        val (vm, _) = rig(gateway)
+        advanceUntilIdle()
+        return vm
+    }
+
+    @Test
+    fun coldLaunchQueuesOneAutomaticRequestAndStartsItOnlyWhenResumed() = runTest(dispatcher) {
+        val gateway = FakeGateway()
+        gateway.onUnlockWithBiometrics = { AuthResult.Biometric(AuthBiometricFailure.Cancelled) }
+        val vm = lockedWithBiometrics(gateway)
+        assertTrue(vm.state.value.biometricAutoPending, "the first lock of a cold launch is eligible")
+        assertEquals(0, gateway.biometricUnlockCalls, "queuing alone never prompts")
+
+        vm.onIntent(AuthIntent.AutomaticBiometric)
+        advanceUntilIdle()
+        assertEquals(1, gateway.biometricUnlockCalls)
+        assertEquals(1, gateway.consumeCalls, "the attempt is recorded before the platform is asked")
+        assertTrue(gateway.autoConsumed)
+
+        // A second lock-surface composition or a rotation sends the intent again: nothing is queued any more.
+        vm.onIntent(AuthIntent.AutomaticBiometric)
+        advanceUntilIdle()
+        assertEquals(1, gateway.biometricUnlockCalls)
+    }
+
+    @Test
+    fun everyLockAfterAnUnlockQueuesANewAutomaticRequest() = runTest(dispatcher) {
+        val gateway = FakeGateway()
+        gateway.onUnlockWithBiometrics = { AuthResult.Opened }
+        val vm = lockedWithBiometrics(gateway)
+        vm.onIntent(AuthIntent.AutomaticBiometric)
+        advanceUntilIdle()
+        assertEquals(1, gateway.biometricUnlockCalls)
+
+        // The app goes to the background and locks. This view model lives on, and the gate rechecks the status: the
+        // screen still read Unlock from the last episode, yet this lock is a new one.
+        vm.onIntent(AuthIntent.Recheck)
+        advanceUntilIdle()
+        assertTrue(vm.state.value.biometricAutoPending, "a lock after a successful unlock is eligible again")
+
+        vm.onIntent(AuthIntent.AutomaticBiometric)
+        advanceUntilIdle()
+        assertEquals(2, gateway.biometricUnlockCalls)
+    }
+
+    @Test
+    fun aRequestQueuedInTheBackgroundSurvivesTheRecheckOnResume() = runTest(dispatcher) {
+        val gateway = FakeGateway()
+        gateway.onUnlockWithBiometrics = { AuthResult.Opened }
+        // The vault locked while the app was in the background: the request is queued but the host is not resumed.
+        val vm = lockedWithBiometrics(gateway)
+        assertTrue(vm.state.value.biometricAutoPending)
+
+        // Returning to the foreground rechecks the status before the lock surface sees the host resumed.
+        vm.onIntent(AuthIntent.Recheck)
+        advanceUntilIdle()
+        assertTrue(vm.state.value.biometricAutoPending, "the resume recheck must not drop the queued request")
+
+        vm.onIntent(AuthIntent.AutomaticBiometric)
+        advanceUntilIdle()
+        assertEquals(1, gateway.biometricUnlockCalls)
+    }
+
+    @Test
+    fun cancelledAutomaticRequestDoesNotRepeatAfterRecheckOrRelaunch() = runTest(dispatcher) {
+        val gateway = FakeGateway()
+        gateway.onUnlockWithBiometrics = { AuthResult.Biometric(AuthBiometricFailure.Cancelled) }
+        val vm = lockedWithBiometrics(gateway)
+        vm.onIntent(AuthIntent.AutomaticBiometric)
+        advanceUntilIdle()
+        assertEquals(AuthPhase.Unlock, vm.state.value.phase)
+        assertNull(vm.state.value.error, "a cancelled prompt is not an error")
+
+        // Resume and recheck: the episode is already spent.
+        vm.onIntent(AuthIntent.Recheck)
+        advanceUntilIdle()
+        assertFalse(vm.state.value.biometricAutoPending)
+
+        // A process restart reads the stored flag and starts no request.
+        val restarted = rig(gateway).first
+        advanceUntilIdle()
+        assertFalse(restarted.state.value.biometricAutoPending)
+        restarted.onIntent(AuthIntent.AutomaticBiometric)
+        advanceUntilIdle()
+        assertEquals(1, gateway.biometricUnlockCalls, "no repeat until a successful unlock")
+
+        // The explicit key still works.
+        restarted.onIntent(AuthIntent.BiometricUnlock)
+        advanceUntilIdle()
+        assertEquals(2, gateway.biometricUnlockCalls)
+    }
+
+    @Test
+    fun terminalFailureAndLockoutNeverRetryAutomatically() = runTest(dispatcher) {
+        val gateway = FakeGateway()
+        gateway.onUnlockWithBiometrics = { AuthResult.Biometric(AuthBiometricFailure.LockedOut) }
+        val vm = lockedWithBiometrics(gateway)
+        vm.onIntent(AuthIntent.AutomaticBiometric)
+        advanceUntilIdle()
+        assertEquals(AuthNotice.BiometricsLockedOut, vm.state.value.notice)
+        vm.onIntent(AuthIntent.Recheck)
+        advanceUntilIdle()
+        assertEquals(1, gateway.biometricUnlockCalls)
+    }
+
+    @Test
+    fun typingTakesOverQueuedRequestAndConsumesIt() = runTest(dispatcher) {
+        val gateway = FakeGateway()
+        val vm = lockedWithBiometrics(gateway)
+        vm.type("1")
+        advanceUntilIdle()
+        assertFalse(vm.state.value.biometricAutoPending)
+        assertEquals(1, gateway.consumeCalls)
+        vm.onIntent(AuthIntent.AutomaticBiometric)
+        advanceUntilIdle()
+        assertEquals(0, gateway.biometricUnlockCalls, "the PIN entry is never interrupted")
+    }
+
+    @Test
+    fun forgotPinOrRestoreCancelsTheQueuedRequest() = runTest(dispatcher) {
+        val gateway = FakeGateway()
+        val vm = lockedWithBiometrics(gateway)
+        vm.onIntent(AuthIntent.ShowRecovery)
+        advanceUntilIdle()
+        assertFalse(vm.state.value.biometricAutoPending)
+        assertEquals(1, gateway.consumeCalls)
+        vm.onIntent(AuthIntent.LeaveRecovery)
+        advanceUntilIdle()
+        assertEquals(0, gateway.biometricUnlockCalls, "returning from recovery never prompts")
+        assertFalse(vm.state.value.biometricAutoPending)
+    }
+
+    @Test
+    fun backoffExpiryAndDisabledBiometricsNeverAutoPrompt() = runTest(dispatcher) {
+        val throttled = FakeGateway()
+        throttled.status = SecurityStatus.Locked(5.seconds)
+        throttled.ready = true
+        val (blocked, _) = rig(throttled)
+        runCurrent()
+        assertFalse(blocked.state.value.biometricAutoPending, "a running penalty blocks the automatic request")
+        // The penalty ends: the status is read again and reports no penalty, so the countdown stops.
+        throttled.status = SecurityStatus.Locked(null)
+        advanceUntilIdle()
+        assertFalse(blocked.state.value.biometricAutoPending, "expiry never starts an automatic request")
+
+        val disabled = FakeGateway()
+        disabled.status = SecurityStatus.Locked(null)
+        disabled.ready = false
+        val (noBiometrics, _) = rig(disabled)
+        advanceUntilIdle()
+        assertFalse(noBiometrics.state.value.biometricAutoPending)
+        noBiometrics.onIntent(AuthIntent.AutomaticBiometric)
+        advanceUntilIdle()
+        assertEquals(0, disabled.biometricUnlockCalls)
+    }
+
+    @Test
+    fun consumedFlagFromAnEarlierEpisodeBlocksTheRequest() = runTest(dispatcher) {
+        val gateway = FakeGateway()
+        gateway.autoConsumed = true
+        val vm = lockedWithBiometrics(gateway)
+        assertFalse(vm.state.value.biometricAutoPending)
+    }
+
+    @Test
+    fun failedWriteDoesNotStartTheRequest() = runTest(dispatcher) {
+        val gateway = FakeGateway()
+        gateway.consumeSucceeds = false
+        val vm = lockedWithBiometrics(gateway)
+        vm.onIntent(AuthIntent.AutomaticBiometric)
+        advanceUntilIdle()
+        assertEquals(0, gateway.biometricUnlockCalls, "no prompt without a recorded attempt")
+    }
+
+    @Test
+    fun successfulUnlockClearsTheFlagForTheNextEpisode() = runTest(dispatcher) {
+        val gateway = FakeGateway()
+        gateway.onUnlockWithBiometrics = { AuthResult.Opened }
+        val vm = lockedWithBiometrics(gateway)
+        vm.onIntent(AuthIntent.AutomaticBiometric)
+        advanceUntilIdle()
+        assertEquals(1, gateway.clearCalls)
+        assertFalse(gateway.autoConsumed)
     }
 }

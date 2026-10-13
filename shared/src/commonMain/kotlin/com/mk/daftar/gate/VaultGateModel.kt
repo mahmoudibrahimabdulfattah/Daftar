@@ -19,13 +19,29 @@ internal sealed interface VaultSurface {
     data class Shell(val generation: Long) : VaultSurface
 }
 
-internal fun vaultSurfaceFor(state: VaultSessionState): VaultSurface = when (state) {
-    VaultSessionState.Locked -> VaultSurface.Locked
-    VaultSessionState.Opening -> VaultSurface.Progress(closing = false)
-    VaultSessionState.Closing -> VaultSurface.Progress(closing = true)
-    VaultSessionState.Unavailable -> VaultSurface.Unavailable
-    is VaultSessionState.Open -> VaultSurface.Shell(state.generation)
-}
+/**
+ * [biometricInProgress] keeps the lock surface while a biometric unlock runs: the session reports Opening as soon as the
+ * attempt starts, before the system prompt is even shown, and a progress screen there would stand between the user's
+ * tap and the prompt. Once the prompt succeeds the vault opens behind the same lock surface and goes straight to Home.
+ */
+internal fun vaultSurfaceFor(state: VaultSessionState, biometricInProgress: Boolean = false): VaultSurface =
+    when (state) {
+        VaultSessionState.Locked -> VaultSurface.Locked
+
+        VaultSessionState.Opening -> if (biometricInProgress) {
+            VaultSurface.Locked
+        } else {
+            VaultSurface.Progress(
+                closing = false,
+            )
+        }
+
+        VaultSessionState.Closing -> VaultSurface.Progress(closing = true)
+
+        VaultSessionState.Unavailable -> VaultSurface.Unavailable
+
+        is VaultSessionState.Open -> VaultSurface.Shell(state.generation)
+    }
 
 /** The developer tools that the locked surface can open. They exist only in debug builds. */
 internal enum class DeveloperDestination { DESIGN_CATALOG, SHELL_PREVIEW }

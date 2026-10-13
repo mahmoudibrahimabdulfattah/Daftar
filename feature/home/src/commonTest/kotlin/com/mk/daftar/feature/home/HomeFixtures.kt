@@ -86,9 +86,13 @@ internal fun remoteGold(karat: GoldKarat, price: String, fetchedAt: Instant = FI
     return RemoteQuoteRecord(GoldQuote(sellKey(karat), GoldPrice(dec(price)), provenance), null, null)
 }
 
-internal fun remoteUsd(rate: String, fetchedAt: Instant = FIXTURE_NOW): RemoteQuoteRecord {
+internal fun remoteUsd(
+    rate: String,
+    fetchedAt: Instant = FIXTURE_NOW,
+    provider: QuoteProvider = QuoteProvider.EXCHANGE_RATE_API,
+): RemoteQuoteRecord {
     val provenance = QuoteProvenance.live(
-        provider = QuoteProvider.EXCHANGE_RATE_API,
+        provider = provider,
         sourceUrl = "https://open.er-api.com/v6/latest/USD",
         sourceTime = SourceTime.Unknown,
         fetchedAt = fetchedAt,

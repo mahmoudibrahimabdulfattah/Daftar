@@ -131,7 +131,17 @@ object DaftarStyles {
 
     val goldTileIcon: Style = Style {
         shape(shapes.tile)
-        background(colors.goldSoft)
+        background(colors.goldTile)
+    }
+
+    val bankTileIcon: Style = Style {
+        shape(shapes.tile)
+        background(colors.bankTile)
+    }
+
+    val cashTileIcon: Style = Style {
+        shape(shapes.tile)
+        background(colors.cashTile)
     }
 
     val statusTag: Style = Style {

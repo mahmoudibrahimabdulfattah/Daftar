@@ -48,6 +48,7 @@ import com.mk.daftar.core.domain.session.VaultSessionState
 import com.mk.daftar.core.navigation.BackupExportRoute
 import com.mk.daftar.core.ui.presentation.ValuesVisibility
 import com.mk.daftar.feature.auth.AuthIntent
+import com.mk.daftar.feature.auth.AuthPhase
 import com.mk.daftar.feature.auth.AuthUiState
 import com.mk.daftar.feature.auth.AuthViewModel
 import com.mk.daftar.feature.auth.ui.AuthContent
@@ -55,6 +56,7 @@ import com.mk.daftar.feature.backup.restore.RestoreHandoff
 import com.mk.daftar.feature.backup.restore.RestoreScreen
 import com.mk.daftar.feature.cloud.CloudMode
 import com.mk.daftar.feature.cloud.CloudScreen
+import com.mk.daftar.platform.LaunchReadiness
 import com.mk.daftar.platform.PlatformBackHandler
 import com.mk.daftar.shared.resources.Res
 import com.mk.daftar.shared.resources.dev_catalog
@@ -119,7 +121,11 @@ fun VaultGate(
         }
     }
     LifecycleEventEffect(Lifecycle.Event.ON_RESUME) { onAuthIntent(AuthIntent.Recheck) }
-    when (val surface = vaultSurfaceFor(state)) {
+    // The splash waits for this: once the status is known the lock surface (and its biometric request) is ready.
+    LaunchedEffect(authState.phase, state) {
+        if (authState.phase != AuthPhase.Checking || state is VaultSessionState.Open) LaunchReadiness.markReady()
+    }
+    when (val surface = vaultSurfaceFor(state, biometricInProgress = authState.busy?.isBiometric == true)) {
         VaultSurface.Locked, VaultSurface.Unavailable -> LockedSurface(
             authState = authState,
             onAuthIntent = onAuthIntent,

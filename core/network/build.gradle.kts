@@ -58,6 +58,7 @@ val generateTestFixtures = tasks.register("generateTestFixtures") {
         val fixtures = mapOf(
             "isaghaPricesHtml" to "isagha-prices.html",
             "isaghaFxHtml" to "isagha-fx.html",
+            "banqueMisrFxHtml" to "banquemisr-fx.html",
         )
         val packageDir = File(outputDir, "com/mk/daftar/core/network/fixtures").apply { mkdirs() }
         val body = buildString {

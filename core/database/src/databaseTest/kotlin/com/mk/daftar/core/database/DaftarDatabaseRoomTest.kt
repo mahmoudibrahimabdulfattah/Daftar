@@ -10,6 +10,7 @@ import com.mk.daftar.core.database.mapper.toRemoteEntity
 import com.mk.daftar.core.database.mapper.toStored
 import com.mk.daftar.core.database.schema.ValidationTriggersV1
 import com.mk.daftar.core.database.schema.ValidationTriggersV2
+import com.mk.daftar.core.database.schema.ValidationTriggersV3
 import com.mk.daftar.core.domain.repository.ManualQuoteInput
 import com.mk.daftar.core.model.Bank
 import com.mk.daftar.core.model.BankAccount
@@ -266,6 +267,8 @@ class DaftarDatabaseRoomTest {
             assertRejected(connection, remoteSql(date = "'2026-06-01'"), "timestamp source time")
             assertRejected(connection, remoteSql(kind = "DATE_ONLY", date = "NULL"), "date-only")
             assertRejected(connection, remoteSql(value = "4100.50"), "value")
+            assertRejected(connection, remoteSql(key = "USD_EGP", provider = "BANQUE_MISR"), "basis")
+            assertRejected(connection, remoteSql(basis = "MID_MARKET_ESTIMATE"), "only USD to EGP")
 
             assertRejected(connection, manualSql(key = "GOLD_21_BUY"), "only gold sell prices")
             assertRejected(connection, manualSql(pinned = 2), "pinned")
@@ -293,7 +296,11 @@ class DaftarDatabaseRoomTest {
 
             val triggers = connection.names("SELECT name FROM sqlite_master WHERE type = 'trigger'")
             assertEquals(
-                (ValidationTriggersV1.triggerNames + ValidationTriggersV2.triggerNames).toSet(),
+                (
+                    ValidationTriggersV1.triggerNames + ValidationTriggersV2.triggerNames +
+                        ValidationTriggersV3.triggerNames
+                    )
+                    .toSet(),
                 triggers.toSet(),
             )
         }
@@ -430,13 +437,15 @@ class DaftarDatabaseRoomTest {
         url: String = "https://example.com/gold",
         kind: String = "TIMESTAMP",
         date: String = "NULL",
+        basis: String? = null,
     ): String {
         val seconds = if (kind == "TIMESTAMP") "1700000000" else "NULL"
         val nanos = if (kind == "TIMESTAMP") "0" else "NULL"
+        val basisSql = basis?.let { "'$it'" } ?: "NULL"
         return "INSERT INTO remote_quotes (quote_key, provider, value, source_url, source_time_kind, source_seconds, " +
             "source_nanos, source_date, fetched_seconds, fetched_nanos, recorded_seconds, recorded_nanos, note, " +
-            "next_update_seconds, next_update_nanos, attribution_url) VALUES ('$key', '$provider', '$value', '$url', " +
-            "'$kind', $seconds, $nanos, $date, 1700000000, 0, 1700000000, 0, NULL, NULL, NULL, NULL)"
+            "next_update_seconds, next_update_nanos, attribution_url, basis) VALUES ('$key', '$provider', '$value', " +
+            "'$url', '$kind', $seconds, $nanos, $date, 1700000000, 0, 1700000000, 0, NULL, NULL, NULL, NULL, $basisSql)"
     }
 
     private fun manualSql(key: String = "GOLD_24_SELL", pinned: Int = 1) =

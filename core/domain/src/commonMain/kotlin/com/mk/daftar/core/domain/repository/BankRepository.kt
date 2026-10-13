@@ -8,10 +8,21 @@ import com.mk.daftar.core.model.Bank
 import com.mk.daftar.core.model.BankAccount
 import com.mk.daftar.core.model.BankAccountId
 import com.mk.daftar.core.model.BankId
+import com.mk.daftar.core.model.InstitutionId
 import com.mk.daftar.core.model.Money
 import kotlinx.coroutines.flow.Flow
 
-data class BankInput(val name: String)
+/**
+ * An explicit identity choice made in the directory or as a custom bank. [institutionId] is null for "Other". Every
+ * choice is reviewed, so automatic matching never revisits it.
+ */
+data class BankIdentityChoice(val institutionId: InstitutionId?)
+
+/**
+ * The editable fields of a bank. A null [identity] keeps the stored identity on update, and creates an unreviewed
+ * custom bank. Editing the display name never changes the identity.
+ */
+data class BankInput(val name: String, val identity: BankIdentityChoice? = null)
 
 data class BankAccountInput(
     /** Editing may move an account only to an existing bank. */

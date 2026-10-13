@@ -1,6 +1,7 @@
 package com.mk.daftar.core.designsystem.icon
 
 import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.graphics.PathFillType
 import androidx.compose.ui.graphics.SolidColor
 import androidx.compose.ui.graphics.StrokeCap
 import androidx.compose.ui.graphics.StrokeJoin
@@ -34,6 +35,17 @@ object DaftarIcons {
             "Gold",
             "m6 7-3 11h18L18 7Z M6 7h12M8 11h8",
         )
+    }
+
+    /** A solid ingot for gold category tiles: one even-odd path whose lower seam is cut out to the tile. */
+    val GoldBar: ImageVector by lazy {
+        ImageVector.Builder("GoldBar", 24.dp, 24.dp, 24f, 24f)
+            .addPath(
+                pathData = addPathNodes("M6 5H18L22 16V19H2V16Z M4.5 15L3.8 17H20.2L19.5 15Z"),
+                fill = SolidColor(Color.Black),
+                pathFillType = PathFillType.EvenOdd,
+            )
+            .build()
     }
 
     val Bank: ImageVector by lazy {

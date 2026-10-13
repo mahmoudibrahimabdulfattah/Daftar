@@ -85,14 +85,19 @@ class BackupZakatYearsTest {
             appVersion = current.appVersion,
             preferences = current.preferences,
             goldHoldings = current.goldHoldings,
-            banks = current.banks,
+            banks = current.banks.map { BankPayloadV2(it.id, it.name, it.createdAt, it.updatedAt) },
             bankAccounts = current.bankAccounts,
             cashBalances = current.cashBalances,
             zakatPayments = current.zakatPayments.map {
                 ZakatPayloadV1(it.id, it.paidOn, it.amount, it.currency, it.note, it.createdAt, it.updatedAt)
             },
             personalNotes = current.personalNotes,
-            remoteQuotes = current.remoteQuotes,
+            remoteQuotes = current.remoteQuotes.map {
+                RemoteQuotePayloadV2(
+                    it.quoteKey, it.provider, it.value, it.sourceUrl, it.sourceTimeKind, it.sourceTime,
+                    it.fetchedAt, it.recordedAt, it.note, it.nextUpdateAt, it.attributionUrl,
+                )
+            },
             manualQuotes = current.manualQuotes,
         )
         val text = BackupJson.encodeToString(PayloadDocumentV1.serializer(), versionOne)
@@ -104,8 +109,8 @@ class BackupZakatYearsTest {
     }
 
     @Test
-    fun aPayloadNewerThanVersionTwoIsRefused() = runTest {
-        val text = canonicalText(withYears()).replace("\"schemaVersion\":2", "\"schemaVersion\":3")
+    fun aPayloadNewerThanTheCurrentVersionIsRefused() = runTest {
+        val text = canonicalText(withYears()).replace("\"schemaVersion\":3", "\"schemaVersion\":4")
         assertRejected(text, BackupError.UnsupportedFormat)
     }
 

@@ -279,9 +279,8 @@ fun ZakatEditorScreen(
     }
     // The shell asks before it leaves: a back action, a gesture or a tab change. Only unsaved edits make it ask.
     DisposableEffect(viewModel, navigator) {
-        val unregister = navigator.leaveGuard.register(viewModel) { request, proceed ->
-            viewModel.onLeaveRequested { discarded ->
-                if (discarded && request is LeaveRequest.Switch) navigator.goBack()
+        val unregister = navigator.leaveGuard.register(viewModel) { _, proceed ->
+            viewModel.onLeaveRequested { _ ->
                 proceed()
             }
         }

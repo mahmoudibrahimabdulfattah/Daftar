@@ -80,6 +80,110 @@ class BankEditorViewModelTest {
     }
 
     @Test
+    fun aNewBankStartsInTheDirectoryAndTakesTheChosenCatalogName() {
+        val rig = rig(BankEditorTarget.New)
+        rig.open()
+        assertEquals(BankPickerState(), rig.model.state.value.picker)
+
+        rig.model.onIntent(BankEditorIntent.PickerQueryChanged("مصر"))
+        assertEquals("مصر", rig.model.state.value.picker?.query)
+        rig.model.onIntent(BankEditorIntent.PickInstitution("eg.banque-misr", "بنك مصر"))
+
+        val state = rig.model.state.value
+        assertNull(state.picker)
+        assertEquals("بنك مصر", state.draft.nameText)
+        assertEquals("eg.banque-misr", state.institutionId)
+        rig.model.onIntent(BankEditorIntent.NameChanged("بنك مصر - الراتب"))
+        rig.model.onIntent(BankEditorIntent.Save)
+        settle()
+
+        val input = rig.repository.createdBankInputs.single()
+        assertEquals("بنك مصر - الراتب", input.name)
+        assertEquals("eg.banque-misr", input.identity?.institutionId?.value)
+    }
+
+    @Test
+    fun otherBankIsACustomIdentityWithAnEmptyName() {
+        val rig = rig(BankEditorTarget.New)
+        rig.open()
+
+        rig.model.onIntent(BankEditorIntent.PickOther)
+        assertEquals("", rig.model.state.value.draft.nameText)
+        assertNull(rig.model.state.value.institutionId)
+        rig.model.onIntent(BankEditorIntent.NameChanged("بنك التعمير"))
+        rig.model.onIntent(BankEditorIntent.Save)
+        settle()
+
+        val identity = requireNotNull(rig.repository.createdBankInputs.single().identity)
+        assertNull(identity.institutionId)
+    }
+
+    @Test
+    fun backFromTheDirectoryBeforeAnyChoiceLeavesTheNewEditor() {
+        val rig = rig(BankEditorTarget.New)
+        rig.open()
+        val effects = collectEffects(rig)
+
+        rig.model.onIntent(BankEditorIntent.ClosePicker)
+        settle()
+
+        assertEquals(listOf<BankEffect>(BankEffect.Close), effects)
+        assertTrue(rig.repository.createdBankInputs.isEmpty())
+    }
+
+    @Test
+    fun changingTheIdentityOfAStoredBankKeepsItsNameAndIsSaved() {
+        val rig = rig(BankEditorTarget.Existing("b1"))
+        rig.repository.seed(bank("b1", "حساب الراتب"), revision = 2)
+        rig.open()
+        assertNull(rig.model.state.value.picker)
+        assertFalse(rig.model.state.value.dirty)
+
+        rig.model.onIntent(BankEditorIntent.OpenPicker)
+        rig.model.onIntent(BankEditorIntent.PickInstitution("eg.cib", "البنك التجاري الدولي"))
+
+        val state = rig.model.state.value
+        assertEquals("حساب الراتب", state.draft.nameText)
+        assertEquals("eg.cib", state.institutionId)
+        assertTrue(state.dirty)
+        rig.model.onIntent(BankEditorIntent.Save)
+        settle()
+        val input = rig.repository.updatedBankInputs.single()
+        assertEquals("حساب الراتب", input.name)
+        assertEquals("eg.cib", input.identity?.institutionId?.value)
+    }
+
+    @Test
+    fun renamingAloneSendsNoIdentitySoTheStoredOneIsKept() {
+        val rig = rig(BankEditorTarget.Existing("b1"))
+        rig.repository.seed(bank("b1", "CIB"), revision = 1)
+        rig.open()
+
+        rig.model.onIntent(BankEditorIntent.NameChanged("CIB Egypt"))
+        rig.model.onIntent(BankEditorIntent.Save)
+        settle()
+
+        assertNull(rig.repository.updatedBankInputs.single().identity)
+    }
+
+    @Test
+    fun aDiscardDropsAnIdentityChoiceWithTheName() {
+        val rig = rig(BankEditorTarget.Existing("b1"))
+        rig.repository.seed(bank("b1", "CIB"), revision = 1)
+        rig.open()
+        rig.model.onIntent(BankEditorIntent.PickOther)
+        assertTrue(rig.model.state.value.dirty)
+
+        var discarded: Boolean? = null
+        rig.model.onLeaveRequested { discarded = it }
+        rig.model.onIntent(BankEditorIntent.ConfirmDiscard)
+
+        assertEquals(true, discarded)
+        assertNull(rig.model.state.value.identityChoice)
+        assertFalse(rig.model.state.value.dirty)
+    }
+
+    @Test
     fun aBlankNameIsRefusedWithoutAnyWrite() {
         val rig = rig(BankEditorTarget.New)
         rig.open()

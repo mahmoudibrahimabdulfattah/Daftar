@@ -36,6 +36,9 @@ internal class FawazFxDataSource(
         return Outcome.Failure(FxFetchFailure(failures.toList()))
     }
 
+    /** One endpoint of this source, for the FX chain. */
+    internal suspend fun fetchEndpoint(endpoint: String): Outcome<FxFetch, DataError> = fetchOne(endpoint)
+
     private suspend fun fetchOne(endpoint: String): Outcome<FxFetch, DataError> {
         val body = when (val result = client.fetchBoundedText(endpoint, JSON_ACCEPT, JSON_MAX_BYTES, clock)) {
             is Outcome.Failure -> return result

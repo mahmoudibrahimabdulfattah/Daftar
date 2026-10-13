@@ -2,6 +2,8 @@
 
 package com.mk.daftar.feature.assets
 
+import com.mk.daftar.core.domain.refresh.PriceRefreshController
+import com.mk.daftar.core.domain.refresh.PriceRefreshStatus
 import com.mk.daftar.core.domain.session.VaultSession
 import com.mk.daftar.core.domain.session.VaultSessionState
 import com.mk.daftar.core.domain.usecase.ObserveBanksUseCase
@@ -64,6 +66,7 @@ class AssetsViewModelTest {
             ),
             observeBanks = ObserveBanksUseCase(portfolio.banks),
             visibility = visibility,
+            refresh = IdleRefresh,
         )
         return Rig(portfolio, visibility, model)
     }
@@ -137,4 +140,13 @@ class AssetsViewModelTest {
             effects,
         )
     }
+}
+
+/** A refresh controller that never refreshes: the Assets tests only read values and privacy state. */
+private object IdleRefresh : PriceRefreshController {
+    override val status = kotlinx.coroutines.flow.MutableStateFlow<PriceRefreshStatus>(PriceRefreshStatus.Idle)
+
+    override fun start() = Unit
+
+    override fun refresh() = Unit
 }

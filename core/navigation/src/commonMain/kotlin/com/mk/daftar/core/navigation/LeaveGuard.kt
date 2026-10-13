@@ -1,10 +1,14 @@
 package com.mk.daftar.core.navigation
 
-/** What the shell is about to do with the screen on top: a back action, or a switch to another top-level tab. */
+/**
+ * What the shell is about to do with the screen on top: a back action, or a reselect of the shown tab that pops its
+ * pushed screens. Switching to another tab is not a request: it keeps every stack and never asks.
+ */
 sealed interface LeaveRequest {
     data object Back : LeaveRequest
 
-    data class Switch(val destination: TopLevelDestination) : LeaveRequest
+    /** Reselecting the shown tab while it has pushed screens: the tab returns to its root. */
+    data class PopToRoot(val destination: TopLevelDestination) : LeaveRequest
 }
 
 /**

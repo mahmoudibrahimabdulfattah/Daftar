@@ -90,4 +90,13 @@
     <string name="failed_retry">Retry</string>
     <string name="failed_back_to_editing">Back to editing</string>
     <string name="load_failed_title">Records could not be loaded</string>
+    <string name="bank_picker_title">Choose bank</string>
+    <string name="bank_picker_search">Search bank names</string>
+    <string name="bank_picker_other">Other bank</string>
+    <string name="bank_picker_empty">No matches. You can add another bank.</string>
+    <string name="bank_picker_privacy">The directory and logos are on your device. We do not connect to your bank.</string>
+    <string name="bank_display_name">Display name</string>
+    <string name="bank_change_identity">Change bank identity</string>
+    <string name="bank_use_custom">Use custom bank</string>
+    <string name="bank_identity_custom">Custom bank</string>
 </resources>

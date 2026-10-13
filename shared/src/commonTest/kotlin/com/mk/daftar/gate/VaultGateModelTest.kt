@@ -33,6 +33,19 @@ class VaultGateModelTest {
     }
 
     @Test
+    fun aBiometricUnlockKeepsTheLockSurfaceInsteadOfTheOpeningProgress() {
+        assertEquals(VaultSurface.Locked, vaultSurfaceFor(VaultSessionState.Opening, biometricInProgress = true))
+        assertEquals(
+            VaultSurface.Progress(closing = true),
+            vaultSurfaceFor(VaultSessionState.Closing, biometricInProgress = true),
+        )
+        assertEquals(
+            VaultSurface.Shell(generation = 3),
+            vaultSurfaceFor(VaultSessionState.Open(generation = 3), biometricInProgress = true),
+        )
+    }
+
+    @Test
     fun developerEntriesExistOnlyOnTheLockedSurfaceOfADebugBuild() {
         assertTrue(developerEntriesVisible(VaultSessionState.Locked, developerTools = true))
         assertFalse(

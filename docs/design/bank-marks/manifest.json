@@ -1,0 +1,635 @@
+{
+  "version": 1,
+  "marks": [
+    {
+      "institutionId": "eg.nbe",
+      "file": "eg.nbe.svg",
+      "format": "svg",
+      "sourcePage": "https://www.nbe.com.eg/NBE/E/#/EN/Home",
+      "assetUrl": "https://www.nbe.com.eg/NBE/MainSite/siteimages/mini-logo.svg",
+      "retrievedAtUtc": "2026-10-13T12:25:32Z",
+      "sha256": "69e29e4680b4944770a5fbfaa4f07c1dab7d1ef85033c548b15620098fc09a3f",
+      "bytes": 2610,
+      "backing": "white",
+      "notes": "Retrieved by the owner's decision (Phase 23, official marks in the private build); not a bank license.",
+      "assetKey": "bank_eg_nbe",
+      "outputs": [
+        {
+          "density": "mdpi",
+          "file": "core/designsystem/src/officialBankArtwork/composeResources/drawable-mdpi/bank_eg_nbe.png",
+          "pixels": 38,
+          "sha256": "df4b45fab4402f6367856b56c6ea2a63b327ad53db7888a18654ea078f3f155d"
+        },
+        {
+          "density": "hdpi",
+          "file": "core/designsystem/src/officialBankArtwork/composeResources/drawable-hdpi/bank_eg_nbe.png",
+          "pixels": 57,
+          "sha256": "1192dfc8f3fa04f5b95d3a00771d55843b3d03a9eae90fb537aa158294cc3120"
+        },
+        {
+          "density": "xhdpi",
+          "file": "core/designsystem/src/officialBankArtwork/composeResources/drawable-xhdpi/bank_eg_nbe.png",
+          "pixels": 76,
+          "sha256": "f17a4706bfae92d12710820dd420de6e6e5fe8f4fdfb0e15c385782eda00ddb0"
+        },
+        {
+          "density": "xxhdpi",
+          "file": "core/designsystem/src/officialBankArtwork/composeResources/drawable-xxhdpi/bank_eg_nbe.png",
+          "pixels": 114,
+          "sha256": "576f80cfb57d22d3c97c48deb7ba7b93a353a79fcea205697b8ff02593c27a28"
+        },
+        {
+          "density": "xxxhdpi",
+          "file": "core/designsystem/src/officialBankArtwork/composeResources/drawable-xxxhdpi/bank_eg_nbe.png",
+          "pixels": 152,
+          "sha256": "f2b73a347bc7edb1466c214165f0c3adfdc83b04103c3567baf11cebb745c99b"
+        }
+      ]
+    },
+    {
+      "institutionId": "eg.banque-misr",
+      "file": "eg.banque-misr.png",
+      "format": "png",
+      "sourcePage": "https://www.banquemisr.com/",
+      "assetUrl": "https://www.banquemisr.com/Assets/Images/bmp-logo.png",
+      "retrievedAtUtc": "2026-10-13T12:25:32Z",
+      "sha256": "08fe2335d5b4017975254e0306191c73c268d4f00bd32cbe717d63aac74a7818",
+      "bytes": 16637,
+      "backing": "white",
+      "notes": "Retrieved by the owner's decision (Phase 23, official marks in the private build); not a bank license.",
+      "assetKey": "bank_eg_banque_misr",
+      "outputs": [
+        {
+          "density": "mdpi",
+          "file": "core/designsystem/src/officialBankArtwork/composeResources/drawable-mdpi/bank_eg_banque_misr.png",
+          "pixels": 38,
+          "sha256": "696a5ed1da2835f57dd6b1c4ef3776ede441c265315690ea46dcf15e67aa453b"
+        },
+        {
+          "density": "hdpi",
+          "file": "core/designsystem/src/officialBankArtwork/composeResources/drawable-hdpi/bank_eg_banque_misr.png",
+          "pixels": 57,
+          "sha256": "f556b918423e92771321a01eb4da2a998ab1d49830749a15eef10f8482634d88"
+        },
+        {
+          "density": "xhdpi",
+          "file": "core/designsystem/src/officialBankArtwork/composeResources/drawable-xhdpi/bank_eg_banque_misr.png",
+          "pixels": 76,
+          "sha256": "4d63528e6063044710c5df0f67e380c3ad08e1b7f87d54adf26e5411896a4211"
+        },
+        {
+          "density": "xxhdpi",
+          "file": "core/designsystem/src/officialBankArtwork/composeResources/drawable-xxhdpi/bank_eg_banque_misr.png",
+          "pixels": 114,
+          "sha256": "ce717c32cf479e9093bd8ff9fce8147275af4351999b9dca7e605e3e57d8ada8"
+        },
+        {
+          "density": "xxxhdpi",
+          "file": "core/designsystem/src/officialBankArtwork/composeResources/drawable-xxxhdpi/bank_eg_banque_misr.png",
+          "pixels": 152,
+          "sha256": "4c1191fc14086469ce25be338a5f3778245144b63b1e4ffe6416b3c103edfe30"
+        }
+      ]
+    },
+    {
+      "institutionId": "eg.cib",
+      "file": "eg.cib.svg",
+      "format": "svg",
+      "sourcePage": "https://www.cibeg.com/en",
+      "assetUrl": "https://www.cibeg.com/-/media/feature/navigation/footer/logo-white.svg",
+      "retrievedAtUtc": "2026-10-13T12:25:32Z",
+      "sha256": "4b5f61f4bf0d9dfca8faaad6aebba936678f5b26cf53dadef3ae20e3fb2c047a",
+      "bytes": 2877,
+      "backing": "brand",
+      "notes": "Retrieved by the owner's decision (Phase 23, official marks in the private build); not a bank license. White mark: render on the institution brand color, unmodified. CIB serves this file behind a bot wall; bytes captured from the same URL via a browser fetch.",
+      "assetKey": "bank_eg_cib",
+      "outputs": [
+        {
+          "density": "mdpi",
+          "file": "core/designsystem/src/officialBankArtwork/composeResources/drawable-mdpi/bank_eg_cib.png",
+          "pixels": 38,
+          "sha256": "b35bd8ac3ca4146224d9927063432b052456143bcd134c25455fac0764591e6a"
+        },
+        {
+          "density": "hdpi",
+          "file": "core/designsystem/src/officialBankArtwork/composeResources/drawable-hdpi/bank_eg_cib.png",
+          "pixels": 57,
+          "sha256": "d9f93b34ff8429f86ed12b89d49db82e4f6d6ee8edf0f53f38ef4f17a225e3bb"
+        },
+        {
+          "density": "xhdpi",
+          "file": "core/designsystem/src/officialBankArtwork/composeResources/drawable-xhdpi/bank_eg_cib.png",
+          "pixels": 76,
+          "sha256": "bb4ce660cf9df56abbb026e029c81a65720b21c98483a8cfb1c59410799d6b4e"
+        },
+        {
+          "density": "xxhdpi",
+          "file": "core/designsystem/src/officialBankArtwork/composeResources/drawable-xxhdpi/bank_eg_cib.png",
+          "pixels": 114,
+          "sha256": "be8606b20a8689aaf2e518833d76aa89a2f44c04ebb4a2153007e859944bf001"
+        },
+        {
+          "density": "xxxhdpi",
+          "file": "core/designsystem/src/officialBankArtwork/composeResources/drawable-xxxhdpi/bank_eg_cib.png",
+          "pixels": 152,
+          "sha256": "4455dc4adb95152c735dfa7f996f9d3612e705fcb6fefe1d54a8d93a596f1073"
+        }
+      ]
+    },
+    {
+      "institutionId": "eg.qnb",
+      "file": "eg.qnb.png",
+      "format": "png",
+      "sourcePage": "https://www.qnb.com.eg/sites/qnb/qnbegypt/page/en/en-home.html",
+      "assetUrl": "https://www.qnb.com.eg/sites/qnb/qnbkuwait/QNB%20Logo.png",
+      "retrievedAtUtc": "2026-10-13T12:25:32Z",
+      "sha256": "7011f881057545a97ce90e79ee139cb0c52239e6801370e196045aed0c884530",
+      "bytes": 17217,
+      "backing": "white",
+      "notes": "Retrieved by the owner's decision (Phase 23, official marks in the private build); not a bank license.",
+      "assetKey": "bank_eg_qnb",
+      "outputs": [
+        {
+          "density": "mdpi",
+          "file": "core/designsystem/src/officialBankArtwork/composeResources/drawable-mdpi/bank_eg_qnb.png",
+          "pixels": 38,
+          "sha256": "ae50ef12ce8fc1db73cdd669dd95694e01b5f5836247b8c41553a4eddf3a657a"
+        },
+        {
+          "density": "hdpi",
+          "file": "core/designsystem/src/officialBankArtwork/composeResources/drawable-hdpi/bank_eg_qnb.png",
+          "pixels": 57,
+          "sha256": "09bd449d5b20cea1d353203d4404508c4cd5c680ce5d69d01119174c132c758e"
+        },
+        {
+          "density": "xhdpi",
+          "file": "core/designsystem/src/officialBankArtwork/composeResources/drawable-xhdpi/bank_eg_qnb.png",
+          "pixels": 76,
+          "sha256": "f01806c64a1bee597d4405ec7eaed6bbdeaa7aaa005e5950263efba75a665e9f"
+        },
+        {
+          "density": "xxhdpi",
+          "file": "core/designsystem/src/officialBankArtwork/composeResources/drawable-xxhdpi/bank_eg_qnb.png",
+          "pixels": 114,
+          "sha256": "d0d170fb0c7d1261aa0dfa517527753f401733b7c8bd1503ef2407a533cf0901"
+        },
+        {
+          "density": "xxxhdpi",
+          "file": "core/designsystem/src/officialBankArtwork/composeResources/drawable-xxxhdpi/bank_eg_qnb.png",
+          "pixels": 152,
+          "sha256": "ed80adc3281c497b40bec8026d7440b0c10a9333109564ba20523d46a850ff3b"
+        }
+      ]
+    },
+    {
+      "institutionId": "eg.banque-du-caire",
+      "file": "eg.banque-du-caire.png",
+      "format": "png",
+      "sourcePage": "https://www.bdc.com.eg/bdcwebsite/home.html",
+      "assetUrl": "https://www.bdc.com.eg/.resources/bdc/webresources/img/BDC_logo.png",
+      "retrievedAtUtc": "2026-10-13T12:25:32Z",
+      "sha256": "d54e984813a167bf3d6afacfdc649589558b7fa0b58b6ec9e0aa98b6a9959746",
+      "bytes": 7145,
+      "backing": "brand",
+      "notes": "Retrieved by the owner's decision (Phase 23, official marks in the private build); not a bank license. White mark: render on the institution brand color, unmodified.",
+      "assetKey": "bank_eg_banque_du_caire",
+      "outputs": [
+        {
+          "density": "mdpi",
+          "file": "core/designsystem/src/officialBankArtwork/composeResources/drawable-mdpi/bank_eg_banque_du_caire.png",
+          "pixels": 38,
+          "sha256": "71c3481b3727a906961a8a6e330ace0bf6be90a2f72dfc0814fe31ca01a5f5d9"
+        },
+        {
+          "density": "hdpi",
+          "file": "core/designsystem/src/officialBankArtwork/composeResources/drawable-hdpi/bank_eg_banque_du_caire.png",
+          "pixels": 57,
+          "sha256": "be83425bdbced3004a927f367728fe4e20579d3ac75453d9f30bd373654c2bf2"
+        },
+        {
+          "density": "xhdpi",
+          "file": "core/designsystem/src/officialBankArtwork/composeResources/drawable-xhdpi/bank_eg_banque_du_caire.png",
+          "pixels": 76,
+          "sha256": "df350560d71811f27117dd22636854688c5b0b3974b8d9a8b78936ee625bf56b"
+        },
+        {
+          "density": "xxhdpi",
+          "file": "core/designsystem/src/officialBankArtwork/composeResources/drawable-xxhdpi/bank_eg_banque_du_caire.png",
+          "pixels": 114,
+          "sha256": "92ed5ec3050d2c5389acb887893e2e8888ad6bd4f9cab0e87356018860fa3a09"
+        },
+        {
+          "density": "xxxhdpi",
+          "file": "core/designsystem/src/officialBankArtwork/composeResources/drawable-xxxhdpi/bank_eg_banque_du_caire.png",
+          "pixels": 152,
+          "sha256": "6dd10275aca6ab6ac6950d9e98975e4f2b166638f1f5e7e512c72bddf5309c25"
+        }
+      ]
+    },
+    {
+      "institutionId": "eg.aaib",
+      "file": "eg.aaib.svg",
+      "format": "svg",
+      "sourcePage": "https://www.aaib.com/",
+      "assetUrl": "https://www.aaib.com/images/logo.svg",
+      "retrievedAtUtc": "2026-10-13T12:25:32Z",
+      "sha256": "79944c64be023de9ab2e1242436ef4116469a806dbf14817323d949e6aa37530",
+      "bytes": 69614,
+      "backing": "white",
+      "notes": "Retrieved by the owner's decision (Phase 23, official marks in the private build); not a bank license.",
+      "assetKey": "bank_eg_aaib",
+      "outputs": [
+        {
+          "density": "mdpi",
+          "file": "core/designsystem/src/officialBankArtwork/composeResources/drawable-mdpi/bank_eg_aaib.png",
+          "pixels": 38,
+          "sha256": "ef4aa30cd86b7c3be6de61da498bd6c6aaaf084fa7704306480d3ecd996bf833"
+        },
+        {
+          "density": "hdpi",
+          "file": "core/designsystem/src/officialBankArtwork/composeResources/drawable-hdpi/bank_eg_aaib.png",
+          "pixels": 57,
+          "sha256": "ff0bfaed2b7c2752f58a06b4fb7a7cbf6a4193780ddb2b95f0f6264ca227a7c9"
+        },
+        {
+          "density": "xhdpi",
+          "file": "core/designsystem/src/officialBankArtwork/composeResources/drawable-xhdpi/bank_eg_aaib.png",
+          "pixels": 76,
+          "sha256": "7c644514594ce4ae7e40310c2c3d3866923eeee61a05d588846551863e2ebe8f"
+        },
+        {
+          "density": "xxhdpi",
+          "file": "core/designsystem/src/officialBankArtwork/composeResources/drawable-xxhdpi/bank_eg_aaib.png",
+          "pixels": 114,
+          "sha256": "4429a9453939fb697a044e7402590d426d6e8b4729ec6c565f8b965657c265e0"
+        },
+        {
+          "density": "xxxhdpi",
+          "file": "core/designsystem/src/officialBankArtwork/composeResources/drawable-xxxhdpi/bank_eg_aaib.png",
+          "pixels": 152,
+          "sha256": "0ef0946ba1f0af8511bb102020da1ba63c11a3170cb64710ed9748ed14dad9da"
+        }
+      ]
+    },
+    {
+      "institutionId": "eg.hsbc",
+      "file": "eg.hsbc.svg",
+      "format": "svg",
+      "sourcePage": "https://www.hsbc.com.eg/",
+      "assetUrl": "https://www.hsbc.com.eg/content/dam/hsbc/hbeg/images/logos/hsbc-logo.svg",
+      "retrievedAtUtc": "2026-10-13T12:25:32Z",
+      "sha256": "392961169ed068757ca4ccfba64f9a1e5cfd0e5c2467039ec5f0315afcb4de50",
+      "bytes": 5004,
+      "backing": "white",
+      "notes": "Retrieved by the owner's decision (Phase 23, official marks in the private build); not a bank license.",
+      "assetKey": "bank_eg_hsbc",
+      "outputs": [
+        {
+          "density": "mdpi",
+          "file": "core/designsystem/src/officialBankArtwork/composeResources/drawable-mdpi/bank_eg_hsbc.png",
+          "pixels": 38,
+          "sha256": "98a5172d26066e60de8943f65a8e7ef6de08cb59f209459922998c69275a8781"
+        },
+        {
+          "density": "hdpi",
+          "file": "core/designsystem/src/officialBankArtwork/composeResources/drawable-hdpi/bank_eg_hsbc.png",
+          "pixels": 57,
+          "sha256": "48b321e3f47ae57aa4fc5f7f38efda336d095abb75ea73a53096831688162447"
+        },
+        {
+          "density": "xhdpi",
+          "file": "core/designsystem/src/officialBankArtwork/composeResources/drawable-xhdpi/bank_eg_hsbc.png",
+          "pixels": 76,
+          "sha256": "fb88d6082aa5c0422d2d41c6d0ca370264ce7ead2d120bdd209949a5bb5b87a5"
+        },
+        {
+          "density": "xxhdpi",
+          "file": "core/designsystem/src/officialBankArtwork/composeResources/drawable-xxhdpi/bank_eg_hsbc.png",
+          "pixels": 114,
+          "sha256": "46aa52c824089747945b5c08546874013e094a0a0ad906cb610add47c9ff76db"
+        },
+        {
+          "density": "xxxhdpi",
+          "file": "core/designsystem/src/officialBankArtwork/composeResources/drawable-xxxhdpi/bank_eg_hsbc.png",
+          "pixels": 152,
+          "sha256": "0fc69b7884394cce59f10aa730af9e4e9c460f6e966740918a3516c80ca09505"
+        }
+      ]
+    },
+    {
+      "institutionId": "eg.alexbank",
+      "file": "eg.alexbank.svg",
+      "format": "svg",
+      "sourcePage": "https://www.alexbank.com/",
+      "assetUrl": "https://res.cloudinary.com/alex-bank/image/upload/prod/publicportal/bank-logo/ALEXBANK/SVG/ALEXBANK_Short_White.svg",
+      "retrievedAtUtc": "2026-10-13T12:25:32Z",
+      "sha256": "eec2c324ab9a50f81649462b06a1b931996acf0b64b76ddc933806104ec88685",
+      "bytes": 26815,
+      "backing": "brand",
+      "notes": "Retrieved by the owner's decision (Phase 23, official marks in the private build); not a bank license. White mark: render on the institution brand color, unmodified.",
+      "assetKey": "bank_eg_alexbank",
+      "outputs": [
+        {
+          "density": "mdpi",
+          "file": "core/designsystem/src/officialBankArtwork/composeResources/drawable-mdpi/bank_eg_alexbank.png",
+          "pixels": 38,
+          "sha256": "1a567709ffe0d70eea4cd68f603fe2423d2679c6a17c7afbbed71771ac12722a"
+        },
+        {
+          "density": "hdpi",
+          "file": "core/designsystem/src/officialBankArtwork/composeResources/drawable-hdpi/bank_eg_alexbank.png",
+          "pixels": 57,
+          "sha256": "029a64a0dca59de9aea2c132d3799af7fd146e2a2801689f7eb9681effc906a0"
+        },
+        {
+          "density": "xhdpi",
+          "file": "core/designsystem/src/officialBankArtwork/composeResources/drawable-xhdpi/bank_eg_alexbank.png",
+          "pixels": 76,
+          "sha256": "db452af128db719282c295b556480552f0cb02e591b4e1875f10d91a0a436dfc"
+        },
+        {
+          "density": "xxhdpi",
+          "file": "core/designsystem/src/officialBankArtwork/composeResources/drawable-xxhdpi/bank_eg_alexbank.png",
+          "pixels": 114,
+          "sha256": "9b3c412ad6c17750fb19c7eec6e524e8fbb429eee5f1870af538be5a5ca72453"
+        },
+        {
+          "density": "xxxhdpi",
+          "file": "core/designsystem/src/officialBankArtwork/composeResources/drawable-xxxhdpi/bank_eg_alexbank.png",
+          "pixels": 152,
+          "sha256": "c25a1bf23b0d082cccf24f1bb206714cf562628d53bbb71d49c74d9c30577ef4"
+        }
+      ]
+    },
+    {
+      "institutionId": "eg.faisal",
+      "file": "eg.faisal.svg",
+      "format": "svg",
+      "sourcePage": "https://www.faisalbank.com.eg/",
+      "assetUrl": "https://www.faisalbank.com.eg/assets/images/logo.svg",
+      "retrievedAtUtc": "2026-10-13T12:25:32Z",
+      "sha256": "fa0e4758ea53ecc900aff08c965443e9ffb31cbafd72378fd1abbc28a00f19d0",
+      "bytes": 28093,
+      "backing": "white",
+      "notes": "Retrieved by the owner's decision (Phase 23, official marks in the private build); not a bank license.",
+      "assetKey": "bank_eg_faisal",
+      "outputs": [
+        {
+          "density": "mdpi",
+          "file": "core/designsystem/src/officialBankArtwork/composeResources/drawable-mdpi/bank_eg_faisal.png",
+          "pixels": 38,
+          "sha256": "662490127be6e5881b1d04bd69a9d9b3fe83576e270f75d9c8b6cceb569a351d"
+        },
+        {
+          "density": "hdpi",
+          "file": "core/designsystem/src/officialBankArtwork/composeResources/drawable-hdpi/bank_eg_faisal.png",
+          "pixels": 57,
+          "sha256": "e8f48f90eef5a6a7616aa837f8623730be7c49ac6cc2a225685391d8f602290a"
+        },
+        {
+          "density": "xhdpi",
+          "file": "core/designsystem/src/officialBankArtwork/composeResources/drawable-xhdpi/bank_eg_faisal.png",
+          "pixels": 76,
+          "sha256": "c60301d13d59e28a8e53732ef91fe0d0c2bcb10e8c6d89c93509cdc397e825ee"
+        },
+        {
+          "density": "xxhdpi",
+          "file": "core/designsystem/src/officialBankArtwork/composeResources/drawable-xxhdpi/bank_eg_faisal.png",
+          "pixels": 114,
+          "sha256": "e07f2735b8d1cb9c8c8c8522c1be3e4d880f634c55b869be79433f1009b83016"
+        },
+        {
+          "density": "xxxhdpi",
+          "file": "core/designsystem/src/officialBankArtwork/composeResources/drawable-xxxhdpi/bank_eg_faisal.png",
+          "pixels": 152,
+          "sha256": "40ff9f4722673ce661d00f82559259aef725f0a86b69f7df781ee62eef4556a5"
+        }
+      ]
+    },
+    {
+      "institutionId": "eg.adib",
+      "file": "eg.adib.png",
+      "format": "png",
+      "sourcePage": "https://www.adib.eg/",
+      "assetUrl": "https://www.adib.eg/media/146118/logo.png",
+      "retrievedAtUtc": "2026-10-13T12:25:32Z",
+      "sha256": "ab679b1dec656025e8c2d550a434a1113eb5db95027501e224926e139377d829",
+      "bytes": 10285,
+      "backing": "white",
+      "notes": "Retrieved by the owner's decision (Phase 23, official marks in the private build); not a bank license.",
+      "assetKey": "bank_eg_adib",
+      "outputs": [
+        {
+          "density": "mdpi",
+          "file": "core/designsystem/src/officialBankArtwork/composeResources/drawable-mdpi/bank_eg_adib.png",
+          "pixels": 38,
+          "sha256": "0b14828949ec64949aea13107f0bcb11c7f013984194862be080e775bbf6c6e3"
+        },
+        {
+          "density": "hdpi",
+          "file": "core/designsystem/src/officialBankArtwork/composeResources/drawable-hdpi/bank_eg_adib.png",
+          "pixels": 57,
+          "sha256": "6a53486454048f6447990931954c9f09179130315558e76a99c388b670ef78bb"
+        },
+        {
+          "density": "xhdpi",
+          "file": "core/designsystem/src/officialBankArtwork/composeResources/drawable-xhdpi/bank_eg_adib.png",
+          "pixels": 76,
+          "sha256": "e2899d30609b62c1893e317b3866d05f08ec9b7156d4102b0afcd997a8703642"
+        },
+        {
+          "density": "xxhdpi",
+          "file": "core/designsystem/src/officialBankArtwork/composeResources/drawable-xxhdpi/bank_eg_adib.png",
+          "pixels": 114,
+          "sha256": "af787e9ded3afce944663014718426265f3679b8344c750e76909f53ca4fefb9"
+        },
+        {
+          "density": "xxxhdpi",
+          "file": "core/designsystem/src/officialBankArtwork/composeResources/drawable-xxxhdpi/bank_eg_adib.png",
+          "pixels": 152,
+          "sha256": "d565520e5c2b0e7ba39a45d9e40f74a4014204b314709d6ab5a7dbbfcc23be0d"
+        }
+      ]
+    },
+    {
+      "institutionId": "eg.emirates-nbd",
+      "file": "eg.emirates-nbd.png",
+      "format": "png",
+      "sourcePage": "https://www.emiratesnbd.com.eg/",
+      "assetUrl": "https://www.emiratesnbd.com.eg/-/media/enbd/images/header/icons/footer_logo.png",
+      "retrievedAtUtc": "2026-10-13T12:25:32Z",
+      "sha256": "164be6bbab1e3238377e0f4de6a8a154931554d5c6290bb03047fee9a81be59f",
+      "bytes": 12796,
+      "backing": "white",
+      "notes": "Retrieved by the owner's decision (Phase 23, official marks in the private build); not a bank license.",
+      "assetKey": "bank_eg_emirates_nbd",
+      "outputs": [
+        {
+          "density": "mdpi",
+          "file": "core/designsystem/src/officialBankArtwork/composeResources/drawable-mdpi/bank_eg_emirates_nbd.png",
+          "pixels": 38,
+          "sha256": "22ae4fb8df1eedca4f57a6a582a273204441996ea16bff7669cf1a62d13045ed"
+        },
+        {
+          "density": "hdpi",
+          "file": "core/designsystem/src/officialBankArtwork/composeResources/drawable-hdpi/bank_eg_emirates_nbd.png",
+          "pixels": 57,
+          "sha256": "5c096cff13ae30d2dabce3073e9b1a0008fd6bdd3fdfdc18b113d5aaba1b87e3"
+        },
+        {
+          "density": "xhdpi",
+          "file": "core/designsystem/src/officialBankArtwork/composeResources/drawable-xhdpi/bank_eg_emirates_nbd.png",
+          "pixels": 76,
+          "sha256": "e256f576f9b10061a8ade2b2f6528eaf8de852601d7a3feea6b3f7691aacfe60"
+        },
+        {
+          "density": "xxhdpi",
+          "file": "core/designsystem/src/officialBankArtwork/composeResources/drawable-xxhdpi/bank_eg_emirates_nbd.png",
+          "pixels": 114,
+          "sha256": "2dcdcbe66e73e49ef157998bf40186504002c7a65d7d858cc44b857205ea9248"
+        },
+        {
+          "density": "xxxhdpi",
+          "file": "core/designsystem/src/officialBankArtwork/composeResources/drawable-xxxhdpi/bank_eg_emirates_nbd.png",
+          "pixels": 152,
+          "sha256": "2d2ad5e3e2c415c4a56bb43a38e8bb5a48d493f103198e61ce703cc61975d482"
+        }
+      ]
+    },
+    {
+      "institutionId": "eg.credit-agricole",
+      "file": "eg.credit-agricole.svg",
+      "format": "svg",
+      "sourcePage": "https://www.ca-egypt.com/",
+      "assetUrl": "https://www.ca-egypt.com/app/themes/credit-agricole/main-assets/images/CA_Logo_seul-1.svg",
+      "retrievedAtUtc": "2026-10-13T12:25:32Z",
+      "sha256": "c0c98ec43db1ab158394781babf5cc8365a0f400037303bb5c857562a6938453",
+      "bytes": 1647,
+      "backing": "white",
+      "notes": "Retrieved by the owner's decision (Phase 23, official marks in the private build); not a bank license.",
+      "assetKey": "bank_eg_credit_agricole",
+      "outputs": [
+        {
+          "density": "mdpi",
+          "file": "core/designsystem/src/officialBankArtwork/composeResources/drawable-mdpi/bank_eg_credit_agricole.png",
+          "pixels": 38,
+          "sha256": "030db2475e48326d68a67285d2ca7c9cf4dbf453b723c8b8f928ddcf590082b2"
+        },
+        {
+          "density": "hdpi",
+          "file": "core/designsystem/src/officialBankArtwork/composeResources/drawable-hdpi/bank_eg_credit_agricole.png",
+          "pixels": 57,
+          "sha256": "78cb76e1fc7d60b3299e75cc406acba2dfa277c14835b1a5d9cbf525068038cc"
+        },
+        {
+          "density": "xhdpi",
+          "file": "core/designsystem/src/officialBankArtwork/composeResources/drawable-xhdpi/bank_eg_credit_agricole.png",
+          "pixels": 76,
+          "sha256": "301bb39b64e50a3cd6e3462c13fc08f03976c8a6695809e6a5c09802d1432377"
+        },
+        {
+          "density": "xxhdpi",
+          "file": "core/designsystem/src/officialBankArtwork/composeResources/drawable-xxhdpi/bank_eg_credit_agricole.png",
+          "pixels": 114,
+          "sha256": "9fc3f7f9a339345e3b37b69cc51bdb8e7b341b05f21d4660223148c8bf259851"
+        },
+        {
+          "density": "xxxhdpi",
+          "file": "core/designsystem/src/officialBankArtwork/composeResources/drawable-xxxhdpi/bank_eg_credit_agricole.png",
+          "pixels": 152,
+          "sha256": "8496900291d7efb6a4088645e41f2dfba63d641da74a186d71f56c62b57a57ef"
+        }
+      ]
+    },
+    {
+      "institutionId": "eg.bank-abc",
+      "file": "eg.bank-abc.png",
+      "format": "png",
+      "sourcePage": "https://www.bank-abc.com/En/CountrySites/Egypt",
+      "assetUrl": "https://www.bank-abc.com/Style%20Library/Images/BankABClogo.png",
+      "retrievedAtUtc": "2026-10-13T12:25:32Z",
+      "sha256": "586f03f01e5cd40accf6194950d24601ed480e3f68d778106d0633a732b4e6b5",
+      "bytes": 4631,
+      "backing": "white",
+      "notes": "Retrieved by the owner's decision (Phase 23, official marks in the private build); not a bank license.",
+      "assetKey": "bank_eg_bank_abc",
+      "outputs": [
+        {
+          "density": "mdpi",
+          "file": "core/designsystem/src/officialBankArtwork/composeResources/drawable-mdpi/bank_eg_bank_abc.png",
+          "pixels": 38,
+          "sha256": "9dbd6e89f2831fd8a02433b7da35dfb755c4575df765a5858ecce092be25f032"
+        },
+        {
+          "density": "hdpi",
+          "file": "core/designsystem/src/officialBankArtwork/composeResources/drawable-hdpi/bank_eg_bank_abc.png",
+          "pixels": 57,
+          "sha256": "939db0f459739501572ecd14e1fc25253e0277609a894eae401507a0479fa8ce"
+        },
+        {
+          "density": "xhdpi",
+          "file": "core/designsystem/src/officialBankArtwork/composeResources/drawable-xhdpi/bank_eg_bank_abc.png",
+          "pixels": 76,
+          "sha256": "ac90e89357dc8c3de0b1be83a322d3687150c7f44da5d8a5d1d671da5d036bd2"
+        },
+        {
+          "density": "xxhdpi",
+          "file": "core/designsystem/src/officialBankArtwork/composeResources/drawable-xxhdpi/bank_eg_bank_abc.png",
+          "pixels": 114,
+          "sha256": "4ab24943e22aba5e9ebf9496708774954be99316659669aba5748b77ac59c132"
+        },
+        {
+          "density": "xxxhdpi",
+          "file": "core/designsystem/src/officialBankArtwork/composeResources/drawable-xxxhdpi/bank_eg_bank_abc.png",
+          "pixels": 152,
+          "sha256": "6ec3e48252f4827a4353f95cdb5f43fa038fc9f234b7d5eb329110932a4d7b28"
+        }
+      ]
+    },
+    {
+      "institutionId": "eg.egebank",
+      "file": "eg.egebank.png",
+      "format": "png",
+      "sourcePage": "https://www.eg-bank.com/",
+      "assetUrl": "https://www.eg-bank.com/images/En_footer_Logo.png",
+      "retrievedAtUtc": "2026-10-13T12:25:32Z",
+      "sha256": "b4884e75051edbd9c18fc6c5d5874f0c65afa7297501b26e18f979c0d301c978",
+      "bytes": 1672,
+      "backing": "brand",
+      "notes": "Retrieved by the owner's decision (Phase 23, official marks in the private build); not a bank license. White mark: render on the institution brand color, unmodified.",
+      "assetKey": "bank_eg_egebank",
+      "outputs": [
+        {
+          "density": "mdpi",
+          "file": "core/designsystem/src/officialBankArtwork/composeResources/drawable-mdpi/bank_eg_egebank.png",
+          "pixels": 38,
+          "sha256": "fb7b9f2abb99958df14022fde2c8bc1a988f360574a3ab52657b06ecd179e25c"
+        },
+        {
+          "density": "hdpi",
+          "file": "core/designsystem/src/officialBankArtwork/composeResources/drawable-hdpi/bank_eg_egebank.png",
+          "pixels": 57,
+          "sha256": "c21ea9ff9cd385371eb2a84b60786d783228c9bd87f89eaaec09f8ad63894dc6"
+        },
+        {
+          "density": "xhdpi",
+          "file": "core/designsystem/src/officialBankArtwork/composeResources/drawable-xhdpi/bank_eg_egebank.png",
+          "pixels": 76,
+          "sha256": "6d64c7cd3eab2b31fbcff7984022a02cc9328720cf00e79a3c93d9b6619d3dc3"
+        },
+        {
+          "density": "xxhdpi",
+          "file": "core/designsystem/src/officialBankArtwork/composeResources/drawable-xxhdpi/bank_eg_egebank.png",
+          "pixels": 114,
+          "sha256": "65586e1d24e380ad66938a52ef8fd786ee52c6231f6a11c2680c3fddbf3b9e6a"
+        },
+        {
+          "density": "xxxhdpi",
+          "file": "core/designsystem/src/officialBankArtwork/composeResources/drawable-xxxhdpi/bank_eg_egebank.png",
+          "pixels": 152,
+          "sha256": "aa7b789e6b569e93d651f5ea592259f24aba228b8141d66bd6ae4ef6c6f370b7"
+        }
+      ]
+    }
+  ]
+}

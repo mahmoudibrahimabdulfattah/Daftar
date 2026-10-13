@@ -31,11 +31,13 @@ import com.mk.daftar.core.designsystem.theme.DaftarSpacing
 import com.mk.daftar.core.designsystem.theme.DaftarTheme
 import com.mk.daftar.core.domain.valuation.AssetCategory
 import com.mk.daftar.core.navigation.LocalNavigator
+import com.mk.daftar.core.navigation.TopLevelDestination
 import com.mk.daftar.core.ui.mvi.CollectEffects
 import com.mk.daftar.core.ui.presentation.CountNoun
 import com.mk.daftar.core.ui.presentation.bankAndAccountLabel
 import com.mk.daftar.core.ui.presentation.countLabel
 import com.mk.daftar.core.ui.presentation.moneyText
+import com.mk.daftar.core.ui.shell.RootReselectScroll
 import com.mk.daftar.core.ui.shell.ShellScreen
 import com.mk.daftar.feature.assets.resources.Res
 import com.mk.daftar.feature.assets.resources.assets_banks
@@ -49,6 +51,8 @@ import com.mk.daftar.feature.assets.resources.assets_incomplete
 import com.mk.daftar.feature.assets.resources.assets_masked_value
 import com.mk.daftar.feature.assets.resources.assets_no_records
 import com.mk.daftar.feature.assets.resources.assets_note_manual
+import com.mk.daftar.feature.assets.resources.assets_refresh
+import com.mk.daftar.feature.assets.resources.assets_refreshing
 import com.mk.daftar.feature.assets.resources.assets_show_values
 import com.mk.daftar.feature.assets.resources.assets_state_hidden
 import com.mk.daftar.feature.assets.resources.assets_state_visible
@@ -79,15 +83,11 @@ fun AssetsContent(state: AssetsUiState, onIntent: (AssetsIntent) -> Unit, modifi
     val hidden = state.valuesHidden
     val label = stringResource(if (hidden) Res.string.assets_show_values else Res.string.assets_hide_values)
     val stateLabel = stringResource(if (hidden) Res.string.assets_state_hidden else Res.string.assets_state_visible)
+    val scroll = rememberScrollState()
+    RootReselectScroll(TopLevelDestination.ASSETS) { scroll.animateScrollTo(0) }
     ShellScreen(modifier = modifier) {
-        Column(
-            modifier = Modifier
-                .fillMaxSize()
-                .verticalScroll(rememberScrollState())
-                .padding(horizontal = DaftarSpacing.md)
-                .padding(bottom = DaftarSpacing.xl),
-            verticalArrangement = Arrangement.spacedBy(DaftarSpacing.sm),
-        ) {
+        Column(modifier = Modifier.fillMaxSize()) {
+            // The bar stays pinned: the privacy eye and the price refresh never scroll away with the figures.
             DaftarTopBar(
                 title = stringResource(Res.string.assets_title),
                 actions = {
@@ -97,29 +97,47 @@ fun AssetsContent(state: AssetsUiState, onIntent: (AssetsIntent) -> Unit, modifi
                         contentDescription = label,
                         modifier = Modifier.semantics { stateDescription = stateLabel },
                     )
+                    DaftarIconButton(
+                        onClick = { onIntent(AssetsIntent.Refresh) },
+                        icon = DaftarIcons.Refresh,
+                        contentDescription = stringResource(
+                            if (state.refreshing) Res.string.assets_refreshing else Res.string.assets_refresh,
+                        ),
+                        enabled = !state.refreshing,
+                    )
                 },
             )
-            Text(
-                text = stringResource(Res.string.assets_subtitle),
-                style = DaftarTheme.typography.supportingBody,
-                color = colors.muted,
-            )
-            when (val load = state.load) {
-                AssetsLoad.Loading -> DaftarSkeleton()
+            Column(
+                modifier = Modifier
+                    .weight(1f)
+                    .fillMaxWidth()
+                    .verticalScroll(scroll)
+                    .padding(horizontal = DaftarSpacing.md)
+                    .padding(bottom = DaftarSpacing.xl),
+                verticalArrangement = Arrangement.spacedBy(DaftarSpacing.sm),
+            ) {
+                Text(
+                    text = stringResource(Res.string.assets_subtitle),
+                    style = DaftarTheme.typography.supportingBody,
+                    color = colors.muted,
+                )
+                when (val load = state.load) {
+                    AssetsLoad.Loading -> DaftarSkeleton()
 
-                is AssetsLoad.Failed -> DaftarNotePanel(tone = DaftarNoteTone.Error) {
-                    Text(stringResource(Res.string.assets_failed))
+                    is AssetsLoad.Failed -> DaftarNotePanel(tone = DaftarNoteTone.Error) {
+                        Text(stringResource(Res.string.assets_failed))
+                    }
+
+                    is AssetsLoad.Ready -> AssetsRows(figures = load.figures, hidden = hidden, onIntent = onIntent)
                 }
-
-                is AssetsLoad.Ready -> AssetsRows(figures = load.figures, hidden = hidden, onIntent = onIntent)
-            }
-            if (hidden) {
+                if (hidden) {
+                    DaftarNotePanel(tone = DaftarNoteTone.Context) {
+                        Text(stringResource(Res.string.assets_hidden_note))
+                    }
+                }
                 DaftarNotePanel(tone = DaftarNoteTone.Context) {
-                    Text(stringResource(Res.string.assets_hidden_note))
+                    Text(stringResource(Res.string.assets_note_manual))
                 }
-            }
-            DaftarNotePanel(tone = DaftarNoteTone.Context) {
-                Text(stringResource(Res.string.assets_note_manual))
             }
         }
     }
@@ -138,7 +156,7 @@ private fun AssetsRows(figures: AssetsFigures, hidden: Boolean, onIntent: (Asset
     AssetRow(
         title = stringResource(Res.string.assets_gold),
         subtitle = countLabel(figures.gold.count, CountNoun.HOLDINGS),
-        icon = DaftarIcons.Gold,
+        icon = DaftarIcons.GoldBar,
         tone = DaftarTileTone.Gold,
         figures = figures.gold,
         hidden = hidden,
@@ -151,7 +169,7 @@ private fun AssetsRows(figures: AssetsFigures, hidden: Boolean, onIntent: (Asset
         title = stringResource(Res.string.assets_banks),
         subtitle = bankAndAccountLabel(banks = figures.bankCount, accounts = figures.banks.count),
         icon = DaftarIcons.Bank,
-        tone = DaftarTileTone.Default,
+        tone = DaftarTileTone.Bank,
         figures = figures.banks,
         hidden = hidden,
         masked = masked,
@@ -163,7 +181,7 @@ private fun AssetsRows(figures: AssetsFigures, hidden: Boolean, onIntent: (Asset
         title = stringResource(Res.string.assets_cash),
         subtitle = countLabel(figures.cash.count, CountNoun.BALANCES),
         icon = DaftarIcons.Wallet,
-        tone = DaftarTileTone.Default,
+        tone = DaftarTileTone.Cash,
         figures = figures.cash,
         hidden = hidden,
         masked = masked,

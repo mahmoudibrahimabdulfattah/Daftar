@@ -83,6 +83,14 @@ class BackupCodecTest {
     }
 
     @Test
+    fun goldenVersionTwoVectorStillDecodesToTheSameSnapshot() = runTest {
+        val decoded = assertIs<Outcome.Success<DecodedBackup>>(
+            codec.decode(GOLDEN_VECTOR_V2_HEX.hexToBytes(), pw()),
+        ).data
+        assertEquals(BackupFixtures.minimalSnapshot(), decoded.snapshot)
+    }
+
+    @Test
     fun goldenVectorIsReproducedByTheFixedInputs() = runTest {
         val salt = ByteArray(16) { it.toByte() }
         val nonce = ByteArray(24) { (0x20 + it).toByte() }
@@ -262,8 +270,8 @@ class BackupCodecTest {
                 "bdd5a65cb6b7ea9a47914f3ec7721425ffde11cc953c28b1b03dc76522470c19ce56ffdb7956ee2560adf3e41be566b4" +
                 "c87b0417ca279a4f821f7ee8972fae245a5dd61f979c503ee7d389afb875b35917e1c3f9a5807da8216ed6ec2588dbac"
 
-        /** Version-two vector: [BackupFixtures.minimalSnapshot] under the fixed salt and nonce of the tests. */
-        const val GOLDEN_VECTOR_HEX: String =
+        /** Version-two vector: [BackupFixtures.minimalSnapshot] under the fixed salt and nonce, as version two wrote it. */
+        const val GOLDEN_VECTOR_V2_HEX: String =
             "4446545242414b00000101010001000000000003012010000102030405060708090a0b0c0d0e0f182021222324252627" +
                 "28292a2b2c2d2e2f3031323334353637000001faf4222d42449dacacda3b44d13135cff4fe0f7d7ca990f73737eb9c08" +
                 "0263d24df3d8973042c0d9ea1673ba03640ad912cd6ef2d8cd1a4ebee801b224d5ac0fb15720f8bfc12c0d5a15f77f45" +
@@ -276,5 +284,20 @@ class BackupCodecTest {
                 "bdd5a65cb6b7ea9a47914f3ec7721425ffde11cc953c28b1b03dc76522470c19ce56ffdb7956ee2560adf3e41be566b4" +
                 "c87b0417ca279a4f821f7ee8972fae245a5dd61f979c503ee7d389afb875b3081c8062ed6592fb2c12158e5a541a15b1" +
                 "271b10f4c36f3be9c7010bfad8ba59a7434a2dca1c4edc45bd5abdea0fee5ebde43a7bdc359437f2058dbc5a9443"
+
+        /** Version-three vector: [BackupFixtures.minimalSnapshot] under the fixed salt and nonce of the tests. */
+        const val GOLDEN_VECTOR_HEX: String =
+            "4446545242414b00000101010001000000000003012010000102030405060708090a0b0c0d0e0f1820212223242526272829" +
+                "2a2b2c2d2e2f3031323334353637000001faf4222d42449dacacda3b44d13135cff4fe0e7d7ca990f73737eb9c080263d24d" +
+                "f3d8973042c0d9ea1673ba03640ad912cd6ef2d8cd1a4ebee801b224d5ac0fb15720f8bfc12c0d5a15f77f45f492e09befa4" +
+                "90c1af5b4c6edef05fa9ae1fb014bfebae6c64575e9b95012302435392c65549ecceb0d4d88233498e65d907d7c17c4d4afe" +
+                "0d0f604f88303e4b71456803f7f04d8ece4c55514b66273e95c6c4b6246d49296fa51113edcfeb0cba0cf6560d50b6cc6401" +
+                "70fa7cd413c55ef65b3364774675c51838df9b1c710205c63e6458fe5300810da05693ff0652a92e2e1363a6a0064b3ae060" +
+                "933984f37d381ccc3087bef46efe6f30aac551f24ee40ae2460a9b287a0f97f4b207efa21e08436604917eb538bf326973ff" +
+                "b8f91f29458180bfafd836e9382c01c49cc60802b0b0e47a07ae8eeaa1a00b2106948ce29931f83f1defc2257000cc6202d4" +
+                "1e7a95327676bb361db603708c10499a66a74a5919f317e2503f819c392ec3dcbdd5a65cb6b7ea9a47914f3ec7721425ffde" +
+                "11cc953c28b1b03dc76522470c19ce56ffdb7956ee2560adf3e41be566b4c87b0417ca279a4f821f7ee8972fae245a5dd61f" +
+                "979c503ee7d389afb875b3081c8062ed6592fb2c12158e5a541a15b1271b10f4c36f3be9c7010bfad8ba59a7434a2dca1c4e" +
+                "dc45bd5abdea0feebcc4731f3058e52374da74bf66c21b95"
     }
 }

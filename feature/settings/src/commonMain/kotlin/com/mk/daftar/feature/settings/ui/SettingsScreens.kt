@@ -36,6 +36,7 @@ import com.mk.daftar.core.navigation.ChangePinRoute
 import com.mk.daftar.core.navigation.CloudRoute
 import com.mk.daftar.core.navigation.LocalNavigator
 import com.mk.daftar.core.navigation.PreferencesRoute
+import com.mk.daftar.core.navigation.TopLevelDestination
 import com.mk.daftar.feature.settings.AppBuildInfo
 import com.mk.daftar.feature.settings.BiometricAvailability
 import com.mk.daftar.feature.settings.BiometricPinSheet
@@ -127,7 +128,11 @@ fun SettingsContent(
     modifier: Modifier = Modifier,
 ) {
     val prefs = state.preferences ?: UserPreferences()
-    SettingsPage(title = stringResource(Res.string.settings_title), modifier = modifier) {
+    SettingsPage(
+        title = stringResource(Res.string.settings_title),
+        modifier = modifier,
+        rootDestination = TopLevelDestination.SETTINGS,
+    ) {
         SectionTitle(stringResource(Res.string.settings_section_security))
         DaftarSettingRow(
             title = stringResource(Res.string.settings_pin_title),

@@ -11,6 +11,7 @@ import com.mk.daftar.core.domain.storage.VaultRead
 import com.mk.daftar.core.domain.valuation.AssetCategory
 import com.mk.daftar.core.domain.valuation.PortfolioInput
 import com.mk.daftar.core.domain.valuation.SelectedQuotes
+import com.mk.daftar.core.model.FxBasis
 import com.mk.daftar.core.model.GoldKarat
 import com.mk.daftar.core.model.QuoteKey
 import com.mk.daftar.core.model.QuoteProvider
@@ -98,6 +99,17 @@ class HomeSummaryTest {
         val figures = summarizeHome(valuationOf(input, quotes), quotes, bankCount = 1)
 
         assertEquals("4874.25", figures.total!!.toPlainString())
+    }
+
+    @Test
+    fun theStripNamesWhatTheUsdRateIs() {
+        val bank = quotesOf(remoteUsd("52.77", provider = QuoteProvider.BANQUE_MISR))
+        assertEquals(FxBasis.BANK_TRANSFER_BUY, summarizeHome(valuationOf(readyInput(), bank), bank, 1).quotes.usdBasis)
+        val estimate = quotesOf(remoteUsd("48.50"))
+        assertEquals(
+            FxBasis.MID_MARKET_ESTIMATE,
+            summarizeHome(valuationOf(readyInput(), estimate), estimate, 1).quotes.usdBasis,
+        )
     }
 
     @Test

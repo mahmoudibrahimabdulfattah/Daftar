@@ -22,24 +22,25 @@ import kotlin.test.assertTrue
 import kotlin.time.Duration.Companion.seconds
 import kotlin.time.Instant
 import kotlinx.coroutines.CancellationException
-import kotlinx.coroutines.test.runTest
+import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.runBlocking
 import kotlinx.io.IOException
 
 class HttpFallbackTest {
 
     private val clock = FixedClock(FETCHED_AT)
-    private val dispatchers = AppDispatchers()
+    private val dispatchers = AppDispatchers(default = Dispatchers.Unconfined)
     private val exchangeEndpoint = "https://open.er-api.com/v6/latest/USD"
     private val cdnEndpoint = "https://cdn.jsdelivr.net/npm/@fawazahmed0/currency-api@latest/v1/currencies/usd.json"
     private val mirrorEndpoint = "https://latest.currency-api.pages.dev/v1/currencies/usd.json"
 
     private val exchangeBody = """
-        {"result":"success","time_last_update_unix":1790990000,"base_code":"USD","rates":{"USD":1,"EGP":50.25}}
+        {"result":"success","time_last_update_unix":1791776030,"base_code":"USD","rates":{"USD":1,"EGP":50.25}}
     """.trimIndent()
     private val fawazBody = """{"date":"2026-10-12","usd":{"egp":50.5}}"""
 
     @Test
-    fun primarySuccessMakesASingleRequest() = runTest {
+    fun primarySuccessMakesASingleRequest() = runBlocking<Unit> {
         val log = RequestLog()
         val client = clientFor(mapOf(exchangeEndpoint to ok(exchangeBody)), log)
 
@@ -51,7 +52,7 @@ class HttpFallbackTest {
     }
 
     @Test
-    fun serverErrorFallsBackToTheCdnAndKeepsTheFailure() = runTest {
+    fun serverErrorFallsBackToTheCdnAndKeepsTheFailure() = runBlocking<Unit> {
         val log = RequestLog()
         val client = clientFor(
             mapOf(exchangeEndpoint to status(HttpStatusCode.InternalServerError), cdnEndpoint to ok(fawazBody)),
@@ -69,7 +70,7 @@ class HttpFallbackTest {
     }
 
     @Test
-    fun invalidPrimaryValueFallsBackInsteadOfBlending() = runTest {
+    fun invalidPrimaryValueFallsBackInsteadOfBlending() = runBlocking<Unit> {
         val euroBase = exchangeBody.replace("\"base_code\":\"USD\"", "\"base_code\":\"EUR\"")
         val client = clientFor(mapOf(exchangeEndpoint to ok(euroBase), cdnEndpoint to ok(fawazBody)), RequestLog())
 
@@ -80,7 +81,7 @@ class HttpFallbackTest {
     }
 
     @Test
-    fun mirrorIsTriedOnceAfterTheCdnFails() = runTest {
+    fun mirrorIsTriedOnceAfterTheCdnFails() = runBlocking<Unit> {
         val log = RequestLog()
         val client = clientFor(
             mapOf(
@@ -104,7 +105,7 @@ class HttpFallbackTest {
     }
 
     @Test
-    fun noRequestIsMadeAfterASuccessfulSecondarySource() = runTest {
+    fun noRequestIsMadeAfterASuccessfulSecondarySource() = runBlocking<Unit> {
         val log = RequestLog()
         val client = clientFor(
             mapOf(
@@ -121,7 +122,7 @@ class HttpFallbackTest {
     }
 
     @Test
-    fun allProvidersFailingReportsEveryAttemptInOrder() = runTest {
+    fun allProvidersFailingReportsEveryAttemptInOrder() = runBlocking<Unit> {
         val log = RequestLog()
         val client = clientFor(
             mapOf(
@@ -150,7 +151,7 @@ class HttpFallbackTest {
     }
 
     @Test
-    fun malformedBodiesAreReportedAsInvalidPayloads() = runTest {
+    fun malformedBodiesAreReportedAsInvalidPayloads() = runBlocking<Unit> {
         val client = clientFor(
             mapOf(
                 exchangeEndpoint to ok("{"),
@@ -172,7 +173,7 @@ class HttpFallbackTest {
     }
 
     @Test
-    fun oversizedJsonIsRefusedWhileReading() = runTest {
+    fun oversizedJsonIsRefusedWhileReading() = runBlocking<Unit> {
         val oversized = "{\"result\":\"success\"" + " ".repeat(JSON_MAX_BYTES) + "}"
         val client = clientFor(mapOf(exchangeEndpoint to ok(oversized)), RequestLog())
 
@@ -183,7 +184,7 @@ class HttpFallbackTest {
     }
 
     @Test
-    fun declaredContentLengthOverTheLimitIsRefusedBeforeReading() = runTest {
+    fun declaredContentLengthOverTheLimitIsRefusedBeforeReading() = runBlocking<Unit> {
         val client = clientFor(
             mapOf(
                 exchangeEndpoint to ok(
@@ -201,7 +202,7 @@ class HttpFallbackTest {
     }
 
     @Test
-    fun bodyExactlyAtTheHtmlLimitIsAccepted() = runTest {
+    fun bodyExactlyAtTheHtmlLimitIsAccepted() = runBlocking<Unit> {
         val body = "a".repeat(HTML_MAX_BYTES)
         val client = clientFor(mapOf(exchangeEndpoint to ok(body, "text/html")), RequestLog())
 
@@ -211,7 +212,7 @@ class HttpFallbackTest {
     }
 
     @Test
-    fun bodyOneByteOverTheHtmlLimitIsRefused() = runTest {
+    fun bodyOneByteOverTheHtmlLimitIsRefused() = runBlocking<Unit> {
         val body = "a".repeat(HTML_MAX_BYTES + 1)
         val client = clientFor(mapOf(exchangeEndpoint to ok(body, "text/html")), RequestLog())
 
@@ -222,7 +223,7 @@ class HttpFallbackTest {
     }
 
     @Test
-    fun httpStatusesMapToTypedErrors() = runTest {
+    fun httpStatusesMapToTypedErrors() = runBlocking<Unit> {
         listOf(HttpStatusCode.NotFound, HttpStatusCode.InternalServerError, HttpStatusCode.ServiceUnavailable)
             .forEach { code ->
                 val client = clientFor(mapOf(exchangeEndpoint to status(code)), RequestLog())
@@ -234,7 +235,7 @@ class HttpFallbackTest {
     }
 
     @Test
-    fun rateLimitedKeepsRetryAfterSecondsAndDropsDates() = runTest {
+    fun rateLimitedKeepsRetryAfterSecondsAndDropsDates() = runBlocking<Unit> {
         val withSeconds = clientFor(
             mapOf(exchangeEndpoint to status(HttpStatusCode.TooManyRequests, mapOf(HttpHeaders.RetryAfter to "120"))),
             RequestLog(),
@@ -260,7 +261,7 @@ class HttpFallbackTest {
     }
 
     @Test
-    fun timeoutAndTransportFailuresAreDistinct() = runTest {
+    fun timeoutAndTransportFailuresAreDistinct() = runBlocking<Unit> {
         val timeout = clientFor(
             mapOf(exchangeEndpoint to { throw HttpRequestTimeoutException(exchangeEndpoint, 20_000) }),
             RequestLog(),
@@ -278,14 +279,14 @@ class HttpFallbackTest {
     }
 
     @Test
-    fun cancellationPropagatesInsteadOfBecomingAnError() = runTest {
+    fun cancellationPropagatesInsteadOfBecomingAnError() = runBlocking<Unit> {
         assertFailsWith<CancellationException> {
             networkCall<Unit>(clock) { throw CancellationException("stopped") }
         }
     }
 
     @Test
-    fun cancellationStopsTheFallbackChainBeforeTheNextRequest() = runTest {
+    fun cancellationStopsTheFallbackChainBeforeTheNextRequest() = runBlocking<Unit> {
         val log = RequestLog()
         val client = clientFor(
             mapOf(
@@ -300,7 +301,7 @@ class HttpFallbackTest {
     }
 
     @Test
-    fun exchangeRateRequestsNeverRetry() = runTest {
+    fun exchangeRateRequestsNeverRetry() = runBlocking<Unit> {
         val log = RequestLog()
         val client = clientFor(mapOf(exchangeEndpoint to status(HttpStatusCode.InternalServerError)), log)
 
@@ -310,7 +311,7 @@ class HttpFallbackTest {
     }
 
     @Test
-    fun goldRequestsUseOnlyTheHtmlAcceptHeaderAndNoQueryData() = runTest {
+    fun goldRequestsUseOnlyTheHtmlAcceptHeaderAndNoQueryData() = runBlocking<Unit> {
         val log = RequestLog()
         val client =
             clientFor(mapOf(IsaghaGoldDataSource.PAGE_URL to ok(TestFixtures.isaghaPricesHtml, "text/html")), log)
@@ -327,7 +328,7 @@ class HttpFallbackTest {
     }
 
     @Test
-    fun goldChallengePageFromTheNetworkIsAMalformedPayload() = runTest {
+    fun goldChallengePageFromTheNetworkIsAMalformedPayload() = runBlocking<Unit> {
         val client = clientFor(
             mapOf(IsaghaGoldDataSource.PAGE_URL to ok("<html><body>Verify you are human</body></html>", "text/html")),
             RequestLog(),
@@ -340,7 +341,7 @@ class HttpFallbackTest {
     }
 
     @Test
-    fun goldHttpFailuresKeepTheirTypedError() = runTest {
+    fun goldHttpFailuresKeepTheirTypedError() = runBlocking<Unit> {
         val client = clientFor(mapOf(IsaghaGoldDataSource.PAGE_URL to status(HttpStatusCode.NotFound)), RequestLog())
 
         assertEquals(
@@ -350,7 +351,7 @@ class HttpFallbackTest {
     }
 
     @Test
-    fun fallbackUsesTheInjectedClockForRetryTimes() = runTest {
+    fun fallbackUsesTheInjectedClockForRetryTimes() = runBlocking<Unit> {
         val later = Instant.parse("2026-10-12T05:00:00Z")
         val client = clientFor(
             mapOf(exchangeEndpoint to status(HttpStatusCode.TooManyRequests, mapOf(HttpHeaders.RetryAfter to "5"))),
@@ -363,10 +364,18 @@ class HttpFallbackTest {
         )
     }
 
-    private fun fallback(client: HttpClient) = FallbackFxDataSource(
-        primary = ExchangeRateApiDataSource(client, clock, dispatchers),
-        secondary = FawazFxDataSource(client, clock, dispatchers),
-    )
+    /** The open.er-api and fawazahmed0 part of the production chain, without the Banque Misr first step. */
+    private fun fallback(client: HttpClient): FallbackFxDataSource {
+        val exchange = ExchangeRateApiDataSource(client, clock, dispatchers)
+        val fawaz = FawazFxDataSource(client, clock, dispatchers)
+        return FallbackFxDataSource(
+            steps = listOf(FxStep(QuoteProvider.EXCHANGE_RATE_API, exchange.endpoint) { exchange.fetch() }) +
+                FawazFxDataSource.ENDPOINTS.map { endpoint ->
+                    FxStep(QuoteProvider.FAWAZ_CURRENCY_API, endpoint) { fawaz.fetchEndpoint(endpoint) }
+                },
+            clock = clock,
+        )
+    }
 
     /**
      * Builds a client whose responses come from [routes], keyed by exact URL. A route either returns a response or

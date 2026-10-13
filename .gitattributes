@@ -1,0 +1,4 @@
+
+# Recorded third-party bytes: hashed in manifests and fixtures, never normalised.
+docs/design/bank-marks/source/** -text
+core/network/src/commonTest/resources/fixtures/*.html -text

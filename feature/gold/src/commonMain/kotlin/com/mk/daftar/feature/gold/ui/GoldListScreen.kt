@@ -46,6 +46,7 @@ import com.mk.daftar.core.navigation.LeaveRequest
 import com.mk.daftar.core.navigation.LocalNavigator
 import com.mk.daftar.core.ui.mvi.CollectEffects
 import com.mk.daftar.core.ui.presentation.moneyText
+import com.mk.daftar.core.ui.shell.PriceRefreshAction
 import com.mk.daftar.core.ui.shell.ShellScreen
 import com.mk.daftar.feature.gold.GoldEffect
 import com.mk.daftar.feature.gold.GoldPhase
@@ -132,7 +133,10 @@ fun GoldListContent(
                 title = stringResource(Res.string.gold_title),
                 onBack = onBack,
                 backLabel = stringResource(DesignRes.string.btn_back),
-                actions = { VisibilityToggle(hidden = state.hidden) { onIntent(GoldListIntent.ToggleHidden) } },
+                actions = {
+                    VisibilityToggle(hidden = state.hidden) { onIntent(GoldListIntent.ToggleHidden) }
+                    PriceRefreshAction()
+                },
             )
             if (state.pendingRoute != null) {
                 RevealPrompt(
@@ -366,7 +370,7 @@ private fun GoldRow(
             stringResource(Res.string.gold_karat_label, row.karat.carats),
         ),
         subtitle = if (hidden) null else weightLine(row),
-        icon = DaftarIcons.Gold,
+        icon = DaftarIcons.GoldBar,
         tone = DaftarTileTone.Gold,
         onClick = onOpen,
         value = {

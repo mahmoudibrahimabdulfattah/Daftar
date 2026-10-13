@@ -96,4 +96,13 @@
     <string name="failed_retry">إعادة المحاولة</string>
     <string name="failed_back_to_editing">العودة للتعديل</string>
     <string name="load_failed_title">تعذّر تحميل السجل</string>
+    <string name="bank_picker_title">اختر البنك</string>
+    <string name="bank_picker_search">ابحث باسم البنك</string>
+    <string name="bank_picker_other">بنك آخر</string>
+    <string name="bank_picker_empty">لا توجد نتائج. يمكنك إضافة بنك آخر.</string>
+    <string name="bank_picker_privacy">القائمة والشعارات على جهازك. لا نتصل بالبنك.</string>
+    <string name="bank_display_name">الاسم الظاهر</string>
+    <string name="bank_change_identity">تغيير هوية البنك</string>
+    <string name="bank_use_custom">استخدام بنك مخصّص</string>
+    <string name="bank_identity_custom">بنك مخصّص</string>
 </resources>

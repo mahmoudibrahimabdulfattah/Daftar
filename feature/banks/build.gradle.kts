@@ -20,6 +20,10 @@ kotlin {
             implementation(projects.core.common)
             implementation(libs.compose.material3.adaptive.navigation3)
         }
+        getByName("androidMain").dependencies {
+            // Back from the bank directory returns to the form instead of leaving the editor.
+            implementation(libs.androidx.activity.compose)
+        }
         commonTest.dependencies {
             implementation(libs.kotlinx.coroutines.test)
         }

@@ -17,6 +17,7 @@
     <string name="prices_badge_manual">يدوي</string>
     <string name="prices_badge_stale">قديم · محفوظ</string>
     <string name="prices_badge_clock">الوقت غير موثوق</string>
+    <string name="prices_provider_banque_misr">بنك مصر</string>
     <string name="prices_provider_isagha">iSagha</string>
     <string name="prices_provider_exchange">ExchangeRate-API</string>
     <string name="prices_provider_fawaz">fawazahmed0 currency API</string>
@@ -110,4 +111,11 @@
     <string name="manual_error_range">القيمة كبيرة جدًا.</string>
     <string name="manual_error_note">الملاحظة طويلة جدًا.</string>
     <string name="prices_unit_short">ج.م</string>
+    <string name="fx_basis_bank">بنك مصر · شراء التحويلات</string>
+    <string name="fx_basis_bank_explanation">سعر شراء البنك لدولارك. مرجع موحّد للتقييم، وليس وعدًا بسعر التنفيذ.</string>
+    <string name="fx_basis_fallback">سعر تقديري من مصدر بديل؛ تعذّر تحديث سعر بنك مصر.</string>
+    <string name="fx_basis_estimate">تقدير متوسط السوق · %1$s</string>
+    <string name="fx_basis_manual">يدوي · أُدخل: %1$s</string>
+    <string name="fx_time_published_checked">نُشر: %1$s / تم التحقق: %2$s</string>
+    <string name="fx_time_checked">تم التحقق: %1$s</string>
 </resources>

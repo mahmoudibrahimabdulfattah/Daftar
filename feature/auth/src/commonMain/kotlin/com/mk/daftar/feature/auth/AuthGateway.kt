@@ -33,6 +33,21 @@ interface AuthGateway {
 
     /** Whether the lock screen may offer biometrics: preference, valid slot and platform capability agree. */
     suspend fun biometricReady(): Boolean
+
+    /**
+     * Whether this lock episode has already spent its automatic biometric request. Non-sensitive storage: it holds only
+     * a flag. Reads that fail report true, so a broken store never causes an automatic prompt.
+     */
+    suspend fun autoAttemptConsumed(): Boolean
+
+    /**
+     * Persists the consumed flag before a request reaches the platform. Returns false when the write failed; the caller
+     * must then not start the request.
+     */
+    suspend fun consumeAutoAttempt(): Boolean
+
+    /** Clears the consumed flag after a successful unlock, so the next lock episode is eligible again. */
+    suspend fun clearAutoAttempt()
 }
 
 /** The outcome of one create or unlock, in terms the feature owns. */

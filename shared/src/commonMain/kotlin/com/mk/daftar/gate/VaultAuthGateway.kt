@@ -3,6 +3,7 @@ package com.mk.daftar.gate
 import com.mk.daftar.core.common.Outcome
 import com.mk.daftar.core.data.session.VaultAuthenticator
 import com.mk.daftar.core.data.session.VaultOpenFailure
+import com.mk.daftar.core.datastore.DaftarPreferencesDataSource
 import com.mk.daftar.core.security.BiometricCapability
 import com.mk.daftar.core.security.BiometricError
 import com.mk.daftar.core.security.BiometricPrompter
@@ -22,6 +23,7 @@ internal class VaultAuthGateway(
     private val security: VaultSecurity,
     private val authenticator: VaultAuthenticator,
     private val prompter: BiometricPrompter,
+    private val preferences: DaftarPreferencesDataSource,
 ) : AuthGateway {
     override suspend fun status(): SecurityStatus = security.status()
 
@@ -38,6 +40,14 @@ internal class VaultAuthGateway(
     override suspend fun biometricCapability(): BiometricCapability = authenticator.biometricCapability()
 
     override suspend fun biometricReady(): Boolean = authenticator.biometricReady()
+
+    override suspend fun autoAttemptConsumed(): Boolean = preferences.autoBiometricConsumed()
+
+    override suspend fun consumeAutoAttempt(): Boolean = preferences.setAutoBiometricConsumed(true) is Outcome.Success
+
+    override suspend fun clearAutoAttempt() {
+        preferences.setAutoBiometricConsumed(false)
+    }
 }
 
 internal fun Outcome<Unit, VaultOpenFailure>.toAuthResult(): AuthResult = when (this) {

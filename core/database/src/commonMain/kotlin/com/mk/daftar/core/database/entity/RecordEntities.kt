@@ -41,6 +41,10 @@ data class BankEntity(
     @ColumnInfo(name = "updated_nanos") val updatedNanos: Int,
     @ColumnInfo(name = "revision") val revision: Long,
     @ColumnInfo(name = "name") val name: String,
+    /** The catalog institution ID, or null for a custom or unidentified bank. Version 3. */
+    @ColumnInfo(name = "institution_id") val institutionId: String? = null,
+    /** Whether the user made the identity choice. Version 3; automatic matching never sets it. */
+    @ColumnInfo(name = "identity_reviewed") val identityReviewed: Boolean = false,
 )
 
 @Entity(

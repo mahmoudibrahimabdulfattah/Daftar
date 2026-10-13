@@ -15,6 +15,7 @@ import androidx.compose.ui.Modifier
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import com.mk.daftar.core.designsystem.component.DaftarAmount
 import com.mk.daftar.core.designsystem.component.DaftarBalanceSummary
+import com.mk.daftar.core.designsystem.component.DaftarCurrencyBadge
 import com.mk.daftar.core.designsystem.component.DaftarEmptyState
 import com.mk.daftar.core.designsystem.component.DaftarIconButton
 import com.mk.daftar.core.designsystem.component.DaftarLedgerRow
@@ -38,6 +39,7 @@ import com.mk.daftar.core.navigation.LocalNavigator
 import com.mk.daftar.core.ui.mvi.CollectEffects
 import com.mk.daftar.core.ui.presentation.moneyText
 import com.mk.daftar.core.ui.shell.LocalSimultaneousPanes
+import com.mk.daftar.core.ui.shell.PriceRefreshAction
 import com.mk.daftar.core.ui.shell.ShellScreen
 import com.mk.daftar.feature.banks.AccountRow
 import com.mk.daftar.feature.banks.BankDetailIntent
@@ -108,6 +110,7 @@ fun BankDetailContent(
                 backLabel = stringResource(DesignRes.string.btn_back),
                 actions = {
                     VisibilityToggle(hidden = state.hidden) { onIntent(BankDetailIntent.ToggleValues) }
+                    PriceRefreshAction()
                     if (state.phase is BankPhase.Ready || state.phase == BankPhase.Empty) {
                         DaftarIconButton(
                             onClick = { onIntent(BankDetailIntent.EditBank) },
@@ -223,7 +226,10 @@ private fun AccountLedgerRow(
     DaftarLedgerRow(
         title = account.name,
         subtitle = stringResource(Res.string.banks_account_balance),
-        icon = DaftarIcons.Wallet,
+        leading = {
+            val glyph = currencyGlyphOf(account.currency)
+            DaftarCurrencyBadge(glyph = glyph.text, arabicGlyph = glyph.arabic)
+        },
         onClick = onClick,
         value = {
             Column(horizontalAlignment = Alignment.End) {

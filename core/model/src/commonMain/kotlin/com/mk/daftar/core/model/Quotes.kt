@@ -28,9 +28,48 @@ enum class QuoteKind { LIVE, CACHED, MANUAL, ESTIMATE }
 
 enum class QuoteProvider {
     ISAGHA,
+    BANQUE_MISR,
     EXCHANGE_RATE_API,
     FAWAZ_CURRENCY_API,
     USER,
+}
+
+/**
+ * What a USD to EGP rate measures. It is a disclosure, not a promise of execution.
+ * - [BANK_TRANSFER_BUY]: the bank's transfer buying rate for USD (Banque Misr).
+ * - [MID_MARKET_ESTIMATE]: an estimate from a market-rate provider, never labelled as a bank rate.
+ * - [MANUAL]: entered by the user.
+ * - [LEGACY_UNKNOWN]: a stored remote rate whose provider identity does not prove its basis.
+ */
+enum class FxBasis {
+    BANK_TRANSFER_BUY,
+    MID_MARKET_ESTIMATE,
+    MANUAL,
+    LEGACY_UNKNOWN,
+    ;
+
+    /** Whether this basis may describe a quote from [provider]. */
+    fun isAllowedFor(provider: QuoteProvider): Boolean = when (provider) {
+        QuoteProvider.BANQUE_MISR -> this == BANK_TRANSFER_BUY
+
+        QuoteProvider.EXCHANGE_RATE_API, QuoteProvider.FAWAZ_CURRENCY_API ->
+            this == MID_MARKET_ESTIMATE ||
+                this == LEGACY_UNKNOWN
+
+        QuoteProvider.USER -> this == MANUAL
+
+        QuoteProvider.ISAGHA -> this == LEGACY_UNKNOWN
+    }
+
+    companion object {
+        /** The basis that a provider's identity proves. Only an unproven stored row uses [LEGACY_UNKNOWN]. */
+        fun defaultFor(provider: QuoteProvider): FxBasis = when (provider) {
+            QuoteProvider.BANQUE_MISR -> BANK_TRANSFER_BUY
+            QuoteProvider.EXCHANGE_RATE_API, QuoteProvider.FAWAZ_CURRENCY_API -> MID_MARKET_ESTIMATE
+            QuoteProvider.USER -> MANUAL
+            QuoteProvider.ISAGHA -> LEGACY_UNKNOWN
+        }
+    }
 }
 
 /** The time the provider says its data describes. Kept separate from the time we fetched it. */
@@ -108,7 +147,15 @@ sealed interface PriceQuote {
 data class GoldQuote(val key: QuoteKey.Gold, val price: GoldPrice, override val provenance: QuoteProvenance) :
     PriceQuote
 
-data class FxQuote(val rate: FxRate, override val provenance: QuoteProvenance) : PriceQuote {
+data class FxQuote(
+    val rate: FxRate,
+    override val provenance: QuoteProvenance,
+    val basis: FxBasis = FxBasis.defaultFor(provenance.provider),
+) : PriceQuote {
+    init {
+        require(basis.isAllowedFor(provenance.provider)) { "basis does not match the quote provider" }
+    }
+
     val key: QuoteKey.UsdEgp
         get() = QuoteKey.UsdEgp
 }

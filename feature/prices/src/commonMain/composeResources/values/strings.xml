@@ -17,6 +17,7 @@
     <string name="prices_badge_manual">Manual</string>
     <string name="prices_badge_stale">Stale · cached</string>
     <string name="prices_badge_clock">Clock uncertain</string>
+    <string name="prices_provider_banque_misr">Banque Misr</string>
     <string name="prices_provider_isagha">iSagha</string>
     <string name="prices_provider_exchange">ExchangeRate-API</string>
     <string name="prices_provider_fawaz">fawazahmed0 currency API</string>
@@ -110,4 +111,11 @@
     <string name="manual_error_range">The value is too large.</string>
     <string name="manual_error_note">The note is too long.</string>
     <string name="prices_unit_short">EGP</string>
+    <string name="fx_basis_bank">Banque Misr · transfer buy</string>
+    <string name="fx_basis_bank_explanation">The bank\'s buying rate for your USD. A shared valuation reference, not a guaranteed exchange rate.</string>
+    <string name="fx_basis_fallback">Estimated rate from an alternative source; Banque Misr could not be updated.</string>
+    <string name="fx_basis_estimate">Mid-market estimate · %1$s</string>
+    <string name="fx_basis_manual">Manual · entered: %1$s</string>
+    <string name="fx_time_published_checked">Published: %1$s / Checked: %2$s</string>
+    <string name="fx_time_checked">Checked: %1$s</string>
 </resources>

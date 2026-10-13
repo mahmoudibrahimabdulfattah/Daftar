@@ -2,6 +2,8 @@ package com.mk.daftar.feature.assets
 
 import androidx.lifecycle.viewModelScope
 import androidx.navigation3.runtime.NavKey
+import com.mk.daftar.core.domain.refresh.PriceRefreshController
+import com.mk.daftar.core.domain.refresh.PriceRefreshStatus
 import com.mk.daftar.core.domain.storage.StorageError
 import com.mk.daftar.core.domain.usecase.ObserveBanksUseCase
 import com.mk.daftar.core.domain.usecase.ObservePortfolioValuationUseCase
@@ -27,10 +29,18 @@ sealed interface AssetsLoad {
     data class Ready(val figures: AssetsFigures) : AssetsLoad
 }
 
-data class AssetsUiState(val load: AssetsLoad = AssetsLoad.Loading, val valuesHidden: Boolean = false) : UiState
+data class AssetsUiState(
+    val load: AssetsLoad = AssetsLoad.Loading,
+    val valuesHidden: Boolean = false,
+    /** A price refresh is in flight. The pinned refresh action shows it; values stay visible. */
+    val refreshing: Boolean = false,
+) : UiState
 
 sealed interface AssetsIntent : UiIntent {
     data object ToggleValues : AssetsIntent
+
+    /** The shared quote refresh. Coalesced with any refresh already running. */
+    data object Refresh : AssetsIntent
 
     data class OpenCategory(val category: AssetCategory) : AssetsIntent
 }
@@ -44,6 +54,7 @@ class AssetsOverviewViewModel(
     observePortfolio: ObservePortfolioValuationUseCase,
     observeBanks: ObserveBanksUseCase,
     private val visibility: ValuesVisibility,
+    private val refresh: PriceRefreshController,
 ) : MviViewModel<AssetsUiState, AssetsIntent, AssetsEffect>(AssetsUiState()) {
 
     init {
@@ -52,10 +63,12 @@ class AssetsOverviewViewModel(
                 observePortfolio(),
                 observeBanks().map { it.countReady() },
                 visibility.visible,
-            ) { valuation, bankCount, visible ->
+                refresh.status,
+            ) { valuation, bankCount, visible, status ->
                 AssetsUiState(
                     load = assetsLoadOf(valuation, bankCount),
                     valuesHidden = !visible,
+                    refreshing = status is PriceRefreshStatus.Refreshing,
                 )
             }.collect { next -> reduce { next } }
         }
@@ -64,6 +77,7 @@ class AssetsOverviewViewModel(
     override fun onIntent(intent: AssetsIntent) {
         when (intent) {
             AssetsIntent.ToggleValues -> visibility.toggle()
+            AssetsIntent.Refresh -> refresh.refresh()
             is AssetsIntent.OpenCategory -> emitEffect(AssetsEffect.Open(intent.category.route()))
         }
     }

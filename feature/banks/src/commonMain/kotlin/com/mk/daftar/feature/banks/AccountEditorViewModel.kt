@@ -135,7 +135,11 @@ class AccountEditorViewModel(
             is VaultRead.Failed -> Unit
 
             is VaultRead.Ready -> reduce {
-                copy(banks = read.value.map { BankOption(it.value.id.value, it.value.name) })
+                copy(
+                    banks = read.value.map {
+                        BankOption(it.value.id.value, it.value.name, it.value.institutionId?.value)
+                    },
+                )
             }
         }
     }
