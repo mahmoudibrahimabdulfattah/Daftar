@@ -112,4 +112,8 @@
     <string name="cloud_upload_submit">Encrypt &amp; upload</string>
     <string name="cloud_sign_in_google">Continue with Google</string>
     <string name="cloud_sign_in_apple">Continue with Apple</string>
+    <string name="restore_use_recovery">Forgot the password? Use your recovery key</string>
+    <string name="restore_use_password">Use the backup password</string>
+    <string name="restore_recovery_label">Recovery key</string>
+    <string name="restore_recovery_note">The key opens only backups made after it was set up.</string>
 </resources>

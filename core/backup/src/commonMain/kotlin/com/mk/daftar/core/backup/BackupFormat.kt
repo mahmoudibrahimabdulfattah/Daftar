@@ -128,6 +128,32 @@ internal class BackupHeader(val salt: ByteArray, val nonce: ByteArray, val ciphe
             return Outcome.Success(header)
         }
 
+        /** Validates only the shared 64-byte prefix (magic to nonce) of [bytes], whatever follows it. */
+        fun decodePrefix(bytes: ByteArray): Outcome<BackupHeader, BackupError> {
+            if (bytes.size < BackupFormat.HEADER_BYTES) return failure(BackupError.NotABackup)
+            if (!bytes.copyOfRange(0, BackupFormat.MAGIC.size).contentEquals(BackupFormat.MAGIC)) {
+                return failure(BackupError.NotABackup)
+            }
+            if (bytes[10].toInt() != BackupFormat.KDF_ARGON2ID13) return failure(BackupError.UnsupportedFormat)
+            if (bytes[11].toInt() != BackupFormat.AEAD_XCHACHA20_POLY1305) return failure(BackupError.UnsupportedFormat)
+            if (readU32(bytes, 12) != BackupFormat.MEMORY_KIB.toLong() ||
+                readU32(bytes, 16) != BackupFormat.PASSES.toLong()
+            ) {
+                return failure(BackupError.UnsupportedFormat)
+            }
+            if (bytes[20].toInt() != BackupFormat.LANES) return failure(BackupError.UnsupportedFormat)
+            if (bytes[21].toInt() != BackupFormat.KEY_BYTES) return failure(BackupError.UnsupportedFormat)
+            if (bytes[22].toInt() != BackupFormat.SALT_BYTES) return failure(BackupError.NotABackup)
+            if (bytes[39].toInt() != BackupFormat.NONCE_BYTES) return failure(BackupError.NotABackup)
+            return Outcome.Success(
+                BackupHeader(
+                    salt = bytes.copyOfRange(23, 23 + BackupFormat.SALT_BYTES),
+                    nonce = bytes.copyOfRange(40, 40 + BackupFormat.NONCE_BYTES),
+                    ciphertextLength = 0,
+                ),
+            )
+        }
+
         private fun failure(error: BackupError): Outcome<BackupHeader, BackupError> = Outcome.Failure(error)
     }
 }
@@ -151,3 +177,88 @@ private fun readU32(bytes: ByteArray, offset: Int): Long = ((bytes[offset].toLon
     ((bytes[offset + 1].toLong() and 0xFF) shl 16) or
     ((bytes[offset + 2].toLong() and 0xFF) shl 8) or
     (bytes[offset + 3].toLong() and 0xFF)
+
+/**
+ * The version-two container, written when the vault has a recovery key. The payload is encrypted under a random backup
+ * key; that key is wrapped twice, under the password's Argon2id key and sealed to the recovery public key, so either
+ * the password or the recovery key opens the file. Version one stays readable and is still written without a recovery
+ * key. Every width below is part of the format and is frozen.
+ *
+ * ```
+ * offset  size  field
+ *      0    64  as version one (magic, version = 2, KDF and AEAD identifiers and parameters, salt, payload nonce)
+ *     64    24  wrap nonce
+ *     88    48  backup key (32) wrapped under the password key, XChaCha20-Poly1305, associated data = bytes 0..64
+ *    136     1  recovery slot present, 0 or 1
+ *    137    80  backup key sealed to the recovery public key (crypto_box_seal), zeros when absent
+ *    217     4  ciphertext length, u32 big-endian, plaintext length + 16
+ *    221     n  payload ciphertext under the backup key, associated data = bytes 0..221
+ * ```
+ */
+internal class BackupHeaderV2(
+    val salt: ByteArray,
+    val nonce: ByteArray,
+    val wrapNonce: ByteArray,
+    val wrappedKey: ByteArray,
+    val recoverySealed: ByteArray?,
+    val ciphertextLength: Int,
+) {
+    /** The first 64 bytes: the associated data of the wrapped key. */
+    fun prefix(): ByteArray = BackupHeader(salt, nonce, 0).encode().copyOf(PREFIX_BYTES).also { putU16(it, 8, VERSION) }
+
+    fun encode(): ByteArray {
+        val out = ByteArray(HEADER_BYTES)
+        prefix().copyInto(out, 0)
+        wrapNonce.copyInto(out, 64)
+        wrappedKey.copyInto(out, 88)
+        if (recoverySealed != null) {
+            out[136] = 1
+            recoverySealed.copyInto(out, 137)
+        }
+        putU32(out, 217, ciphertextLength.toLong())
+        return out
+    }
+
+    companion object {
+        const val VERSION = 2
+        const val PREFIX_BYTES = 64
+        const val HEADER_BYTES = 221
+        const val WRAPPED_KEY_BYTES = BackupFormat.KEY_BYTES + BackupFormat.TAG_BYTES
+        const val SEALED_KEY_BYTES = BackupFormat.KEY_BYTES + 48
+
+        fun decode(file: ByteArray): Outcome<BackupHeaderV2, BackupError> {
+            if (file.size < HEADER_BYTES + BackupFormat.TAG_BYTES) return Outcome.Failure(BackupError.NotABackup)
+            // The shared prefix is validated by the version-one rules, read with its own version number.
+            val asV1 = file.copyOf(BackupFormat.HEADER_BYTES).also { putU16(it, 8, BackupFormat.CONTAINER_VERSION) }
+            putU32(asV1, 64, 0)
+            val prefix = when (val parsed = BackupHeader.decodePrefix(asV1)) {
+                is Outcome.Failure -> return Outcome.Failure(parsed.error)
+                is Outcome.Success -> parsed.data
+            }
+            val flag = file[136].toInt()
+            if (flag != 0 && flag != 1) return Outcome.Failure(BackupError.NotABackup)
+            val ciphertextLength = readU32(file, 217)
+            val maxCiphertext = BackupFormat.MAX_PLAINTEXT_BYTES.toLong() + BackupFormat.TAG_BYTES
+            if (ciphertextLength < BackupFormat.TAG_BYTES || ciphertextLength > maxCiphertext) {
+                return Outcome.Failure(BackupError.NotABackup)
+            }
+            if (file.size.toLong() != HEADER_BYTES + ciphertextLength) return Outcome.Failure(BackupError.NotABackup)
+            return Outcome.Success(
+                BackupHeaderV2(
+                    salt = prefix.salt,
+                    nonce = prefix.nonce,
+                    wrapNonce = file.copyOfRange(64, 88),
+                    wrappedKey = file.copyOfRange(88, 88 + WRAPPED_KEY_BYTES),
+                    recoverySealed = if (flag == 1) file.copyOfRange(137, 137 + SEALED_KEY_BYTES) else null,
+                    ciphertextLength = ciphertextLength.toInt(),
+                ),
+            )
+        }
+    }
+}
+
+/** The container version of a file that starts with the magic, or null when it is not a backup at all. */
+internal fun containerVersionOf(file: ByteArray): Int? {
+    if (file.size < 10 || !file.copyOfRange(0, BackupFormat.MAGIC.size).contentEquals(BackupFormat.MAGIC)) return null
+    return readU16(file, 8)
+}

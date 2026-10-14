@@ -18,6 +18,7 @@ import com.mk.daftar.core.domain.repository.InactivityTimeout
 import com.mk.daftar.core.domain.repository.ThemeMode
 import com.mk.daftar.core.model.Bank
 import com.mk.daftar.core.model.BankId
+import com.mk.daftar.core.security.RecoveryKeyFormat
 import com.mk.daftar.core.security.SecretBytes
 import com.mk.daftar.feature.backup.restore.RestoreDraftRegistry
 import com.mk.daftar.feature.backup.restore.RestoreEffect
@@ -81,6 +82,16 @@ class RestoreViewModelTest {
 
         override suspend fun decrypt(file: ByteArray, password: ByteArray): Outcome<DecodedBackup, BackupError> {
             passwords += password.decodeToString()
+            return result
+        }
+
+        val recoveryKeys = mutableListOf<String>()
+
+        override suspend fun decryptWithRecoveryKey(
+            file: ByteArray,
+            recoveryKey: String,
+        ): Outcome<DecodedBackup, BackupError> {
+            recoveryKeys += recoveryKey
             return result
         }
     }
@@ -538,5 +549,25 @@ class RestoreViewModelTest {
         settle()
         assertTrue(picker.cancelled)
         assertEquals(RestoreEffect.Close, vm.effects.first())
+    }
+
+    @Test
+    fun aForgottenPasswordIsReplacedByTheRecoveryKey() = runTest(dispatcher) {
+        val h = harness()
+        h.vm.onIntent(RestoreIntent.ChooseFile)
+        settle()
+        h.vm.onIntent(RestoreIntent.ToggleRecoveryKey)
+        assertTrue(h.vm.state.value.usingRecoveryKey)
+        h.vm.typePassword("AJ5F-ZWDV")
+        assertFalse(h.vm.state.value.canSubmitPassword, "an incomplete key cannot be submitted")
+        val key = RecoveryKeyFormat.format(ByteArray(RecoveryKeyFormat.SECRET_BYTES) { 4 })
+        h.vm.typePassword(key)
+        h.vm.onIntent(RestoreIntent.SubmitPassword)
+        settle()
+
+        assertEquals(listOf(key), h.decryptor.recoveryKeys)
+        assertTrue(h.decryptor.passwords.isEmpty())
+        assertEquals(RestorePhase.Review, h.vm.phase())
+        assertEquals("", h.vm.state.value.password)
     }
 }

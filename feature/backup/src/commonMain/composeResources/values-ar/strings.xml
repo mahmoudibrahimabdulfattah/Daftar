@@ -136,4 +136,8 @@
     <string name="cloud_upload_submit">تشفير النسخة ورفعها</string>
     <string name="cloud_sign_in_google">المتابعة باستخدام Google</string>
     <string name="cloud_sign_in_apple">المتابعة باستخدام Apple</string>
+    <string name="restore_use_recovery">نسيت كلمة السر؟ استخدم مفتاح الاسترداد</string>
+    <string name="restore_use_password">استخدام كلمة سر النسخة</string>
+    <string name="restore_recovery_label">مفتاح الاسترداد</string>
+    <string name="restore_recovery_note">يفتح المفتاح النسخ التي أُنشئت بعد إعداده فقط.</string>
 </resources>

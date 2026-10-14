@@ -57,18 +57,35 @@ class RestoreViewModel(
     override fun onIntent(intent: RestoreIntent) {
         when (intent) {
             RestoreIntent.ChooseFile -> chooseFile()
+
             is RestoreIntent.PasswordChanged -> reduce { copy(password = intent.text) }
+
             RestoreIntent.SubmitPassword -> submitPassword()
+
+            RestoreIntent.ToggleRecoveryKey -> reduce {
+                if (phase == RestorePhase.Password) copy(usingRecoveryKey = !usingRecoveryKey, password = "") else this
+            }
+
             RestoreIntent.ContinueToPin -> continueToPin()
+
             is RestoreIntent.Digit -> digit(intent.codePoint)
+
             RestoreIntent.Erase -> erase()
+
             RestoreIntent.SubmitPin -> submitPin()
+
             RestoreIntent.ConfirmReplacement -> confirmReplacement()
+
             RestoreIntent.CancelReplacement -> cancelReplacement()
+
             RestoreIntent.CancelPreparing -> cancelPreparing()
+
             RestoreIntent.Back -> back()
+
             RestoreIntent.Acknowledge -> acknowledge()
+
             RestoreIntent.Close -> close()
+
             RestoreIntent.PrivacyInvalidated -> invalidate()
         }
     }
@@ -104,12 +121,19 @@ class RestoreViewModel(
     private fun submitPassword() {
         if (!currentState.canSubmitPassword) return
         val file = ciphertext ?: return fail(RestoreProblem.FileUnavailable)
-        val password = currentState.password.encodeToByteArray()
-        reduce { copy(phase = RestorePhase.Decrypting, password = "") }
+        val recoveryKey = currentState.password.takeIf { currentState.usingRecoveryKey }
+        val password = if (recoveryKey == null) currentState.password.encodeToByteArray() else ByteArray(0)
+        reduce { copy(phase = RestorePhase.Decrypting, password = "", usingRecoveryKey = false) }
         work = viewModelScope.launch {
             val outcome = try {
                 val bytes = file.readAll()
-                withContext(decodeDispatcher) { decryptor.decrypt(bytes, password) }
+                withContext(decodeDispatcher) {
+                    if (recoveryKey != null) {
+                        decryptor.decryptWithRecoveryKey(bytes, recoveryKey)
+                    } else {
+                        decryptor.decrypt(bytes, password)
+                    }
+                }
             } catch (cancelled: CancellationException) {
                 throw cancelled
             } catch (failure: Exception) {
