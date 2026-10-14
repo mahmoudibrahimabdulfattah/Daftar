@@ -2,4 +2,22 @@
 <resources>
     <string name="price_refresh">تحديث الأسعار</string>
     <string name="price_refreshing">جارٍ تحديث الأسعار</string>
+    <string name="quotes_norm_live">أسعار محدّثة</string>
+    <string name="quotes_norm_cached">أسعار محفوظة</string>
+    <string name="quotes_norm_manual">أسعار يدوية</string>
+    <string name="quotes_norm_stale">أسعار قديمة</string>
+    <string name="quotes_norm_clock">تعذّر التحقق من وقت الأسعار</string>
+    <string name="quotes_oldest">أقدم تحديث: %1$s</string>
+    <string name="quotes_unknown_time">وقت التحديث غير متاح</string>
+    <string name="quotes_differ">بعض الأسعار مختلفة</string>
+    <string name="quotes_some_missing">بعض الأسعار غير متاحة</string>
+    <string name="quotes_waiting">في انتظار الأسعار</string>
+    <string name="quotes_marker_live">محدّث</string>
+    <string name="quotes_marker_cached">محفوظ</string>
+    <string name="quotes_marker_manual">يدوي</string>
+    <string name="quotes_marker_stale">قديم</string>
+    <string name="quotes_marker_clock">الوقت غير مؤكّد</string>
+    <string name="quotes_marker_manual_stale">يدوي · قديم</string>
+    <string name="quotes_marker_manual_clock">يدوي · الوقت غير مؤكّد</string>
+    <string name="quotes_unavailable">غير متاح</string>
 </resources>

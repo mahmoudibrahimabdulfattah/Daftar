@@ -1,5 +1,8 @@
 package com.mk.daftar.feature.home
 
+import androidx.compose.foundation.background
+import androidx.compose.foundation.border
+import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.ColumnScope
@@ -11,6 +14,7 @@ import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.heightIn
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.rememberScrollState
+import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.foundation.verticalScroll
 import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.material3.ModalBottomSheet
@@ -24,11 +28,16 @@ import androidx.compose.runtime.remember
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.draw.clip
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.vector.ImageVector
 import androidx.compose.ui.platform.LocalUriHandler
+import androidx.compose.ui.semantics.Role
+import androidx.compose.ui.semantics.contentDescription
 import androidx.compose.ui.semantics.semantics
 import androidx.compose.ui.semantics.stateDescription
+import androidx.compose.ui.text.font.FontWeight
+import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import com.mk.daftar.core.designsystem.component.DaftarAllocationBar
@@ -36,6 +45,7 @@ import com.mk.daftar.core.designsystem.component.DaftarAllocationSegment
 import com.mk.daftar.core.designsystem.component.DaftarAmount
 import com.mk.daftar.core.designsystem.component.DaftarBalanceSummary
 import com.mk.daftar.core.designsystem.component.DaftarEmptyState
+import com.mk.daftar.core.designsystem.component.DaftarIcon
 import com.mk.daftar.core.designsystem.component.DaftarIconButton
 import com.mk.daftar.core.designsystem.component.DaftarLedgerRow
 import com.mk.daftar.core.designsystem.component.DaftarNotePanel
@@ -64,6 +74,9 @@ import com.mk.daftar.core.ui.presentation.CountNoun
 import com.mk.daftar.core.ui.presentation.bankAndAccountLabel
 import com.mk.daftar.core.ui.presentation.countLabel
 import com.mk.daftar.core.ui.presentation.moneyText
+import com.mk.daftar.core.ui.presentation.quoteMarkerText
+import com.mk.daftar.core.ui.presentation.quoteSummaryText
+import com.mk.daftar.core.ui.presentation.quoteUnavailableText
 import com.mk.daftar.core.ui.shell.RootReselectScroll
 import com.mk.daftar.core.ui.shell.ShellScreen
 import com.mk.daftar.feature.home.resources.Res
@@ -100,9 +113,12 @@ import com.mk.daftar.feature.home.resources.home_month_6
 import com.mk.daftar.feature.home.resources.home_month_7
 import com.mk.daftar.feature.home.resources.home_month_8
 import com.mk.daftar.feature.home.resources.home_month_9
+import com.mk.daftar.feature.home.resources.home_quote_action
 import com.mk.daftar.feature.home.resources.home_quote_caption
 import com.mk.daftar.feature.home.resources.home_quote_details
 import com.mk.daftar.feature.home.resources.home_quote_refreshing
+import com.mk.daftar.feature.home.resources.home_quote_title
+import com.mk.daftar.feature.home.resources.home_quote_units
 import com.mk.daftar.feature.home.resources.home_recovery_action
 import com.mk.daftar.feature.home.resources.home_recovery_suggestion
 import com.mk.daftar.feature.home.resources.home_refresh
@@ -291,7 +307,6 @@ private fun ReadyBody(
     }
     QuoteSection(
         quotes = figures.quotes,
-        refreshing = state.refreshing,
         refreshFailed = state.refreshFailed,
         attributionUrl = figures.fxAttributionUrl,
         onIntent = onIntent,
@@ -588,80 +603,101 @@ private fun CategoryRow(
     )
 }
 
+/**
+ * Gold and dollar prices as one tappable card: title and chevron, the four prices in equal columns, then one
+ * freshness line and the dollar's basis, all inside the card. The whole card opens Prices; it is one focus stop whose
+ * description carries the four public prices.
+ */
 @Composable
 private fun QuoteSection(
     quotes: QuoteStripFigures,
-    refreshing: Boolean,
     refreshFailed: Boolean,
     attributionUrl: String?,
     onIntent: (HomeIntent) -> Unit,
 ) {
+    val colors = DaftarTheme.colors
+    val typography = DaftarTheme.typography
     val uriHandler = LocalUriHandler.current
-    Column(modifier = Modifier.fillMaxWidth().padding(top = DaftarSpacing.lg)) {
-        Row(
-            modifier = Modifier.fillMaxWidth(),
-            verticalAlignment = Alignment.CenterVertically,
-            horizontalArrangement = Arrangement.spacedBy(DaftarSpacing.xs),
-        ) {
-            Text(
-                stringResource(Res.string.home_quote_caption),
-                style = DaftarTheme.typography.caption,
-                color = DaftarTheme.colors.muted,
-                modifier = Modifier.weight(1f),
-            )
-            if (refreshing) {
-                DaftarStatusTag(label = stringResource(Res.string.home_quote_refreshing))
-            } else {
-                quotes.badge?.let { badge ->
-                    DaftarStatusTag(
-                        label = stringResource(badge.labelResource()),
-                        tone = if (badge == QuoteBadge.LIVE || badge == QuoteBadge.CACHED) {
-                            DaftarStatusTone.Positive
-                        } else {
-                            DaftarStatusTone.Warning
-                        },
-                    )
-                }
-            }
-        }
-        Spacer(Modifier.height(DaftarSpacing.xs))
-        DaftarQuoteStrip(
-            quotes = quotes.quotes.map { figure ->
-                DaftarQuote(label = quoteLabel(figure.key), value = figure.value?.moneyText())
-            },
-            provenance = quotes.referenceAt?.let { stampText(it) } ?: "",
-            status = {
-                DaftarTextButton(onClick = { onIntent(HomeIntent.OpenPrices) }) {
-                    Text(stringResource(Res.string.home_quote_details))
-                }
+    val freshness = quoteSummaryText(quotes.summary, quotes.referenceAt?.let { stampText(it) })
+    val unavailable = quoteUnavailableText()
+    val values = quotes.quotes.map { figure ->
+        quoteLabel(figure.key) + " " + (figure.value?.moneyText() ?: unavailable)
+    }
+    val actionLabel = stringResource(Res.string.home_quote_action)
+    val basis = quotes.usdBasis?.let { basis ->
+        stringResource(
+            when (basis) {
+                FxBasis.BANK_TRANSFER_BUY -> Res.string.home_usd_basis_bank
+                FxBasis.MANUAL -> Res.string.home_usd_basis_manual
+                else -> Res.string.home_usd_basis_estimate
             },
         )
-        quotes.usdBasis?.let { basis ->
-            Text(
-                text = stringResource(
-                    when (basis) {
-                        FxBasis.BANK_TRANSFER_BUY -> Res.string.home_usd_basis_bank
-                        FxBasis.MANUAL -> Res.string.home_usd_basis_manual
-                        else -> Res.string.home_usd_basis_estimate
-                    },
-                ),
-                style = DaftarTheme.typography.caption,
-                color = DaftarTheme.colors.muted,
-            )
+    }
+    Column(modifier = Modifier.fillMaxWidth().padding(top = DaftarSpacing.lg)) {
+        Column(
+            modifier = Modifier
+                .fillMaxWidth()
+                .clip(RoundedCornerShape(QUOTE_CARD_RADIUS))
+                .background(colors.surface)
+                .border(1.dp, colors.line, RoundedCornerShape(QUOTE_CARD_RADIUS))
+                .clickable(role = Role.Button, onClickLabel = actionLabel) { onIntent(HomeIntent.OpenPrices) }
+                .semantics(mergeDescendants = true) {
+                    contentDescription = actionLabel
+                    stateDescription = (values + freshness).joinToString(", ")
+                }
+                .padding(DaftarSpacing.md),
+        ) {
+            Row(verticalAlignment = Alignment.CenterVertically) {
+                Text(
+                    stringResource(Res.string.home_quote_title),
+                    style = typography.ledgerTitle,
+                    color = colors.ink,
+                    modifier = Modifier.weight(1f),
+                )
+                DaftarIcon(DaftarIcons.Chevron, contentDescription = null, tint = colors.muted, mirrorInRtl = true)
+            }
+            Text(stringResource(Res.string.home_quote_units), style = typography.fineText, color = colors.muted)
+            Spacer(Modifier.height(DaftarSpacing.sm))
+            Row(
+                modifier = Modifier.fillMaxWidth(),
+                horizontalArrangement = Arrangement.spacedBy(DaftarSpacing.xs),
+            ) {
+                quotes.quotes.forEachIndexed { index, figure ->
+                    Column(modifier = Modifier.weight(1f), horizontalAlignment = Alignment.CenterHorizontally) {
+                        Text(quoteLabel(figure.key), style = typography.caption, color = colors.muted)
+                        Spacer(Modifier.height(DaftarSpacing.xxs))
+                        Text(
+                            figure.value?.let { "⁦${it.moneyText()}⁩" } ?: "—",
+                            style = typography.quoteNumber.copy(fontWeight = FontWeight.Medium),
+                            color = if (figure.value == null) colors.muted else colors.ink,
+                            textAlign = TextAlign.Center,
+                        )
+                        quotes.summary.markers.getOrNull(index)?.let { marker ->
+                            Text(quoteMarkerText(marker), style = typography.caption, color = colors.muted)
+                        }
+                    }
+                }
+            }
+            Spacer(Modifier.height(DaftarSpacing.sm))
+            Text(freshness, style = typography.fineText, color = colors.muted)
+            basis?.let {
+                Spacer(Modifier.height(DaftarSpacing.xxs))
+                Text(it, style = typography.fineText, color = colors.muted)
+            }
         }
         if (refreshFailed) {
             Spacer(Modifier.height(DaftarSpacing.xs))
-            DaftarNotePanel(tone = DaftarNoteTone.Warning) {
-                Text(stringResource(Res.string.home_refresh_failed))
-            }
+            Text(stringResource(Res.string.home_refresh_failed), style = typography.fineText, color = colors.muted)
         }
         if (attributionUrl != null) {
             DaftarTextButton(onClick = { uriHandler.openUri(attributionUrl) }) {
-                Text(stringResource(Res.string.home_attribution), style = DaftarTheme.typography.caption)
+                Text(stringResource(Res.string.home_attribution), style = typography.caption)
             }
         }
     }
 }
+
+private val QUOTE_CARD_RADIUS = 12.dp
 
 @Composable
 private fun missingQuoteText(key: QuoteKey): String = when (key) {

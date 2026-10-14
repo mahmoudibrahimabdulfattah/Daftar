@@ -5,6 +5,7 @@ import com.mk.daftar.core.domain.usecase.ObserveQuoteSnapshotUseCase
 import com.mk.daftar.core.domain.usecase.RemoveOverrideUseCase
 import com.mk.daftar.core.domain.usecase.SetManualQuoteUseCase
 import com.mk.daftar.core.navigation.ManualQuoteRoute
+import com.mk.daftar.core.navigation.PriceDetailsRoute
 import com.mk.daftar.core.navigation.PricesRoute
 import com.mk.daftar.feature.prices.ManualQuoteScreen
 import com.mk.daftar.feature.prices.ManualQuoteViewModel
@@ -37,5 +38,6 @@ val pricesModule: Module = module {
         )
     }
     navigation<PricesRoute> { PricesScreen() }
+    navigation<PriceDetailsRoute> { PricesScreen(details = true) }
     navigation<ManualQuoteRoute> { route -> ManualQuoteScreen(route = route) }
 }

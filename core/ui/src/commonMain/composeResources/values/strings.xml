@@ -2,4 +2,22 @@
 <resources>
     <string name="price_refresh">Refresh prices</string>
     <string name="price_refreshing">Refreshing prices</string>
+    <string name="quotes_norm_live">Updated prices</string>
+    <string name="quotes_norm_cached">Saved prices</string>
+    <string name="quotes_norm_manual">Manual prices</string>
+    <string name="quotes_norm_stale">Old prices</string>
+    <string name="quotes_norm_clock">Price times could not be verified</string>
+    <string name="quotes_oldest">Oldest update: %1$s</string>
+    <string name="quotes_unknown_time">Update time unavailable</string>
+    <string name="quotes_differ">Some prices differ</string>
+    <string name="quotes_some_missing">Some prices unavailable</string>
+    <string name="quotes_waiting">Waiting for prices</string>
+    <string name="quotes_marker_live">Updated</string>
+    <string name="quotes_marker_cached">Saved</string>
+    <string name="quotes_marker_manual">Manual</string>
+    <string name="quotes_marker_stale">Old</string>
+    <string name="quotes_marker_clock">Time uncertain</string>
+    <string name="quotes_marker_manual_stale">Manual · old</string>
+    <string name="quotes_marker_manual_clock">Manual · time uncertain</string>
+    <string name="quotes_unavailable">Unavailable</string>
 </resources>

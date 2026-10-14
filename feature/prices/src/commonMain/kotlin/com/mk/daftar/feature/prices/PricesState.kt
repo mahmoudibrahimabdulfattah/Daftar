@@ -78,6 +78,9 @@ sealed interface PricesIntent : UiIntent {
     /** Asks for a refresh. Also the retry action. Joins a refresh already in flight. */
     data object Refresh : PricesIntent
 
+    /** Opens Sources and details. */
+    data object OpenDetails : PricesIntent
+
     /** Opens the manual editor. A null quote lets the user choose one there. */
     data class OpenManual(val route: ManualQuoteRoute) : PricesIntent
 }
