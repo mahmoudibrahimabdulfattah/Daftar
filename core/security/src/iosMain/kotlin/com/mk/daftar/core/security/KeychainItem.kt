@@ -80,9 +80,13 @@ internal class KeychainItem(private val account: String) {
     /** Creates or replaces the item. */
     fun write(bytes: ByteArray): Outcome<Unit, SecurityError> = memScoped {
         val data = cfData(bytes)
-        val update = baseQuery()
+        // The attributes to change hold only the data: identifying attributes there are rejected (errSecNoSuchAttr).
+        val update =
+            CFDictionaryCreateMutable(null, 0, kCFTypeDictionaryKeyCallBacks.ptr, kCFTypeDictionaryValueCallBacks.ptr)
         CFDictionarySetValue(update, kSecValueData, data)
-        val updateStatus = SecItemUpdate(baseQuery(), update)
+        val query = baseQuery()
+        val updateStatus = SecItemUpdate(query, update)
+        CFRelease(query)
         CFRelease(update)
         val status = if (updateStatus == errSecItemNotFound) {
             val add = baseQuery()
