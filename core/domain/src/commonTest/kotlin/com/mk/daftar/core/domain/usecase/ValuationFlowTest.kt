@@ -10,6 +10,7 @@ import com.mk.daftar.core.domain.testing.FakeBankRepository
 import com.mk.daftar.core.domain.testing.FakeCashRepository
 import com.mk.daftar.core.domain.testing.FakeClock
 import com.mk.daftar.core.domain.testing.FakeGoldRepository
+import com.mk.daftar.core.domain.testing.FakeInvestmentRepository
 import com.mk.daftar.core.domain.testing.FakePriceRepository
 import com.mk.daftar.core.domain.testing.FakeSession
 import com.mk.daftar.core.domain.testing.NOW
@@ -49,9 +50,10 @@ class ValuationFlowTest {
         val gold = FakeGoldRepository()
         val banks = FakeBankRepository()
         val cash = FakeCashRepository()
+        val investments = FakeInvestmentRepository()
         val prices = FakePriceRepository()
 
-        fun portfolio() = ObservePortfolioValuationUseCase(session, gold, banks, cash, prices, clock)()
+        fun portfolio() = ObservePortfolioValuationUseCase(session, gold, banks, cash, investments, prices, clock)()
 
         fun selectedQuotes() = ObserveSelectedQuotesUseCase(session, prices, clock)()
 
@@ -61,6 +63,7 @@ class ValuationFlowTest {
             gold.holdings.value = VaultRead.Ready(generation, input.gold.map { Stored(it, 1L) })
             banks.accounts.value = VaultRead.Ready(generation, input.bankAccounts.map { Stored(it, 1L) })
             cash.balances.value = VaultRead.Ready(generation, input.cash.map { Stored(it, 1L) })
+            investments.investments.value = VaultRead.Ready(generation, input.investments.map { Stored(it, 1L) })
             prices.quotes.value = VaultRead.Ready(generation, designQuotes(quoteFetchedAt))
         }
     }

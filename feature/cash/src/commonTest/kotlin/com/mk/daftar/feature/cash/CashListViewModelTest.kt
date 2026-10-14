@@ -84,6 +84,7 @@ class CashListViewModelTest {
                 gold = EmptyGold(),
                 banks = EmptyBanks(),
                 cash = cash,
+                investments = NoInvestments(cash.observeAll()),
                 prices = prices,
                 clock = FixedClock(),
             ),

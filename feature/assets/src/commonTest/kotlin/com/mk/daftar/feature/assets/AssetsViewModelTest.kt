@@ -9,9 +9,11 @@ import com.mk.daftar.core.domain.session.VaultSessionState
 import com.mk.daftar.core.domain.usecase.ObserveBanksUseCase
 import com.mk.daftar.core.domain.usecase.ObservePortfolioValuationUseCase
 import com.mk.daftar.core.domain.valuation.AssetCategory
+import com.mk.daftar.core.model.InvestmentAccount
 import com.mk.daftar.core.navigation.BanksRoute
 import com.mk.daftar.core.navigation.CashRoute
 import com.mk.daftar.core.navigation.GoldRoute
+import com.mk.daftar.core.navigation.InvestmentsRoute
 import com.mk.daftar.core.ui.presentation.ValuesVisibility
 import kotlin.test.AfterTest
 import kotlin.test.BeforeTest
@@ -52,7 +54,7 @@ class AssetsViewModelTest {
         val model: AssetsOverviewViewModel,
     )
 
-    private fun rig(): Rig {
+    private fun rig(accounts: List<InvestmentAccount> = emptyList()): Rig {
         val portfolio = FakePortfolio()
         val visibility = ValuesVisibility()
         val model = AssetsOverviewViewModel(
@@ -61,6 +63,7 @@ class AssetsViewModelTest {
                 gold = portfolio.gold,
                 banks = portfolio.banks,
                 cash = portfolio.cash,
+                investments = NoInvestments(portfolio.cash.observeAll(), accounts),
                 prices = portfolio.prices,
                 clock = FixedClock,
             ),
@@ -83,6 +86,28 @@ class AssetsViewModelTest {
         assertEquals(3, ready.bankCount)
         assertEquals(2, ready.cash.count)
         assertFalse(ready.incomplete)
+    }
+
+    @Test
+    fun investmentsAreTheFourthCategoryAndCountAccountsNotHoldings() {
+        val account = InvestmentAccount.create(
+            id = com.mk.daftar.core.model.InvestmentAccountId("i1"),
+            providerId = null,
+            name = "Broker",
+            amount = egpAmount("157000"),
+            note = null,
+            valueAsOf = FIXTURE_NOW,
+            convertedFromCashId = null,
+            createdAt = FIXTURE_NOW,
+            updatedAt = FIXTURE_NOW,
+        )
+        val rig = rig(listOf(account))
+        rig.portfolio.load(1)
+        rig.portfolio.session.set(VaultSessionState.Open(1))
+        settle()
+        val ready = assertIs<AssetsLoad.Ready>(rig.model.state.value.load).figures
+        assertEquals(1, ready.investments.count)
+        assertEquals("157000", ready.investments.total!!.toPlainString())
     }
 
     @Test
@@ -125,17 +150,19 @@ class AssetsViewModelTest {
     fun eachCategoryOpensItsRoute() {
         val rig = rig()
         val effects = mutableListOf<AssetsEffect>()
-        CoroutineScope(dispatcher).launch { repeat(3) { effects += rig.model.effects.first() } }
+        CoroutineScope(dispatcher).launch { repeat(4) { effects += rig.model.effects.first() } }
         settle()
         rig.model.onIntent(AssetsIntent.OpenCategory(AssetCategory.GOLD))
         rig.model.onIntent(AssetsIntent.OpenCategory(AssetCategory.BANKS))
         rig.model.onIntent(AssetsIntent.OpenCategory(AssetCategory.CASH))
+        rig.model.onIntent(AssetsIntent.OpenCategory(AssetCategory.INVESTMENTS))
         settle()
         assertEquals(
             listOf<AssetsEffect>(
                 AssetsEffect.Open(GoldRoute),
                 AssetsEffect.Open(BanksRoute),
                 AssetsEffect.Open(CashRoute),
+                AssetsEffect.Open(InvestmentsRoute),
             ),
             effects,
         )

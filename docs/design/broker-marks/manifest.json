@@ -1,0 +1,51 @@
+{
+  "version": 1,
+  "marks": [
+    {
+      "institutionId": "eg.thndr",
+      "file": "eg.thndr.png",
+      "format": "png",
+      "sourcePage": "https://thndr.app/",
+      "assetUrl": "https://thndr.app/wp-content/uploads/2024/01/Thndr_Logo_Final_Thndr_Lockup_Yellow-1.png",
+      "retrievedAtUtc": "2026-10-13T23:38:22Z",
+      "sha256": "806e0c66c28f6350dab12df757834ef4224ad592ee93a19b6e5e67f82c5ae6d2",
+      "bytes": 41506,
+      "backing": "dark",
+      "backingColor": "#141414",
+      "notes": "Retrieved by the owner's decision (Phase 24, official marks in the private build); not a broker license. Yellow wordmark on transparency: render unmodified on a near-black tile, as Thndr presents it.",
+      "assetKey": "broker_eg_thndr",
+      "outputs": [
+        {
+          "density": "mdpi",
+          "file": "core/designsystem/src/officialBankArtwork/composeResources/drawable-mdpi/broker_eg_thndr.png",
+          "pixels": 38,
+          "sha256": "3d42d3ae04a68640154ec0f2711a0c494da0a41f63367207300b84871a7766c2"
+        },
+        {
+          "density": "hdpi",
+          "file": "core/designsystem/src/officialBankArtwork/composeResources/drawable-hdpi/broker_eg_thndr.png",
+          "pixels": 57,
+          "sha256": "184475243e1be58164fb5c604cad09a95a773b409eef3b3183c72d8f0a902977"
+        },
+        {
+          "density": "xhdpi",
+          "file": "core/designsystem/src/officialBankArtwork/composeResources/drawable-xhdpi/broker_eg_thndr.png",
+          "pixels": 76,
+          "sha256": "9a299606d651d7b953fe16583e6d5f5657c834662be0b3f1d50ed738e4a6bea2"
+        },
+        {
+          "density": "xxhdpi",
+          "file": "core/designsystem/src/officialBankArtwork/composeResources/drawable-xxhdpi/broker_eg_thndr.png",
+          "pixels": 114,
+          "sha256": "a3aafe1824526c83d1728e8e4146423e187708b35c8404d577a125d28ff9a7fc"
+        },
+        {
+          "density": "xxxhdpi",
+          "file": "core/designsystem/src/officialBankArtwork/composeResources/drawable-xxxhdpi/broker_eg_thndr.png",
+          "pixels": 152,
+          "sha256": "c5e7fc23cb35db1b4761cddf3a882e1a282c23ed32803730c126bd1428b57048"
+        }
+      ]
+    }
+  ]
+}

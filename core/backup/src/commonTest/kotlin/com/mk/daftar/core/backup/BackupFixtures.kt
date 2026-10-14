@@ -4,6 +4,7 @@ import com.mk.daftar.core.domain.repository.AppLanguage
 import com.mk.daftar.core.domain.repository.InactivityTimeout
 import com.mk.daftar.core.domain.repository.RemoteQuoteRecord
 import com.mk.daftar.core.domain.repository.ThemeMode
+import com.mk.daftar.core.domain.storage.Stored
 import com.mk.daftar.core.model.Bank
 import com.mk.daftar.core.model.BankAccount
 import com.mk.daftar.core.model.BankAccountId
@@ -22,6 +23,9 @@ import com.mk.daftar.core.model.GoldKarat
 import com.mk.daftar.core.model.GoldPrice
 import com.mk.daftar.core.model.GoldQuote
 import com.mk.daftar.core.model.GoldWeight
+import com.mk.daftar.core.model.InstitutionId
+import com.mk.daftar.core.model.InvestmentAccount
+import com.mk.daftar.core.model.InvestmentAccountId
 import com.mk.daftar.core.model.MerchantSide
 import com.mk.daftar.core.model.Money
 import com.mk.daftar.core.model.NoteId
@@ -147,6 +151,42 @@ internal object BackupFixtures {
                     note = "Local goldsmith",
                 ),
             ),
+        ),
+        investmentAccounts = investmentAccounts(),
+    )
+
+    /**
+     * Two broker accounts: a known broker with a converted provenance, and an Other account with a zero value. The
+     * converted source ID is not a cash entry in [snapshot], as the consistency rules require.
+     */
+    fun investmentAccounts(): List<Stored<InvestmentAccount>> = listOf(
+        Stored(
+            InvestmentAccount.create(
+                id = InvestmentAccountId("investment-1"),
+                providerId = InstitutionId("eg.thndr"),
+                name = "ثاندر",
+                amount = Money(Decimal.parseCanonical("157000"), Currency.EGP),
+                note = "حساب الاستثمار",
+                valueAsOf = updated,
+                convertedFromCashId = CashBalanceId("converted-source-1"),
+                createdAt = created,
+                updatedAt = updated,
+            ),
+            3,
+        ),
+        Stored(
+            InvestmentAccount.create(
+                id = InvestmentAccountId("investment-2"),
+                providerId = null,
+                name = "Other broker",
+                amount = Money(Decimal.parseCanonical("0"), Currency.EGP),
+                note = null,
+                valueAsOf = created,
+                convertedFromCashId = null,
+                createdAt = created,
+                updatedAt = created,
+            ),
+            1,
         ),
     )
 

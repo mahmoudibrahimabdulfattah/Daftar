@@ -19,6 +19,12 @@ data class BankAccountId(val value: String) {
     }
 }
 
+data class InvestmentAccountId(val value: String) {
+    init {
+        require(value.isNotBlank()) { "id must not be blank" }
+    }
+}
+
 data class CashBalanceId(val value: String) {
     init {
         require(value.isNotBlank()) { "id must not be blank" }

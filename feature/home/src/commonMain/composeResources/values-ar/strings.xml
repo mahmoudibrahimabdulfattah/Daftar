@@ -18,10 +18,11 @@
     <string name="home_available_subtotal">المتاح</string>
     <string name="home_missing_karat">سعر عيار %1$s غير متاح</string>
     <string name="home_missing_usd">سعر الدولار غير متاح</string>
-    <string name="home_allocation">ذهب %1$s، بنوك %2$s، نقد %3$s</string>
+    <string name="home_allocation">ذهب %1$s، بنوك %2$s، استثمارات %3$s، نقد %4$s</string>
     <string name="home_gold">الذهب</string>
     <string name="home_banks">البنوك</string>
     <string name="home_cash">النقد والمحافظ</string>
+    <string name="home_investments">الاستثمارات</string>
     <string name="home_quote_caption">بيع الصائغ · ج.م / جرام</string>
     <string name="home_quote_details">التفاصيل</string>
     <string name="home_quote_refreshing">جارٍ تحديث الأسعار</string>

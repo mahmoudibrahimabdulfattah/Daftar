@@ -123,6 +123,9 @@ sealed interface CashEditorIntent : UiIntent {
     data object DismissConfirmation : CashEditorIntent
 
     data object RevealForm : CashEditorIntent
+
+    /** Opens the explicit conversion of this saved entry into an investment. Offered only while the entry is clean. */
+    data object ConvertToInvestment : CashEditorIntent
 }
 
 /**

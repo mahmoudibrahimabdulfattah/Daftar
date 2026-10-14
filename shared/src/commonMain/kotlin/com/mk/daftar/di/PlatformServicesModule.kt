@@ -10,6 +10,7 @@ import com.mk.daftar.core.domain.session.VaultSession
 import com.mk.daftar.core.security.BiometricPrompter
 import com.mk.daftar.core.security.VaultSecurity
 import com.mk.daftar.core.ui.presentation.ValuesVisibility
+import com.mk.daftar.core.ui.presentation.ValuesVisibilityStore
 import com.mk.daftar.feature.auth.AuthDraftRegistry
 import com.mk.daftar.feature.auth.AuthGateway
 import com.mk.daftar.feature.backup.restore.RestoreDraftRegistry
@@ -62,8 +63,20 @@ val platformServicesModule: Module = module {
             },
         )
     }
-    // The privacy eye: one per open generation, visible again whenever the vault locks.
-    single { ValuesVisibility() }
+    // The privacy eye: the owner's last choice is remembered across locks and launches.
+    single {
+        val preferences = get<DaftarPreferencesDataSource>()
+        ValuesVisibility(
+            store = object : ValuesVisibilityStore {
+                override suspend fun hidden(): Boolean? = preferences.valuesHidden()
+
+                override suspend fun setHidden(hidden: Boolean) {
+                    preferences.setValuesHidden(hidden)
+                }
+            },
+            scope = CoroutineScope(SupervisorJob() + Dispatchers.Default),
+        )
+    }
     single<PriceRefreshController> {
         SessionPriceRefresh(
             session = get<VaultSession>(),

@@ -91,7 +91,15 @@ class GoldListViewModelTest {
         val visibility = ValuesVisibility()
         val model = GoldListViewModel(
             observeHoldings = ObserveGoldHoldingsUseCase(gold),
-            observePortfolio = ObservePortfolioValuationUseCase(session, gold, banks, cash, prices, clock),
+            observePortfolio = ObservePortfolioValuationUseCase(
+                session,
+                gold,
+                banks,
+                cash,
+                NoInvestments(cash.observeAll()),
+                prices,
+                clock,
+            ),
             observeQuotes = ObserveSelectedQuotesUseCase(session, prices, clock),
             visibility = visibility,
             timeZone = TimeZone.UTC,

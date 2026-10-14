@@ -209,5 +209,8 @@
         <item quantity="other">⁦%1$d⁩ years awaiting your confirmation</item>
     </plurals>
     <string name="zakat_category_cash_help">Wallets and cash balances</string>
+    <string name="zakat_category_investments">Investments</string>
+    <string name="zakat_category_investments_help">Broker account values you recorded</string>
+    <string name="zakat_investments_disclosure">The planning estimate includes the investment values you recorded; Daftar does not assess their zakat treatment.</string>
     <string name="journal_unit_short">EGP</string>
 </resources>

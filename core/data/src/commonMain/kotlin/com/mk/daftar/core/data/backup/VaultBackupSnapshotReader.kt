@@ -18,7 +18,7 @@ import com.mk.daftar.core.domain.storage.StorageError
 import kotlinx.coroutines.flow.first
 
 /**
- * Reads one logical snapshot of the open vault. The eight tables come from a single transaction, and the preferences
+ * Reads one logical snapshot of the open vault. The eleven tables come from a single transaction, and the preferences
  * are one committed read taken on their own, so the two parts are each consistent. Preferences never carry the
  * biometric flag into the snapshot.
  */
@@ -65,4 +65,5 @@ internal fun BackupRows.toSnapshot(settings: UserPreferences): BackupSnapshot = 
     manualQuotes = manualQuotes.map { it.toStored().value },
     zakatYears = zakatYears.map { it.toModel() },
     zakatTrackingStartYear = zakatTracking.trackingStartYear(),
+    investmentAccounts = investmentAccounts.map { it.toStored() },
 )

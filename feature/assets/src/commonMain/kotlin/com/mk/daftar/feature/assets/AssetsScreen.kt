@@ -48,6 +48,7 @@ import com.mk.daftar.feature.assets.resources.assets_gold
 import com.mk.daftar.feature.assets.resources.assets_hidden_note
 import com.mk.daftar.feature.assets.resources.assets_hide_values
 import com.mk.daftar.feature.assets.resources.assets_incomplete
+import com.mk.daftar.feature.assets.resources.assets_investments
 import com.mk.daftar.feature.assets.resources.assets_masked_value
 import com.mk.daftar.feature.assets.resources.assets_no_records
 import com.mk.daftar.feature.assets.resources.assets_note_manual
@@ -176,6 +177,18 @@ private fun AssetsRows(figures: AssetsFigures, hidden: Boolean, onIntent: (Asset
         noRecords = noRecords,
         unit = unit,
         onClick = { onIntent(AssetsIntent.OpenCategory(AssetCategory.BANKS)) },
+    )
+    AssetRow(
+        title = stringResource(Res.string.assets_investments),
+        subtitle = countLabel(figures.investments.count, CountNoun.INVESTMENT_ACCOUNTS),
+        icon = DaftarIcons.Investments,
+        tone = DaftarTileTone.Investments,
+        figures = figures.investments,
+        hidden = hidden,
+        masked = masked,
+        noRecords = noRecords,
+        unit = unit,
+        onClick = { onIntent(AssetsIntent.OpenCategory(AssetCategory.INVESTMENTS)) },
     )
     AssetRow(
         title = stringResource(Res.string.assets_cash),

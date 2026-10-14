@@ -16,6 +16,7 @@
     <string name="assets_gold">Gold</string>
     <string name="assets_banks">Banks</string>
     <string name="assets_cash">Cash &amp; wallets</string>
+    <string name="assets_investments">Investments</string>
     <string name="unit_egp_short">EGP</string>
     <string name="assets_refresh">Refresh prices</string>
     <string name="assets_refreshing">Refreshing prices</string>

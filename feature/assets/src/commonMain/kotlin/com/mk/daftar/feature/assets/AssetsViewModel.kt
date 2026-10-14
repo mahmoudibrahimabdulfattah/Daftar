@@ -11,6 +11,7 @@ import com.mk.daftar.core.domain.valuation.AssetCategory
 import com.mk.daftar.core.navigation.BanksRoute
 import com.mk.daftar.core.navigation.CashRoute
 import com.mk.daftar.core.navigation.GoldRoute
+import com.mk.daftar.core.navigation.InvestmentsRoute
 import com.mk.daftar.core.ui.mvi.MviViewModel
 import com.mk.daftar.core.ui.mvi.UiEffect
 import com.mk.daftar.core.ui.mvi.UiIntent
@@ -86,5 +87,6 @@ class AssetsOverviewViewModel(
         AssetCategory.GOLD -> GoldRoute
         AssetCategory.BANKS -> BanksRoute
         AssetCategory.CASH -> CashRoute
+        AssetCategory.INVESTMENTS -> InvestmentsRoute
     }
 }

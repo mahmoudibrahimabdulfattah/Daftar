@@ -16,6 +16,7 @@
     <string name="assets_gold">الذهب</string>
     <string name="assets_banks">البنوك</string>
     <string name="assets_cash">النقد والمحافظ</string>
+    <string name="assets_investments">الاستثمارات</string>
     <string name="unit_egp_short">ج.م</string>
     <string name="assets_refresh">تحديث الأسعار</string>
     <string name="assets_refreshing">جارٍ تحديث الأسعار</string>

@@ -14,6 +14,7 @@ import com.mk.daftar.feature.cash.di.cashModule
 import com.mk.daftar.feature.cloud.di.cloudFeatureModule
 import com.mk.daftar.feature.gold.di.goldModule
 import com.mk.daftar.feature.home.di.homeModule
+import com.mk.daftar.feature.investments.di.investmentsModule
 import com.mk.daftar.feature.journal.di.journalModule
 import com.mk.daftar.feature.prices.di.pricesModule
 import com.mk.daftar.feature.settings.di.settingsModule
@@ -35,6 +36,7 @@ val daftarModules: List<Module> = listOf(
     homeModule,
     assetsModule,
     cashModule,
+    investmentsModule,
     goldModule,
 
     banksModule,

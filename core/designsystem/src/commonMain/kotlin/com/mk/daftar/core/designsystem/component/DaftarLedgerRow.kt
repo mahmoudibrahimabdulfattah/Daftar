@@ -29,12 +29,13 @@ import com.mk.daftar.core.designsystem.theme.DaftarSpacing
 import com.mk.daftar.core.designsystem.theme.DaftarStyles
 import com.mk.daftar.core.designsystem.theme.DaftarTheme
 
-/** Default tiles are olive on soft; gold tiles mark gold holdings only. */
+/** Default tiles are olive on soft; gold tiles mark gold holdings only. Investments have their own slate tone. */
 enum class DaftarTileTone {
     Default,
     Gold,
     Bank,
     Cash,
+    Investments,
 }
 
 /**
@@ -131,6 +132,7 @@ fun DaftarTileIcon(
         DaftarTileTone.Gold -> DaftarStyles.goldTileIcon to colors.onGoldTile
         DaftarTileTone.Bank -> DaftarStyles.bankTileIcon to colors.onBankTile
         DaftarTileTone.Cash -> DaftarStyles.cashTileIcon to colors.onCashTile
+        DaftarTileTone.Investments -> DaftarStyles.investmentTileIcon to colors.onInvestmentTile
     }
     Box(
         modifier = modifier

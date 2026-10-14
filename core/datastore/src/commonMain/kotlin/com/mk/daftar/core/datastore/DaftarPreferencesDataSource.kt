@@ -72,6 +72,17 @@ class DaftarPreferencesDataSource internal constructor(
     suspend fun setAutoBiometricConsumed(consumed: Boolean): Outcome<Unit, StorageError> =
         write { it[AUTO_BIOMETRIC_CONSUMED] = consumed }
 
+    /** Whether the owner last chose to hide values. A flag only; null when the store cannot be read. */
+    suspend fun valuesHidden(): Boolean? = try {
+        dataStore.data.first()[VALUES_HIDDEN] ?: false
+    } catch (error: CancellationException) {
+        throw error
+    } catch (error: Throwable) {
+        null
+    }
+
+    suspend fun setValuesHidden(hidden: Boolean): Outcome<Unit, StorageError> = write { it[VALUES_HIDDEN] = hidden }
+
     private suspend fun write(change: (MutablePreferences) -> Unit): Outcome<Unit, StorageError> = try {
         dataStore.updateData { prefs -> prefs.toMutablePreferences().also(change).toPreferences() }
         Outcome.Success(Unit)
@@ -88,6 +99,7 @@ private val LANGUAGE = stringPreferencesKey("language")
 private val INACTIVITY_TIMEOUT = intPreferencesKey("inactivity_timeout_seconds")
 private val BIOMETRIC_ENABLED = booleanPreferencesKey("biometric_enabled")
 private val AUTO_BIOMETRIC_CONSUMED = booleanPreferencesKey("biometric_auto_attempt_consumed")
+private val VALUES_HIDDEN = booleanPreferencesKey("values_hidden")
 
 /** Maps stored values to domain settings. Unknown or out-of-range values fall back to the defaults. */
 internal fun Preferences.toUserPreferences(): UserPreferences {

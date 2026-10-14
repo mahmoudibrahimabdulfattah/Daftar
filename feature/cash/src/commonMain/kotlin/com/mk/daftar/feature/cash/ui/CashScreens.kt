@@ -84,6 +84,7 @@ import com.mk.daftar.feature.cash.resources.cash_confirm_discard_message
 import com.mk.daftar.feature.cash.resources.cash_confirm_discard_title
 import com.mk.daftar.feature.cash.resources.cash_confirm_keep
 import com.mk.daftar.feature.cash.resources.cash_conflict_message
+import com.mk.daftar.feature.cash.resources.cash_convert_investment
 import com.mk.daftar.feature.cash.resources.cash_currency
 import com.mk.daftar.feature.cash.resources.cash_currency_ack
 import com.mk.daftar.feature.cash.resources.cash_currency_ack_required
@@ -320,7 +321,10 @@ fun CashEditorScreen(target: CashEditorTarget, modifier: Modifier = Modifier) {
     )
     val state by viewModel.state.collectAsStateWithLifecycle()
     CollectEffects(viewModel.effects) { effect ->
-        if (effect == CashEffect.Completed) navigator.goBack()
+        when (effect) {
+            CashEffect.Completed -> navigator.goBack()
+            is CashEffect.Navigate -> navigator.goTo(effect.route)
+        }
     }
     // The shell asks before it leaves: a back action, a gesture or a tab change. Only unsaved edits make it ask.
     DisposableEffect(viewModel, navigator) {
@@ -564,6 +568,16 @@ private fun CashForm(state: CashEditorUiState, editable: Boolean, onIntent: (Cas
             enabled = editable,
         )
         if (!state.isNew) {
+            // A saved, clean entry can be reclassified as an investment; unsaved edits must be saved or discarded first.
+            if (!state.dirty) {
+                DaftarTextButton(
+                    onClick = { onIntent(CashEditorIntent.ConvertToInvestment) },
+                    fullWidth = true,
+                    enabled = editable,
+                ) {
+                    Text(stringResource(Res.string.cash_convert_investment))
+                }
+            }
             DaftarTextButton(
                 onClick = { onIntent(CashEditorIntent.RequestDelete) },
                 fullWidth = true,

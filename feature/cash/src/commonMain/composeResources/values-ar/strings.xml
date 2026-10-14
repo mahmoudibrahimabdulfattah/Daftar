@@ -28,6 +28,7 @@
     <string name="cash_note">ملاحظة · اختياري</string>
     <string name="cash_save">حفظ</string>
     <string name="cash_delete">حذف الرصيد</string>
+    <string name="cash_convert_investment">تحويل قيد نقدي إلى استثمار</string>
     <string name="cash_error_name_required">أدخل الاسم.</string>
     <string name="cash_error_name_long">الاسم طويل جدًا. الحد الأقصى 120 حرفًا.</string>
     <string name="cash_error_balance_required">أدخل الرصيد.</string>

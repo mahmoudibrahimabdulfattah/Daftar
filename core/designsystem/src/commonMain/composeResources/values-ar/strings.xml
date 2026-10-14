@@ -96,6 +96,8 @@
     <string name="ledger_bank_misr_sub">حسابان · USD وEGP</string>
     <string name="ledger_cash">النقد والمحافظ</string>
     <string name="ledger_cash_sub">رصيد نقدي فقط</string>
+    <string name="ledger_investments">الاستثمارات</string>
+    <string name="ledger_investments_sub">قيمة تُحدّثها بنفسك.</string>
     <string name="ledger_incomplete">التقييم غير مكتمل، أدخل سعر عيار 18</string>
     <string name="card_title">سلفة لأحمد</string>
     <string name="card_body">أقرضته ⁦5,000⁩ ج.م في ⁦1⁩ أكتوبر. نتفق على السداد آخر الشهر.</string>
@@ -175,6 +177,12 @@
     <string name="count_accounts_few">⁦%1$d⁩ حسابات</string>
     <string name="count_accounts_many">⁦%1$d⁩ حسابًا</string>
     <string name="count_accounts_other">⁦%1$d⁩ حساب</string>
+    <string name="count_investment_accounts_zero">لا حسابات</string>
+    <string name="count_investment_accounts_one">حساب واحد</string>
+    <string name="count_investment_accounts_two">حسابان</string>
+    <string name="count_investment_accounts_few">⁦%1$d⁩ حسابات</string>
+    <string name="count_investment_accounts_many">⁦%1$d⁩ حسابًا</string>
+    <string name="count_investment_accounts_other">⁦%1$d⁩ حسابًا</string>
     <string name="count_balances_zero">لا توجد أرصدة</string>
     <string name="count_balances_one">رصيد واحد</string>
     <string name="count_balances_two">رصيدان</string>

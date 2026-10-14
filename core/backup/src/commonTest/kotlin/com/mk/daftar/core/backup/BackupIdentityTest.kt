@@ -89,11 +89,11 @@ class BackupIdentityTest {
     }
 
     @Test
-    fun aVersionThreeDocumentWritesTheIdentityAndBasisFields() {
+    fun theCurrentDocumentWritesTheIdentityAndBasisFields() {
         val document = identifiedSnapshot().toDocument(BackupFixtures.exportedAt, "1.0")
         val text = BackupJson.encodeToString(PayloadDocument.serializer(), document)
 
-        assertEquals(3, document.schemaVersion)
+        assertEquals(BackupFormat.PAYLOAD_SCHEMA_VERSION, document.schemaVersion)
         assertEquals(true, text.contains("\"institutionId\":\"eg.nbe\",\"identityReviewed\":false"))
         assertEquals(true, text.contains("\"basis\":\"BANK_TRANSFER_BUY\""))
     }
@@ -128,6 +128,7 @@ class BackupIdentityTest {
             manualQuotes = document.manualQuotes,
             zakatTrackingStartYear = document.zakatTrackingStartYear,
             zakatYears = document.zakatYears,
+            investmentAccounts = document.investmentAccounts,
         )
     }
 
@@ -154,7 +155,7 @@ class BackupIdentityTest {
             zakatYears = version.zakatYears,
         )
 
-        val current = v2.toCurrent()
+        val current = v2.toV3().toCurrent()
 
         assertEquals(null, current.banks.single().institutionId)
         assertEquals(false, current.banks.single().identityReviewed)
@@ -199,6 +200,6 @@ class BackupIdentityTest {
             zakatTrackingStartYear = null,
             zakatYears = emptyList(),
         )
-        return document.toCurrent().remoteQuotes.single()
+        return document.toV3().toCurrent().remoteQuotes.single()
     }
 }

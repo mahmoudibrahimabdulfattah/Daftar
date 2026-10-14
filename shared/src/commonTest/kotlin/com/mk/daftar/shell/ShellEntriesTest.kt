@@ -13,10 +13,15 @@ import com.mk.daftar.core.navigation.BankAddRoute
 import com.mk.daftar.core.navigation.BankDetailRoute
 import com.mk.daftar.core.navigation.BankEditRoute
 import com.mk.daftar.core.navigation.BanksRoute
+import com.mk.daftar.core.navigation.ConvertCashRoute
 import com.mk.daftar.core.navigation.GoldAddRoute
 import com.mk.daftar.core.navigation.GoldEditRoute
 import com.mk.daftar.core.navigation.GoldRoute
 import com.mk.daftar.core.navigation.HomeRoute
+import com.mk.daftar.core.navigation.InvestmentAddRoute
+import com.mk.daftar.core.navigation.InvestmentDetailRoute
+import com.mk.daftar.core.navigation.InvestmentEditRoute
+import com.mk.daftar.core.navigation.InvestmentsRoute
 import com.mk.daftar.core.navigation.JournalRoute
 import com.mk.daftar.core.navigation.ManualQuoteRoute
 import com.mk.daftar.core.navigation.NoteAddRoute
@@ -36,6 +41,7 @@ import com.mk.daftar.feature.assets.di.assetsModule
 import com.mk.daftar.feature.banks.di.banksModule
 import com.mk.daftar.feature.gold.di.goldModule
 import com.mk.daftar.feature.home.di.homeModule
+import com.mk.daftar.feature.investments.di.investmentsModule
 import com.mk.daftar.feature.journal.di.journalModule
 import com.mk.daftar.feature.prices.di.pricesModule
 import com.mk.daftar.feature.settings.di.settingsModule
@@ -57,7 +63,7 @@ class ShellEntriesTest {
         modules(homeModule, assetsModule, journalModule, settingsModule, pricesModule)
         modules(homeModule, assetsModule, goldModule, journalModule, settingsModule)
 
-        modules(homeModule, assetsModule, banksModule, journalModule, settingsModule, pricesModule)
+        modules(homeModule, assetsModule, banksModule, investmentsModule, journalModule, settingsModule, pricesModule)
     }.koin
 
     /**
@@ -81,6 +87,12 @@ class ShellEntriesTest {
             BanksRoute,
             GoldRoute,
             GoldAddRoute,
+            InvestmentsRoute,
+            InvestmentDetailRoute("sample-account"),
+            InvestmentAddRoute,
+            InvestmentEditRoute("sample-account"),
+            ConvertCashRoute(),
+            ConvertCashRoute("sample-entry"),
             GoldEditRoute("sample-holding"),
             BankDetailRoute("sample-a"),
             BankAddRoute,

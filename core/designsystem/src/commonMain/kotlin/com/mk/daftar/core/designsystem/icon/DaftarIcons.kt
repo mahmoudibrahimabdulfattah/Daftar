@@ -205,6 +205,14 @@ object DaftarIcons {
         )
     }
 
+    /** Investments: a small column chart outline, the category glyph for broker accounts. */
+    val Investments: ImageVector by lazy {
+        lineIcon(
+            "Investments",
+            "M4 20V10h4v10M10 20V4h4v16M16 20V7h4v13M3 20h18",
+        )
+    }
+
     val Calendar: ImageVector by lazy {
         lineIcon(
             "Calendar",

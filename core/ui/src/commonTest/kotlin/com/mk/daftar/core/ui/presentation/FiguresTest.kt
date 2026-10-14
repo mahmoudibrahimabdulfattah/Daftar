@@ -69,7 +69,7 @@ class FiguresTest {
     }
 
     @Test
-    fun visibilityStartsVisibleTogglesAndResetsOnLock() {
+    fun visibilityStartsVisibleTogglesAndKeepsTheChoiceOnLock() {
         val visibility = ValuesVisibility()
         assertTrue(visibility.visible.value)
         visibility.toggle()
@@ -78,6 +78,6 @@ class FiguresTest {
         assertTrue(visibility.visible.value)
         visibility.toggle()
         visibility.reset()
-        assertTrue(visibility.visible.value)
+        assertFalse(visibility.visible.value)
     }
 }

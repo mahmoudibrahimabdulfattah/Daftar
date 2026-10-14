@@ -176,7 +176,7 @@ internal object ValidationTriggersV1 {
      * has no sign, grouping or exponent, no leading zero before another digit, no trailing fraction zero or dot, and
      * fits the input and digit limits. Positive columns also refuse zero.
      */
-    private fun decimalInvalid(column: String, maxFraction: Int, positive: Boolean): String {
+    internal fun decimalInvalid(column: String, maxFraction: Int, positive: Boolean): String {
         val c = "NEW.$column"
         val integerDigits = "(CASE WHEN instr($c, '.') > 0 THEN instr($c, '.') - 1 ELSE length($c) END)"
         val fractionDigits = "(CASE WHEN instr($c, '.') > 0 THEN length($c) - instr($c, '.') ELSE 0 END)"

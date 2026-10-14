@@ -28,6 +28,7 @@
     <string name="cash_note">Note · optional</string>
     <string name="cash_save">Save</string>
     <string name="cash_delete">Delete balance</string>
+    <string name="cash_convert_investment">Convert a cash entry to an investment</string>
     <string name="cash_error_name_required">Enter the name.</string>
     <string name="cash_error_name_long">The name is too long. Use 120 characters at most.</string>
     <string name="cash_error_balance_required">Enter the balance.</string>

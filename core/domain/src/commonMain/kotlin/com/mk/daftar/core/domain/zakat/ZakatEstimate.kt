@@ -77,7 +77,7 @@ fun estimateZakat(valuation: PortfolioValuation): ZakatEstimate {
     if (total.integerDigits() > Decimal.MAX_INTEGER_DIGITS || estimate.integerDigits() > Decimal.MAX_INTEGER_DIGITS) {
         return ZakatEstimate.Unavailable(ZakatUnavailableReason.OUT_OF_RANGE, emptyList(), valuation.subtotalEgp)
     }
-    val used = listOf(valuation.gold, valuation.banks, valuation.cash)
+    val used = listOf(valuation.gold, valuation.banks, valuation.investments, valuation.cash)
         .flatMap { category -> category.assets }
         .filterIsInstance<AssetValuation.Valued>()
         .mapNotNull { it.selectedQuote }
@@ -89,7 +89,7 @@ fun estimateZakat(valuation: PortfolioValuation): ZakatEstimate {
         totalEgp = total,
         estimateEgp = estimate,
         prefillEgp = estimate.takeIf { it > Decimal.ZERO },
-        categories = listOf(valuation.gold, valuation.banks, valuation.cash).map {
+        categories = listOf(valuation.gold, valuation.banks, valuation.investments, valuation.cash).map {
             ZakatCategoryBasis(it.category, it.exactTotalEgp, it.totalEgp)
         },
         quoteSource = when {

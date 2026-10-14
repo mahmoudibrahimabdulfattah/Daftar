@@ -18,10 +18,11 @@
     <string name="home_available_subtotal">Available subtotal</string>
     <string name="home_missing_karat">%1$s price is unavailable</string>
     <string name="home_missing_usd">USD rate is unavailable</string>
-    <string name="home_allocation">Gold %1$s, banks %2$s, cash %3$s</string>
+    <string name="home_allocation">Gold %1$s, banks %2$s, investments %3$s, cash %4$s</string>
     <string name="home_gold">Gold</string>
     <string name="home_banks">Banks</string>
     <string name="home_cash">Cash &amp; wallets</string>
+    <string name="home_investments">Investments</string>
     <string name="home_quote_caption">Merchant sell · EGP / gram</string>
     <string name="home_quote_details">Details</string>
     <string name="home_quote_refreshing">Refreshing prices</string>
