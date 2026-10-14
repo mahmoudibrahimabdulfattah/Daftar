@@ -83,6 +83,8 @@ import com.mk.daftar.feature.backup.resources.restore_pin_new_label
 import com.mk.daftar.feature.backup.resources.restore_pin_note
 import com.mk.daftar.feature.backup.resources.restore_preparing_heading
 import com.mk.daftar.feature.backup.resources.restore_preparing_message
+import com.mk.daftar.feature.backup.resources.restore_recovery_label
+import com.mk.daftar.feature.backup.resources.restore_recovery_note
 import com.mk.daftar.feature.backup.resources.restore_review_continue
 import com.mk.daftar.feature.backup.resources.restore_review_date
 import com.mk.daftar.feature.backup.resources.restore_review_heading
@@ -90,6 +92,8 @@ import com.mk.daftar.feature.backup.resources.restore_review_no_merge
 import com.mk.daftar.feature.backup.resources.restore_review_validated
 import com.mk.daftar.feature.backup.resources.restore_review_warning
 import com.mk.daftar.feature.backup.resources.restore_title
+import com.mk.daftar.feature.backup.resources.restore_use_password
+import com.mk.daftar.feature.backup.resources.restore_use_recovery
 import com.mk.daftar.feature.backup.resources.restore_zakat_count
 import kotlin.time.Instant
 import kotlinx.datetime.TimeZone
@@ -241,15 +245,32 @@ private fun PasswordBody(state: RestoreUiState, onIntent: (RestoreIntent) -> Uni
         DaftarTextField(
             value = state.password,
             onValueChange = { onIntent(RestoreIntent.PasswordChanged(it)) },
-            label = stringResource(Res.string.restore_password_label),
-            kind = DaftarFieldKind.Password,
+            label = stringResource(
+                if (state.usingRecoveryKey) Res.string.restore_recovery_label else Res.string.restore_password_label,
+            ),
+            kind = if (state.usingRecoveryKey) DaftarFieldKind.Code else DaftarFieldKind.Password,
+            placeholder = if (state.usingRecoveryKey) "XXXX-XXXX-XXXX-XXXX-XXXX-XXXX-XXXX-XXXX" else null,
         )
+        if (state.usingRecoveryKey) {
+            Text(
+                text = stringResource(Res.string.restore_recovery_note),
+                style = DaftarTheme.typography.fineText,
+                color = DaftarTheme.colors.muted,
+            )
+        }
         PrimaryButton(
             onClick = { onIntent(RestoreIntent.SubmitPassword) },
             enabled = state.canSubmitPassword,
             fullWidth = true,
         ) {
             Text(stringResource(Res.string.restore_password_action))
+        }
+        DaftarTextButton(onClick = { onIntent(RestoreIntent.ToggleRecoveryKey) }) {
+            Text(
+                stringResource(
+                    if (state.usingRecoveryKey) Res.string.restore_use_password else Res.string.restore_use_recovery,
+                ),
+            )
         }
     }
 }

@@ -10,6 +10,7 @@ import kotlin.test.Test
 import kotlin.test.assertContentEquals
 import kotlin.test.assertEquals
 import kotlin.test.assertIs
+import kotlin.test.assertSame
 import kotlin.test.assertTrue
 import kotlin.time.Duration.Companion.seconds
 import kotlin.time.TimeSource
@@ -46,6 +47,7 @@ class VaultOnDeviceTest {
             coordinator = BackoffUnlockCoordinator(backoff, clock),
             clock = clock,
             biometrics = BiometricSlots(FakeBiometricKeyStore(), FakeBiometricSlotStore(), LibsodiumSecureRandom()),
+            recovery = RecoverySlots(pinProtector, FakeRecordStore()),
         )
         try {
             val start = TimeSource.Monotonic.markNow()
@@ -94,7 +96,8 @@ class VaultOnDeviceTest {
             )
         }
         try {
-            assertIs<DefaultVaultSecurity>(app.koin.get<VaultSecurity>())
+            // The app's security follows the active generation; resolving it touches no keystore entry.
+            assertSame(app.koin.get<VaultGenerations>().security, app.koin.get<VaultSecurity>())
         } finally {
             stopKoin()
         }

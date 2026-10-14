@@ -27,6 +27,10 @@ data object PreferencesRoute : NavKey
 @Serializable
 data object ChangePinRoute : NavKey
 
+/** Creating or replacing the recovery key. */
+@Serializable
+data object RecoveryKeyRoute : NavKey
+
 /** The app's version, the bundled font licenses and their source links. */
 @Serializable
 data object AboutRoute : NavKey

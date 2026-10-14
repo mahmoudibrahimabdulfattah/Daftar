@@ -6,6 +6,7 @@ import com.mk.daftar.core.domain.session.VaultSession
 import com.mk.daftar.core.security.BiometricError
 import com.mk.daftar.core.security.BiometricPrompter
 import com.mk.daftar.core.security.BiometricSlotState
+import com.mk.daftar.core.security.RecoveryState
 import com.mk.daftar.core.security.SecretBytes
 import com.mk.daftar.core.security.SecurityError
 import com.mk.daftar.core.security.VaultSecurity
@@ -59,6 +60,17 @@ internal class VaultSettingsSecurityGateway(
 
     override suspend fun disableBiometrics(): Outcome<Unit, SecurityActionFailure> =
         authenticator.disableBiometrics().toBiometricSettingsOutcome()
+
+    override suspend fun recoveryKeyActive(): Boolean? = when (val state = security.recoveryState()) {
+        is Outcome.Failure -> null
+        is Outcome.Success -> state.data == RecoveryState.Active
+    }
+
+    override suspend fun createRecoveryKey(pin: SecretBytes): Outcome<String, SecurityActionFailure> =
+        when (val created = security.setUpRecovery(pin)) {
+            is Outcome.Success -> created
+            is Outcome.Failure -> Outcome.Failure(created.error.toSettingsFailure())
+        }
 }
 
 /** A PIN-level failure in the settings feature's terms. Storage and session failures keep their meaning. */

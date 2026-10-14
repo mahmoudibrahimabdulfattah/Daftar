@@ -17,6 +17,13 @@ class DecodedBackup(val snapshot: BackupSnapshot, val exportedAt: Instant, val a
 fun interface BackupDecryptor {
     /** Returns the decoded backup, or the reason it was refused. [password] is wiped before this returns. */
     suspend fun decrypt(file: ByteArray, password: ByteArray): Outcome<DecodedBackup, BackupError>
+
+    /**
+     * Opens a backup made while a recovery key existed, with that key instead of the forgotten password. A file without
+     * a recovery slot, or a key that is not its own, fails with [BackupError.AuthenticationFailed].
+     */
+    suspend fun decryptWithRecoveryKey(file: ByteArray, recoveryKey: String): Outcome<DecodedBackup, BackupError> =
+        Outcome.Failure(BackupError.AuthenticationFailed)
 }
 
 /** Encrypts one snapshot into the complete file. [BackupCodec] is the production implementation. */
@@ -38,8 +45,11 @@ interface BackupEncryptor {
  * export, and the Argon2id key is derived from the password for that salt only. The codec never writes a file and
  * never keeps the password, the key or the plaintext after it returns.
  */
-class BackupCodec(private val crypto: PasswordCrypto) :
-    BackupEncryptor,
+class BackupCodec(
+    private val crypto: PasswordCrypto,
+    /** The vault's recovery public key, read at export time. With one, exports use the version-two container. */
+    private val recoveryPublicKey: suspend () -> ByteArray? = { null },
+) : BackupEncryptor,
     BackupDecryptor {
 
     override suspend fun decrypt(file: ByteArray, password: ByteArray): Outcome<DecodedBackup, BackupError> =
@@ -53,7 +63,131 @@ class BackupCodec(private val crypto: PasswordCrypto) :
     ): Outcome<ByteArray, BackupError> {
         val salt = random(BackupFormat.SALT_BYTES) ?: return fail(password, BackupError.ResourceUnavailable)
         val nonce = random(BackupFormat.NONCE_BYTES) ?: return fail(password, BackupError.ResourceUnavailable)
-        return encodeWith(snapshot, password, exportedAt, appVersion, salt, nonce)
+        val publicKey = recoveryPublicKey()
+            ?: return encodeWith(snapshot, password, exportedAt, appVersion, salt, nonce)
+        return encodeWithRecovery(snapshot, password, exportedAt, appVersion, salt, nonce, publicKey)
+    }
+
+    /**
+     * The version-two export: a random backup key encrypts the payload, and is wrapped under the password key and sealed
+     * to the recovery public key. Each unwrap is proved before the file is returned.
+     */
+    private suspend fun encodeWithRecovery(
+        snapshot: BackupSnapshot,
+        password: ByteArray,
+        exportedAt: Instant,
+        appVersion: String,
+        salt: ByteArray,
+        nonce: ByteArray,
+        publicKey: ByteArray,
+    ): Outcome<ByteArray, BackupError> {
+        try {
+            if (snapshot.recordCount > BackupFormat.MAX_RECORDS) return Outcome.Failure(BackupError.TooManyRecords)
+            val plaintext = BackupJson.encodeToString(
+                PayloadDocument.serializer(),
+                snapshot.toDocument(exportedAt, appVersion),
+            ).encodeToByteArray()
+            if (plaintext.size > BackupFormat.MAX_PLAINTEXT_BYTES) return Outcome.Failure(BackupError.TooLarge)
+            val backupKey = random(BackupFormat.KEY_BYTES) ?: return Outcome.Failure(BackupError.ResourceUnavailable)
+            val wrapNonce = random(BackupFormat.NONCE_BYTES) ?: return Outcome.Failure(BackupError.ResourceUnavailable)
+            try {
+                val passwordKey = deriveKey(password, salt) ?: return Outcome.Failure(BackupError.ResourceUnavailable)
+                val prefix = BackupHeaderV2(salt, nonce, wrapNonce, ByteArray(0), null, 0).prefix()
+                val wrapped = try {
+                    crypto.seal(passwordKey, wrapNonce, prefix, backupKey)
+                } finally {
+                    passwordKey.wipe()
+                }
+                val sealed = when (val result = crypto.sealToRecovery(backupKey, publicKey)) {
+                    is Outcome.Failure -> return Outcome.Failure(BackupError.ResourceUnavailable)
+                    is Outcome.Success -> result.data
+                }
+                if (sealed.size !=
+                    BackupHeaderV2.SEALED_KEY_BYTES
+                ) {
+                    return Outcome.Failure(BackupError.ResourceUnavailable)
+                }
+                val header = BackupHeaderV2(
+                    salt = salt,
+                    nonce = nonce,
+                    wrapNonce = wrapNonce,
+                    wrappedKey = wrapped,
+                    recoverySealed = sealed,
+                    ciphertextLength = plaintext.size + BackupFormat.TAG_BYTES,
+                ).encode()
+                val ciphertext = crypto.sealWithKey(backupKey, nonce, header, plaintext)
+                return Outcome.Success(header + ciphertext)
+            } finally {
+                backupKey.fill(0)
+                plaintext.fill(0)
+            }
+        } finally {
+            password.fill(0)
+        }
+    }
+
+    override suspend fun decryptWithRecoveryKey(
+        file: ByteArray,
+        recoveryKey: String,
+    ): Outcome<DecodedBackup, BackupError> {
+        if (containerVersionOf(file) != BackupHeaderV2.VERSION) {
+            return Outcome.Failure(
+                if (containerVersionOf(file) == null) BackupError.NotABackup else BackupError.AuthenticationFailed,
+            )
+        }
+        val header = when (val parsed = BackupHeaderV2.decode(file)) {
+            is Outcome.Failure -> return Outcome.Failure(parsed.error)
+            is Outcome.Success -> parsed.data
+        }
+        val sealed = header.recoverySealed ?: return Outcome.Failure(BackupError.AuthenticationFailed)
+        val backupKey = when (val opened = crypto.openWithRecovery(sealed, recoveryKey)) {
+            is Outcome.Failure -> return Outcome.Failure(BackupError.AuthenticationFailed)
+            is Outcome.Success -> opened.data
+        }
+        return openPayloadV2(file, header, backupKey)
+    }
+
+    /** Decrypts a version-two payload with its unwrapped [backupKey], which is wiped here. */
+    private fun openPayloadV2(
+        file: ByteArray,
+        header: BackupHeaderV2,
+        backupKey: ByteArray,
+    ): Outcome<DecodedBackup, BackupError> {
+        try {
+            if (backupKey.size != BackupFormat.KEY_BYTES) return Outcome.Failure(BackupError.AuthenticationFailed)
+            val associatedData = file.copyOfRange(0, BackupHeaderV2.HEADER_BYTES)
+            val ciphertext = file.copyOfRange(BackupHeaderV2.HEADER_BYTES, file.size)
+            val plaintext = crypto.openWithKey(backupKey, header.nonce, associatedData, ciphertext)
+                ?: return Outcome.Failure(BackupError.AuthenticationFailed)
+            try {
+                return parse(plaintext)
+            } finally {
+                plaintext.fill(0)
+            }
+        } finally {
+            backupKey.fill(0)
+        }
+    }
+
+    /** A version-two file opened with its password: the password key unwraps the backup key. */
+    private suspend fun decodeV2(file: ByteArray, password: ByteArray): Outcome<DecodedBackup, BackupError> {
+        val header = when (val parsed = BackupHeaderV2.decode(file)) {
+            is Outcome.Failure -> return Outcome.Failure(parsed.error)
+            is Outcome.Success -> parsed.data
+        }
+        val passwordKey = deriveKey(password, header.salt) ?: return Outcome.Failure(BackupError.ResourceUnavailable)
+        val backupKey = try {
+            crypto.open(
+                passwordKey,
+                header.wrapNonce,
+                file.copyOfRange(0, BackupHeaderV2.PREFIX_BYTES),
+                header.wrappedKey,
+            )
+                ?: return Outcome.Failure(BackupError.AuthenticationFailed)
+        } finally {
+            passwordKey.wipe()
+        }
+        return openPayloadV2(file, header, backupKey)
     }
 
     /**
@@ -99,6 +233,7 @@ class BackupCodec(private val crypto: PasswordCrypto) :
      */
     suspend fun decode(file: ByteArray, password: ByteArray): Outcome<DecodedBackup, BackupError> {
         try {
+            if (containerVersionOf(file) == BackupHeaderV2.VERSION) return decodeV2(file, password)
             val header = when (val parsed = BackupHeader.decode(file)) {
                 is Outcome.Failure -> return Outcome.Failure(parsed.error)
                 is Outcome.Success -> parsed.data

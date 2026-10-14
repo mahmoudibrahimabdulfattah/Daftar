@@ -35,6 +35,11 @@ internal class VaultAuthGateway(
 
     override suspend fun unlock(pin: SecretBytes): AuthResult = authenticator.unlock(pin).toAuthResult()
 
+    override suspend fun recoveryAvailable(): Boolean = authenticator.recoveryAvailable()
+
+    override suspend fun recover(recoveryKey: String, pin: SecretBytes): AuthResult =
+        authenticator.recover(recoveryKey, pin).toAuthResult()
+
     override suspend fun unlockWithBiometrics(): AuthResult =
         authenticator.unlockWithBiometrics(prompter).toAuthResult()
 

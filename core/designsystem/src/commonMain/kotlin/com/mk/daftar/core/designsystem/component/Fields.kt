@@ -29,6 +29,7 @@ import androidx.compose.ui.platform.LocalLayoutDirection
 import androidx.compose.ui.semantics.Role
 import androidx.compose.ui.semantics.error
 import androidx.compose.ui.semantics.semantics
+import androidx.compose.ui.text.input.KeyboardCapitalization
 import androidx.compose.ui.text.input.KeyboardType
 import androidx.compose.ui.text.input.PasswordVisualTransformation
 import androidx.compose.ui.text.input.VisualTransformation
@@ -46,6 +47,9 @@ enum class DaftarFieldKind {
     Text,
     Decimal,
     Password,
+
+    /** A visible code such as a recovery key: LTR, capitals, no suggestions or learning by the keyboard. */
+    Code,
 }
 
 /**
@@ -74,12 +78,17 @@ fun DaftarTextField(
         DaftarFieldKind.Text -> KeyboardType.Text
         DaftarFieldKind.Decimal -> KeyboardType.Decimal
         DaftarFieldKind.Password -> KeyboardType.Password
+        DaftarFieldKind.Code -> KeyboardType.Password
     }
     // Amounts read left to right in every language, and a name may be typed in either script, but every value sits at
     // the field's start: an Arabic layout never leaves a gap before English text or a number.
     val textStyle = typography.ledgerValue.copy(
         color = colors.ink,
-        textDirection = if (kind == DaftarFieldKind.Decimal) TextDirection.Ltr else TextDirection.Content,
+        textDirection = if (kind == DaftarFieldKind.Decimal || kind == DaftarFieldKind.Code) {
+            TextDirection.Ltr
+        } else {
+            TextDirection.Content
+        },
         textAlign = layoutStartAlign(),
     )
     DaftarFieldShell(
@@ -101,11 +110,19 @@ fun DaftarTextField(
             singleLine = true,
             textStyle = textStyle,
             cursorBrush = SolidColor(colors.primary),
-            keyboardOptions = KeyboardOptions(keyboardType = keyboardType),
+            keyboardOptions = if (kind == DaftarFieldKind.Code) {
+                KeyboardOptions(
+                    keyboardType = keyboardType,
+                    capitalization = KeyboardCapitalization.Characters,
+                    autoCorrectEnabled = false,
+                )
+            } else {
+                KeyboardOptions(keyboardType = keyboardType)
+            },
             visualTransformation = when (kind) {
                 DaftarFieldKind.Password -> PasswordVisualTransformation()
                 DaftarFieldKind.Decimal -> DigitGroupingTransformation
-                DaftarFieldKind.Text -> VisualTransformation.None
+                DaftarFieldKind.Text, DaftarFieldKind.Code -> VisualTransformation.None
             },
             interactionSource = interactionSource,
             decorationBox = { inner ->

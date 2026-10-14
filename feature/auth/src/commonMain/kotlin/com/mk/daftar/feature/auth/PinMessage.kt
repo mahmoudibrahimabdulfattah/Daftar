@@ -18,7 +18,7 @@ sealed interface PinMessage {
     data class Notice(val notice: AuthNotice) : PinMessage
 
     /** The phase's own explanation, shown when nothing else needs the lane. */
-    data class Explanation(val phase: AuthPhase) : PinMessage
+    data class Explanation(val phase: AuthPhase, val recovering: Boolean = false) : PinMessage
 }
 
 /**
@@ -33,9 +33,9 @@ fun pinMessageFor(state: AuthUiState): PinMessage? {
     state.retrySeconds?.let { return PinMessage.Backoff(it) }
     state.error?.let { return PinMessage.Failure(it) }
     when (state.busy) {
-        AuthBusy.Creating, AuthBusy.Unlocking -> return PinMessage.Busy(state.busy)
+        AuthBusy.Creating, AuthBusy.Unlocking, AuthBusy.Recovering -> return PinMessage.Busy(state.busy)
         AuthBusy.Enrolling, AuthBusy.UnlockingBiometric, null -> Unit
     }
     state.notice?.takeIf { state.enteredCount == 0 }?.let { return PinMessage.Notice(it) }
-    return PinMessage.Explanation(state.phase)
+    return PinMessage.Explanation(state.phase, state.recovering)
 }

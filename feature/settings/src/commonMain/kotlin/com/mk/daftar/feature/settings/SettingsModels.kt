@@ -136,6 +136,8 @@ data class SettingsUiState(
     /** The last biometric result that the row should explain. Null when there is nothing to say. */
     val biometricFailure: SecurityActionFailure? = null,
     val biometricSheet: BiometricPinSheet? = null,
+    /** Whether a recovery key is set up. Null until read, or when it cannot be read. */
+    val recoveryActive: Boolean? = null,
 ) : UiState
 
 sealed interface SettingsIntent : UiIntent {

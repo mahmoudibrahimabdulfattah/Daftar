@@ -77,4 +77,6 @@
     <string name="p25_empty_body">أضف أصلًا عندما تكون مستعدًا.</string>
     <string name="p25_empty_action">إضافة أصل</string>
     <string name="p25_price_waiting">في انتظار الأسعار</string>
+    <string name="home_recovery_suggestion">احمِ دفترك من نسيان الرمز بمفتاح استرداد.</string>
+    <string name="home_recovery_action">إنشاء مفتاح الاسترداد</string>
 </resources>

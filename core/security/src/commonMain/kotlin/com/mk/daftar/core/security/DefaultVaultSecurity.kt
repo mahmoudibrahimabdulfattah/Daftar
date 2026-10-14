@@ -20,6 +20,7 @@ internal class DefaultVaultSecurity(
     private val coordinator: UnlockCoordinator,
     private val clock: MonotonicClock,
     private val biometrics: BiometricSlots,
+    private val recovery: RecoverySlots,
 ) : VaultSecurity {
     private val sessionMutex = Mutex()
 
@@ -210,6 +211,113 @@ internal class DefaultVaultSecurity(
 
     override suspend fun disableBiometrics(): Outcome<Unit, BiometricError> = biometricMutex.withLock {
         biometrics.remove()
+    }
+
+    override suspend fun recoveryState(): Outcome<RecoveryState, SecurityError> = recovery.state()
+
+    override suspend fun recoveryPublicKey(): Outcome<ByteArray?, SecurityError> = recovery.publicKey()
+
+    override suspend fun setUpRecovery(pin: SecretBytes): Outcome<String, SecurityError> {
+        if (!pin.use { PinNormalizer.isValidDigits(it) }) return Outcome.Failure(SecurityError.InvalidPinFormat)
+        when (val ready = Libsodium.ensureReady()) {
+            is Outcome.Failure -> return Outcome.Failure(ready.error)
+            is Outcome.Success -> Unit
+        }
+        return coordinator.attempt(
+            verify = { record -> verifyPin(pin, record) },
+            finish = { dek ->
+                val secret = random.bytes(RecoveryKeyFormat.SECRET_BYTES)
+                try {
+                    val ids = when (val opened = openEnvelope()) {
+                        is Outcome.Failure -> return@attempt Outcome.Failure(opened.error)
+                        is Outcome.Success -> opened.data.header
+                    }
+                    val written = dek.use { key -> recovery.write(ids.vaultId, ids.dekId, key, secret) }
+                    when (written) {
+                        is Outcome.Failure -> Outcome.Failure(written.error)
+                        is Outcome.Success -> Outcome.Success(RecoveryKeyFormat.format(secret))
+                    }
+                } finally {
+                    secret.fill(0)
+                    dek.wipe()
+                }
+            },
+        )
+    }
+
+    override suspend fun recover(recoveryKey: String, newPin: SecretBytes): Outcome<KeyLease, SecurityError> {
+        if (!newPin.use { PinNormalizer.isValidDigits(it) }) return Outcome.Failure(SecurityError.InvalidPinFormat)
+        when (val ready = Libsodium.ensureReady()) {
+            is Outcome.Failure -> return Outcome.Failure(ready.error)
+            is Outcome.Success -> Unit
+        }
+        val secret = RecoveryKeyFormat.parse(recoveryKey) ?: return Outcome.Failure(SecurityError.RecoveryKeyRejected)
+        val startGeneration = sessionMutex.withLock { sessionGeneration }
+        return coordinator.exclusive {
+            try {
+                recoverLocked(secret, newPin, startGeneration)
+            } finally {
+                secret.fill(0)
+            }
+        }
+    }
+
+    /**
+     * Opens the recovery slot, wraps the DEK under the new PIN in a fresh envelope, starts a fresh backoff record and
+     * publishes the session. The old envelope stays in place unless the new one was proved and committed.
+     */
+    private suspend fun recoverLocked(
+        secret: ByteArray,
+        newPin: SecretBytes,
+        startGeneration: Long,
+    ): Outcome<KeyLease, SecurityError> {
+        val current = when (val opened = openEnvelope()) {
+            is Outcome.Failure -> return Outcome.Failure(opened.error)
+            is Outcome.Success -> opened.data
+        }
+        current.inner.fill(0)
+        if (current.header.generation >= EnvelopeCodec.GENERATION_MAX) {
+            return Outcome.Failure(SecurityError.UnsupportedFormat)
+        }
+        val dek = when (val opened = recovery.open(secret, current.header.vaultId, current.header.dekId)) {
+            is Outcome.Failure -> return Outcome.Failure(opened.error)
+            is Outcome.Success -> opened.data
+        }
+        val header = EnvelopeHeader(
+            generation = current.header.generation + 1,
+            vaultId = current.header.vaultId,
+            dekId = current.header.dekId,
+            kdf = current.header.kdf,
+            salt = random.bytes(KdfPolicy.SALT_BYTES),
+        )
+        val nonce = random.bytes(EnvelopeCodec.NONCE_BYTES)
+        val sealed = newPin.use { pinBytes -> dek.use { dekBytes -> sealEnvelope(pinBytes, header, nonce, dekBytes) } }
+        val envelope = when (sealed) {
+            is Outcome.Failure -> {
+                dek.wipe()
+                return Outcome.Failure(sealed.error)
+            }
+
+            is Outcome.Success -> sealed.data
+        }
+        when (val replaced = records.replace(envelope)) {
+            is Outcome.Failure -> {
+                dek.wipe()
+                return Outcome.Failure(replaced.error)
+            }
+
+            is Outcome.Success -> Unit
+        }
+        // The forgotten PIN's penalties no longer apply: the new PIN starts with a clean record.
+        when (val initialized = coordinator.initialize(current.header.vaultId)) {
+            is Outcome.Failure -> {
+                dek.wipe()
+                return Outcome.Failure(initialized.error)
+            }
+
+            is Outcome.Success -> Unit
+        }
+        return publish(dek, startGeneration, UnlockProof.Pin)
     }
 
     /** The vault and DEK identifiers from the stored envelope. The envelope is unsealed without the PIN. */

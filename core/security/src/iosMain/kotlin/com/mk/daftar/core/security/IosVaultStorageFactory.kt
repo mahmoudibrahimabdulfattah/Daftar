@@ -13,6 +13,7 @@ internal class IosVaultStorageFactory : PlatformVaultStorageFactory {
         val envelopeAccount = generation.name(KeychainRecordStore.PIN_ENVELOPE_ACCOUNT)
         val backoffAccount = generation.name(KeychainBackoffStore.BACKOFF_ACCOUNT)
         val slotAccount = generation.name(KeychainBiometricSlotStore.SLOT_ACCOUNT)
+        val recoveryAccount = generation.name(RECOVERY_SLOT_ACCOUNT)
         val biometricKeys = createPlatformBiometricKeyStore(generation)
         return PlatformVaultStorage(
             protector = createPlatformEnvelopeProtector(generation),
@@ -20,10 +21,11 @@ internal class IosVaultStorageFactory : PlatformVaultStorageFactory {
             backoff = KeychainBackoffStore(backoffAccount),
             biometricKeys = biometricKeys,
             biometricSlots = KeychainBiometricSlotStore(slotAccount),
+            recoverySlot = KeychainRecordStore(recoveryAccount),
             eraseSecurity = {
                 eraseIosGeneration(
                     generation = generation,
-                    accounts = listOf(envelopeAccount, backoffAccount, slotAccount),
+                    accounts = listOf(envelopeAccount, backoffAccount, slotAccount, recoveryAccount),
                     slotAccount = slotAccount,
                     biometricKeys = biometricKeys,
                 )
@@ -53,5 +55,9 @@ internal class IosVaultStorageFactory : PlatformVaultStorageFactory {
             }
         }
         return erasePlatformEnvelopeKey(generation)
+    }
+
+    private companion object {
+        const val RECOVERY_SLOT_ACCOUNT = "recovery-slot.v1"
     }
 }

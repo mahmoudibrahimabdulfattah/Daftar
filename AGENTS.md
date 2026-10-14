@@ -60,10 +60,17 @@ mapping (`androidApp/build/outputs/mapping/release`), not a package-wide keep.
   persistent banner. The developer entries (design catalog, shell preview) exist only in debug builds.
 - `FLAG_SECURE` on every Android window. Lock on background and on foreground inactivity; cover the app in recents.
 - No balances, PINs or notes in logs, notifications, the clipboard, semantics or screenshots of released surfaces.
+  The one exception is the recovery key, copied only on the owner's tap: marked sensitive, device-only, cleared after
+  60 seconds.
 - Keychain items are device-only. The database and staged backups are excluded from iCloud and Android backup,
   and transfer is disabled. Staged export files live in a no-backup area and are deleted after use.
 - Cleartext traffic is prohibited. The only merged permissions are `INTERNET` and `USE_BIOMETRIC`.
 - Changing the PIN rewraps the data key; the database is not re-encrypted.
+- Recovery key (optional, created in Settings after the current PIN): 18 random bytes + a CRC-16, shown once as 32
+  Crockford base32 characters and never stored. Only its X25519 public key is kept, in a recovery slot sealed by the
+  same hardware key as the PIN envelope, beside the DEK sealed to that key. A forgotten PIN is replaced on this device
+  with the key (device + key are both required); a new key supersedes the old one. Backups made while a key exists
+  use container version 2 and open with the password or the key.
 - Biometric auto-prompt (owner-verified on a real phone, 13 Oct 2026; do not regress): with biometrics enabled the
   system prompt appears by itself once per lock episode, on cold launch AND when the app returns from the background.
   The auth view model outlives sessions, so every lock after a successful unlock is a new episode (`openedSinceLock`),
@@ -78,8 +85,11 @@ mapping (`androidApp/build/outputs/mapping/release`), not a package-wide keep.
 - An export is written as `.dftar`: a fixed binary header (Argon2id KDF, XChaCha20-Poly1305 AEAD, fresh salt and nonce)
   around a versioned JSON payload. The header is authenticated; any change fails to decrypt.
 - The backup password is separate from the PIN and must be at least 12 characters.
+- Container version 1 (password only) is frozen and still written when no recovery key exists. Version 2 encrypts the
+  payload under a random backup key, wrapped under the password key and sealed to the recovery public key.
 - Corrupt, truncated or wrong-password files fail authentication and are rejected; the header is authenticated.
-- Recovery limits: a lost backup password or a forgotten PIN with no backup means the data cannot be recovered.
+- Recovery limits: without a recovery key, a lost backup password or a forgotten PIN with no backup means the data
+  cannot be recovered. A recovery key opens only backups made after it was set up.
 - Optional cloud backups (Android only, Google sign-in) store the same `.dftar` file in Firestore on the Spark plan:
   three fixed slots, a 768 KiB ciphertext cap and no Storage, Functions, Analytics or Crashlytics. Sign-in never
   unlocks the vault, and restoring still requires the backup password. Local OS backup stays disabled.

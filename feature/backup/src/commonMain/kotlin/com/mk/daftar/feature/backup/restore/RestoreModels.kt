@@ -1,5 +1,6 @@
 package com.mk.daftar.feature.backup.restore
 
+import com.mk.daftar.core.security.RecoveryKeyFormat
 import com.mk.daftar.core.ui.mvi.UiEffect
 import com.mk.daftar.core.ui.mvi.UiIntent
 import com.mk.daftar.core.ui.mvi.UiState
@@ -81,10 +82,16 @@ data class RestoreUiState(
     val pinCount: Int = 0,
     /** Set when the confirmation did not match the first PIN. */
     val pinMismatch: Boolean = false,
+    /** The field takes the recovery key instead of the backup password. */
+    val usingRecoveryKey: Boolean = false,
 ) : UiState {
-    /** The password can be submitted once it has at least one character; the decryption decides the rest. */
+    /**
+     * The password can be submitted once it has at least one character; the decryption decides the rest. A recovery key
+     * must first be complete with a matching checksum.
+     */
     val canSubmitPassword: Boolean
-        get() = password.isNotEmpty() && phase == RestorePhase.Password
+        get() = phase == RestorePhase.Password &&
+            if (usingRecoveryKey) RecoveryKeyFormat.isWellFormed(password) else password.isNotEmpty()
 
     /** A new PIN is submitted at six digits or more. */
     val canSubmitPin: Boolean
@@ -103,6 +110,9 @@ sealed interface RestoreIntent : UiIntent {
     data class PasswordChanged(val text: String) : RestoreIntent
 
     data object SubmitPassword : RestoreIntent
+
+    /** Switches the field between the backup password and the recovery key. Clears what was typed. */
+    data object ToggleRecoveryKey : RestoreIntent
 
     /** Continues from the review to the new PIN. */
     data object ContinueToPin : RestoreIntent

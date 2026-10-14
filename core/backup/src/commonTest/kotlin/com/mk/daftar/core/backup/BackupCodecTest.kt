@@ -143,7 +143,8 @@ class BackupCodecTest {
     @Test
     fun tamperedVersionIsRejectedBeforeAnyKeyDerivation() = runTest {
         val file = encode()
-        file[9] = 2
+        // Version two is the recovery container; any later version is unknown.
+        file[9] = 3
         assertEquals(BackupError.UnsupportedFormat, decodeFailure(file))
     }
 

@@ -267,6 +267,7 @@ internal class VaultHarness(
     val backoff: FakeBackoffStore = FakeBackoffStore(),
     val biometricKeys: FakeBiometricKeyStore = FakeBiometricKeyStore(),
     val biometricSlots: FakeBiometricSlotStore = FakeBiometricSlotStore(),
+    val recoverySlot: FakeRecordStore = FakeRecordStore(),
 ) {
     fun vault(): DefaultVaultSecurity = DefaultVaultSecurity(
         kdf = kdf,
@@ -277,6 +278,7 @@ internal class VaultHarness(
         coordinator = BackoffUnlockCoordinator(backoff, clock),
         clock = clock,
         biometrics = BiometricSlots(biometricKeys, biometricSlots, LibsodiumSecureRandom()),
+        recovery = RecoverySlots(protector, recoverySlot),
     )
 
     fun storedRecord(): BackoffRecord = (BackoffCodec.decode(checkNotNull(backoff.record)) as Outcome.Success).data

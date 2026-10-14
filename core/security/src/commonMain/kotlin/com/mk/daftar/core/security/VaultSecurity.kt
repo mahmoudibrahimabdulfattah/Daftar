@@ -52,4 +52,25 @@ interface VaultSecurity {
 
     /** Destroys the biometric slot and its key. Idempotent. The PIN stays usable. */
     suspend fun disableBiometrics(): Outcome<Unit, BiometricError>
+
+    /** Whether this vault has a recovery key. */
+    suspend fun recoveryState(): Outcome<RecoveryState, SecurityError> = Outcome.Success(RecoveryState.Absent)
+
+    /**
+     * Verifies [pin] (counted like any attempt), then creates a new recovery key for the current DEK and returns it,
+     * formatted for display. It is never stored: only its public key is kept in the hardware-sealed slot. A previous
+     * recovery key stops working once the new slot is committed. Never opens a session.
+     */
+    suspend fun setUpRecovery(pin: SecretBytes): Outcome<String, SecurityError> =
+        Outcome.Failure(SecurityError.RecoveryNotSetUp)
+
+    /**
+     * Opens the vault with [recoveryKey] when the PIN is forgotten: the DEK is recovered from the slot on this device,
+     * wrapped under [newPin], and the backoff starts fresh. The database and the biometric slot are unchanged.
+     */
+    suspend fun recover(recoveryKey: String, newPin: SecretBytes): Outcome<KeyLease, SecurityError> =
+        Outcome.Failure(SecurityError.RecoveryNotSetUp)
+
+    /** The recovery public key, so a backup's key can be sealed to it. Null when no recovery key is set up. */
+    suspend fun recoveryPublicKey(): Outcome<ByteArray?, SecurityError> = Outcome.Success(null)
 }

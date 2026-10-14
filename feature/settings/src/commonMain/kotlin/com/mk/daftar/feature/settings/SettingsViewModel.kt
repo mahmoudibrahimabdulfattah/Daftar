@@ -84,6 +84,8 @@ class SettingsViewModel(
         viewModelScope.launch {
             facts = gateway.biometricFacts()
             recompute()
+            val recovery = gateway.recoveryKeyActive()
+            reduce { copy(recoveryActive = recovery) }
         }
     }
 

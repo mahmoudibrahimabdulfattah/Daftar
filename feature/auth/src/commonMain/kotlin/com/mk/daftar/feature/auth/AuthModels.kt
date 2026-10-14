@@ -27,6 +27,12 @@ sealed interface AuthPhase {
     /** The forgotten-PIN explanation. Nothing here changes the vault. */
     data object Recovery : AuthPhase
 
+    /**
+     * The recovery key entry. A well-formed key leads to Create and Confirm for the new PIN, with
+     * [AuthUiState.recovering] set, and the confirmation opens the vault with the key instead of creating one.
+     */
+    data object RecoveryKey : AuthPhase
+
     /** The vault cannot be opened right now or at all. The reason decides the copy and whether retry is offered. */
     data class Unavailable(val reason: AuthUnavailableReason) : AuthPhase
 }
@@ -52,6 +58,9 @@ enum class AuthError {
 
     /** The vault could not be opened or created right now. The user may try again. */
     OpenFailed,
+
+    /** The recovery key is not this vault's. Nothing changed. */
+    RecoveryKeyRejected,
 }
 
 /** An informative message about biometrics. It never blocks the PIN path and is never an error toast. */
@@ -94,6 +103,9 @@ enum class AuthBusy {
 
     /** The platform biometric prompt is on screen. Its result is owned by the operation, not the screen. */
     UnlockingBiometric,
+
+    /** Opening the vault with the recovery key and wrapping it under the new PIN. */
+    Recovering,
     ;
 
     /** Biometric operations survive the prompt's temporary deactivation of the app. */
@@ -118,6 +130,12 @@ data class AuthUiState(
      * [AuthIntent.AutomaticBiometric] only when the host is resumed. Cleared by any user action that takes the request.
      */
     val biometricAutoPending: Boolean = false,
+    /** The forgotten-PIN screen may offer the recovery key: this vault has one. */
+    val recoveryOffered: Boolean = false,
+    /** The typed recovery key is complete and its checksum matches. The key itself never enters the state. */
+    val recoveryKeyReady: Boolean = false,
+    /** Create and Confirm are choosing a new PIN for a recovery, not for a new vault. */
+    val recovering: Boolean = false,
 ) : UiState {
     /** Input is accepted only when no operation is running and no penalty blocks the keypad. */
     val inputEnabled: Boolean
@@ -136,6 +154,15 @@ private val AuthPhase.acceptsDigits: Boolean
     get() = this == AuthPhase.Create || this == AuthPhase.Confirm || this == AuthPhase.Unlock
 
 sealed interface AuthIntent : UiIntent {
+    /** "Use your recovery key" on the forgotten-PIN screen. */
+    data object UseRecoveryKey : AuthIntent
+
+    /** The recovery key field changed. The text is kept by the view model only, never in the state. */
+    data class RecoveryKeyChanged(val text: String) : AuthIntent
+
+    /** Continue from the recovery key to choosing the new PIN. */
+    data object SubmitRecoveryKey : AuthIntent
+
     /** A digit typed on the keypad or a hardware key, as a code point in any supported numeral script. */
     data class Digit(val codePoint: Int) : AuthIntent
 

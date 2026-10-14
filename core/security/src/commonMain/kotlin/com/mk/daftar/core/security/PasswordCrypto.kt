@@ -47,6 +47,60 @@ class PasswordCrypto internal constructor(
     fun open(key: SecretBytes, nonce: ByteArray, associatedData: ByteArray, ciphertext: ByteArray): ByteArray? =
         key.use { aead.open(it, nonce, associatedData, ciphertext) }
 
+    /** [seal] with a random content key the caller owns and wipes, such as a backup's own key. */
+    fun sealWithKey(key: ByteArray, nonce: ByteArray, associatedData: ByteArray, plaintext: ByteArray): ByteArray =
+        aead.seal(key, nonce, associatedData, plaintext)
+
+    /** [open] with a content key the caller owns and wipes. */
+    fun openWithKey(key: ByteArray, nonce: ByteArray, associatedData: ByteArray, ciphertext: ByteArray): ByteArray? =
+        aead.open(key, nonce, associatedData, ciphertext)
+
+    /**
+     * Seals [message] to a recovery public key, so only the holder of that recovery key can open it. Used for the key
+     * of a backup, never for a PIN or the vault key.
+     */
+    suspend fun sealToRecovery(message: ByteArray, publicKey: ByteArray): Outcome<ByteArray, SecurityError> =
+        when (val ready = Libsodium.ensureReady()) {
+            is Outcome.Failure -> Outcome.Failure(ready.error)
+
+            is Outcome.Success -> try {
+                Outcome.Success(sealToRecoveryKey(message, publicKey))
+            } catch (failure: CancellationException) {
+                throw failure
+            } catch (failure: Exception) {
+                Outcome.Failure(SecurityError.ResourceUnavailable)
+            }
+        }
+
+    /**
+     * Opens a box sealed by [sealToRecovery] with the typed [recoveryKey]. Fails with
+     * [SecurityError.RecoveryKeyRejected] when the key is malformed or is not the one the box was sealed to.
+     */
+    suspend fun openWithRecovery(sealed: ByteArray, recoveryKey: String): Outcome<ByteArray, SecurityError> {
+        when (val ready = Libsodium.ensureReady()) {
+            is Outcome.Failure -> return Outcome.Failure(ready.error)
+            is Outcome.Success -> Unit
+        }
+        val secret = RecoveryKeyFormat.parse(recoveryKey) ?: return Outcome.Failure(SecurityError.RecoveryKeyRejected)
+        val pair = RecoveryKeyPair.derive(secret)
+        secret.fill(0)
+        return try {
+            pair.open(sealed)?.let { Outcome.Success(it) } ?: Outcome.Failure(SecurityError.RecoveryKeyRejected)
+        } finally {
+            pair.wipe()
+        }
+    }
+
+    /** The public key of [recoveryKey], or null when it is malformed. The secret half is wiped at once. */
+    suspend fun recoveryPublicKeyOf(recoveryKey: String): ByteArray? {
+        if (Libsodium.ensureReady() is Outcome.Failure) return null
+        val secret = RecoveryKeyFormat.parse(recoveryKey) ?: return null
+        val pair = RecoveryKeyPair.derive(secret)
+        secret.fill(0)
+        pair.wipe()
+        return pair.publicKey
+    }
+
     private companion object {
         /** Largest random block requested through this facade. Salts and nonces are far below it. */
         const val MAX_RANDOM_BYTES = 64

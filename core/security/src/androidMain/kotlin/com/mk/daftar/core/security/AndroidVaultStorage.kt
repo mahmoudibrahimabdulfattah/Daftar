@@ -37,6 +37,7 @@ internal class AndroidVaultStorageFactory(private val context: Context, private 
             ),
             biometricKeys = AndroidBiometricKeyStore(context, policy, generation),
             biometricSlots = FileBiometricSlotStore(directory.resolve(BIOMETRIC_SLOT_FILE)),
+            recoverySlot = FileRecordStore(directory.resolve(RECOVERY_SLOT_FILE)),
             eraseSecurity = { eraseAndroidGeneration(generation, directory) },
         )
     }
@@ -45,6 +46,7 @@ internal class AndroidVaultStorageFactory(private val context: Context, private 
         const val POINTER_FILE = "daftar-generation.v1.txt"
         const val PIN_ENVELOPE_PURPOSE = "pin-envelope.v1"
         const val BACKOFF_PURPOSE = "backoff.v1"
+        const val RECOVERY_SLOT_FILE = "recovery-slot.v1.bin"
     }
 }
 

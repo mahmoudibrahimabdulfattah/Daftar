@@ -17,6 +17,7 @@ import com.mk.daftar.core.security.BiometricError
 import com.mk.daftar.core.security.BiometricPrompter
 import com.mk.daftar.core.security.BiometricSlotState
 import com.mk.daftar.core.security.KeyLease
+import com.mk.daftar.core.security.RecoveryState
 import com.mk.daftar.core.security.SecretBytes
 import com.mk.daftar.core.security.SecurityError
 import com.mk.daftar.core.security.VaultGeneration
@@ -164,6 +165,14 @@ class VaultAuthenticator internal constructor(
 
     suspend fun unlock(pin: SecretBytes): Outcome<Unit, VaultOpenFailure> =
         session.openWith { security.unlock(pin).toOpenFailure() }
+
+    /** Opens the vault with the recovery key and replaces the forgotten PIN with [newPin]. */
+    suspend fun recover(recoveryKey: String, newPin: SecretBytes): Outcome<Unit, VaultOpenFailure> =
+        session.openWith { security.recover(recoveryKey, newPin).toOpenFailure() }
+
+    /** Whether this vault has a recovery key. A read failure reports false. */
+    suspend fun recoveryAvailable(): Boolean =
+        (security.recoveryState() as? Outcome.Success)?.data == RecoveryState.Active
 
     /**
      * Creates the PIN vault, enrolls the same DEK for biometrics, then publishes the session. If enrollment fails, or

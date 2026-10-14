@@ -25,6 +25,8 @@ internal class PlatformVaultStorage(
     val backoff: BackoffStore,
     val biometricKeys: BiometricKeyStore,
     val biometricSlots: BiometricSlotStore,
+    /** The recovery slot, sealed by [protector] like the PIN envelope. */
+    val recoverySlot: SecurityRecordStore,
     /** Removes every platform key and every security file of this generation. Idempotent. */
     val eraseSecurity: suspend () -> Outcome<Unit, SecurityError>,
 )
@@ -224,6 +226,7 @@ class VaultGenerations internal constructor(
             coordinator = BackoffUnlockCoordinator(platform.backoff, clock),
             clock = clock,
             biometrics = BiometricSlots(platform.biometricKeys, platform.biometricSlots, random),
+            recovery = RecoverySlots(platform.protector, platform.recoverySlot),
         )
     }
 
@@ -301,6 +304,28 @@ class VaultGenerations internal constructor(
         override suspend fun disableBiometrics(): Outcome<Unit, BiometricError> = when (val target = target()) {
             is Outcome.Failure -> Outcome.Failure(BiometricError.Security(target.error))
             is Outcome.Success -> target.data.disableBiometrics()
+        }
+
+        override suspend fun recoveryState(): Outcome<RecoveryState, SecurityError> = when (val target = target()) {
+            is Outcome.Failure -> target
+            is Outcome.Success -> target.data.recoveryState()
+        }
+
+        override suspend fun setUpRecovery(pin: SecretBytes): Outcome<String, SecurityError> =
+            when (val target = target()) {
+                is Outcome.Failure -> target
+                is Outcome.Success -> target.data.setUpRecovery(pin)
+            }
+
+        override suspend fun recover(recoveryKey: String, newPin: SecretBytes): Outcome<KeyLease, SecurityError> =
+            when (val target = target()) {
+                is Outcome.Failure -> target
+                is Outcome.Success -> target.data.recover(recoveryKey, newPin)
+            }
+
+        override suspend fun recoveryPublicKey(): Outcome<ByteArray?, SecurityError> = when (val target = target()) {
+            is Outcome.Failure -> target
+            is Outcome.Success -> target.data.recoveryPublicKey()
         }
     }
 }

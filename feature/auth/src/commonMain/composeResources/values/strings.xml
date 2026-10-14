@@ -59,4 +59,17 @@
     <string name="p25_pin_biometric_unavailable">Biometrics are unavailable. Use your Daftar PIN.</string>
     <string name="p25_pin_biometric_locked">Biometrics are temporarily locked. Use your Daftar PIN.</string>
     <string name="p25_pin_biometric_disabled">Unlock with your PIN, then enable biometrics in Settings.</string>
+    <string name="auth_recovery_use_key">Use your recovery key</string>
+    <string name="auth_recovery_key_heading">Enter your recovery key</string>
+    <string name="auth_recovery_key_body">Type the 32-character key you saved. Dashes and capitals don’t matter.</string>
+    <string name="auth_recovery_key_label">Recovery key</string>
+    <string name="auth_recovery_key_incomplete">The key is incomplete or has a wrong character.</string>
+    <string name="auth_recovery_key_rejected">This isn’t this notebook’s recovery key. Nothing changed.</string>
+    <string name="auth_recovery_continue">Continue</string>
+    <string name="auth_recovery_new_heading">A new PIN for your notebook</string>
+    <string name="auth_recovery_confirm_heading">Confirm the new PIN</string>
+    <string name="auth_recovery_new_body">Your recovery key opens your notebook; your data stays as it is.</string>
+    <string name="auth_busy_recovering">Recovering your notebook…</string>
+    <string name="auth_recovery_key_offer_heading">Recover your notebook</string>
+    <string name="auth_recovery_key_offer_body">Use the recovery key you wrote down to choose a new PIN. Your data stays as it is.</string>
 </resources>
