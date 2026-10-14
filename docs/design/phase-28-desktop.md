@@ -54,7 +54,8 @@ All entries below apply only inside the new desktop ≥600dp branch. A single-pa
 | Settings / Preferences / About | 640dp | Same; no settings sidebar | Same |
 | ChangePin / RecoveryKey | 560dp page; PIN step uses auth width | Same; recovery text/key never becomes a second pane | Same |
 | BackupExport / Restore | 560dp (existing cap) | Same, native file dialog for destination/source | Same |
-| Cloud / CloudUpload | Absent | Absent | Absent |
+| Cloud | 640dp, single page; Settings or locked recovery mode | Same; no slot grid/detail pane | Same |
+| CloudUpload | 560dp, single-column password form | Same, full page | Same |
 | Setup / Confirm / Unlock / Forgot PIN / recovery PIN reset | PIN column 360dp; explanatory/recovery forms 560dp | Same | Same |
 
 Gold and Cash rows already lead directly to editing; Notes is also an edit flow. Keep that interaction rather than adding selection and a new detail destination. The existing rows and notebook cards should not be expanded into tables.
@@ -91,9 +92,62 @@ Keep 48dp minimum interactive targets, 52dp fields, current density and typograp
 - Vertical scrollbars per scrollable pane/page at its logical end. Reserve an 8dp gutter, 4dp thumb at rest and 8dp on hover/drag, using `line` / `muted`; show while overflowing, no layout shift. Wheel/trackpad scrolls the hovered pane. Page Up/Down/Home/End scroll the focused region unless an editor owns those keys. No horizontal page scrolling. Rail itself may scroll on a short/high-text-scale window.
 - No record context menus, drag-and-drop, multi-select or double-click requirement in v1. Single click activates a row. Existing visible edit/delete controls remain. Native public text editing menus and file dialogs retain normal OS behavior.
 
+## Cloud on desktop
+
+**Owner decision, 14 October 2026:** macOS and Windows support Google cloud backup upload and restore. This supersedes the desktop cloud exclusion above and the Android-only scope/App Check enforcement statements in `AGENTS.md` and `docs/firebase/README.md`; those implementation/runbook updates must accompany delivery. Phones remain unchanged. Use the same Firestore project, per-user Firebase Auth rules, three slots, 768 KiB ciphertext limit and password-encrypted `.dftar` files. Firestore App Check enforcement is off; do not imply desktop attestation. Backups remain end-to-end encrypted. Sign-in never unlocks the vault or supplies the backup password. No automatic sync.
+
+### Entry, layout and account
+
+- **Settings:** reuse Android's Cloud backups row directly after local encrypted export in the backup section, with its existing title, subtitle and Open action (`settings_cloud_*`). No rail destination or separate account settings page. Preserve availability gating; an unavailable route uses `cloud_unavailable`.
+- **Restore:** expose the existing “الاستعادة من النسخ السحابية” / “Restore from cloud backup” entry on forgotten-PIN recovery (`auth_restore_cloud`). Preserve `CloudMode`: Settings offers upload/deletion; locked Recovery offers download-to-restore only, with no upload or deletion. The existing restore wizard still requires the backup password. Do not add a second restore flow in Settings.
+- Reuse `CloudScreen`'s single-column order, slot numbering/size, empty/loading/problem states, manual-upload and retention notes, confirmations, sign-out and interrupted-deletion flow. Reuse `CloudUploadScreen`'s password/confirmation fields, validation, encryption/upload progress and result states. Caps are 640dp/560dp at every desktop width; Recovery has no rail. Use existing components, typography, spacing and scroll behavior.
+- Add an account block immediately below the top bar, before status/content, on authenticated Cloud and CloudUpload pages: new account label below, then the **full Google email**, isolated LTR in Arabic and allowed to wrap without truncation. No avatar, display name, UID, copy action or account tooltip. Show it in Recovery too, so the owner can distinguish an empty account from the wrong account. Never show it on the browser return page, lock cover or window title. Switching accounts uses the existing Sign out then Continue with Google; sign-out retains backups/local data. Clear old-account slots immediately on sign-out/account change, and fetch the new account's slots before enabling actions.
+- `CloudUiState` currently has neither account identity nor a cancellable browser phase. Engineering must represent both explicitly on desktop (also in upload sign-in), rather than treating the existing generic `SIGNING_IN` busy line as sufficient. Shared phone rendering/copy stays unchanged.
+
+### Browser handoff and errors
+
+Use installed-app OAuth with PKCE and a loopback redirect to `127.0.0.1`. Only an explicit Continue with Google opens the system browser; no embedded web view or Google-password field. Show the new browser explanation under the existing signed-out introduction.
+
+| State | Desktop behavior |
+| --- | --- |
+| Waiting | Replace sign-in action with an indeterminate indicator, waiting heading/body below and an enabled outline `cloud_cancel`. Keep the page title and Back. No percentage, ticking countdown or repeated browser launch. Announce the state once; focus Cancel when the app regains focus. |
+| Cancel / Back / Esc / leave route | Cancel the pending attempt; Cancel stays on signed-out content, Back/Esc returns to the caller. No error or success toast. Ignore late callbacks. Closing only the browser tab cannot be detected: keep waiting with Cancel until timeout. |
+| Three-minute timeout | Measured from the attempt start, including time outside the app. End the attempt, return to signed-out content with the timeout note below and the existing Continue with Google action. Retry requires a new explicit click. |
+| Browser could not open | End the attempt; show the launch-error note with Try again and Cancel. Try again starts a fresh attempt; Cancel returns to signed-out content. **No URL or Copy link fallback:** avoid placing a transient authorization request on the clipboard. |
+| Consent declined | Return signed out with the declined note and existing Continue with Google action; no automatic retry. |
+| Offline / provider failure / invalid callback | End the attempt; show existing `cloud_offline` or `cloud_failed` and Continue with Google. Do not display raw OAuth errors, codes or URLs. Ignore callbacks belonging to cancelled/expired attempts. |
+| Successful authentication | Continue in the initiating mode: load that account's slots, or show the upload password form. Never auto-download, restore, upload or repeat a destructive action. Reauthentication uses this same handoff and existing `cloud_reauth`; return to confirmation before deletion. |
+
+Browser launch does not relax privacy: minimize/hide, inactivity and other existing lock triggers still cover/lock immediately and clear sensitive drafts. A pending sign-in may complete behind that cover, but never dismisses it. After normal vault unlock, resume Cloud in Settings mode; a cleared upload draft requires password re-entry. Recovery remains a locked restore-only surface. Do not steal focus from the browser or suppress existing lock behavior. Reuse Android's quota, changed-slot, unverified-download, unknown-outcome and partial-deletion handling; refresh before retrying an uncertain mutation.
+
+### Browser return page
+
+A minimal, responsive, single-column page: existing Daftar mark, localized brand, heading and one sentence below. Use the initiating app language and its RTL/LTR direction; title is only دفتر / Daftar. Bundle assets locally; no analytics, external fonts, account details, backup metadata, financial data, OAuth parameters or debug text in rendered content. No buttons, auto-close, app-launch link or automatic focus switch. The normal return page acknowledges return to the app, **not successful sign-in**: token exchange can still fail there. A callback error handled by the local listener uses the failed-return variant below; if the tab was closed or the listener has expired, the app's timeout state remains authoritative.
+
+### Exact new desktop copy
+
+Keys below are proposed desktop-only resources. Reuse all other Android resources verbatim, including Continue with Google (المتابعة باستخدام Google), Cancel (إلغاء), Sign out (تسجيل الخروج), slot labels, confirmations and upload/restore copy. Arabic email/system-name runs use LTR isolates. Browser copy is shared by both desktop platforms.
+
+| Key / purpose | Arabic | English |
+| --- | --- | --- |
+| `desktop_cloud_browser_intro` — before sign-in | سنفتح متصفحك لتسجيل الدخول باستخدام ⁦Google⁩. لا يطّلع دفتر على كلمة مرور حسابك. | We’ll open your browser to sign in with Google. Daftar never sees your Google password. |
+| `desktop_cloud_wait_title` | أكمل تسجيل الدخول في المتصفح | Finish signing in in your browser |
+| `desktop_cloud_wait_body` | عُد إلى دفتر بعد الموافقة. يمكنك الإلغاء هنا. تنتهي المحاولة بعد ⁦3⁩ دقائق. | Return to Daftar after approving. You can cancel here. This attempt expires after 3 minutes. |
+| `desktop_cloud_timeout` | انتهت مهلة تسجيل الدخول. حاول مرة أخرى. | Sign-in timed out. Try again. |
+| `desktop_cloud_browser_failed` | تعذّر فتح المتصفح. تأكّد من تعيين متصفح افتراضي، ثم حاول مرة أخرى. | Couldn’t open your browser. Check that a default browser is set, then try again. |
+| `desktop_cloud_retry` | حاول مرة أخرى | Try again |
+| `desktop_cloud_declined` | لم يكتمل تسجيل الدخول. يمكنك المحاولة مرة أخرى. | Sign-in wasn’t completed. You can try again. |
+| `desktop_cloud_account` — label above email | حساب ⁦Google⁩ | Google account |
+| `desktop_cloud_return_title` — normal browser return | يمكنك العودة إلى دفتر | You can return to Daftar |
+| `desktop_cloud_return_body` | أغلق علامة التبويب هذه وعُد إلى التطبيق للمتابعة. | Close this tab and return to the app to continue. |
+| `desktop_cloud_return_failed_title` — browser error | لم يكتمل تسجيل الدخول | Sign-in wasn’t completed |
+| `desktop_cloud_return_failed_body` | أغلق علامة التبويب هذه وعُد إلى دفتر للمحاولة مرة أخرى. | Close this tab and return to Daftar to try again. |
+
+No additional HTML frames are required: this is the existing capped Cloud/CloudUpload composition with existing note, progress and button components. The state table and copy above are the desktop handoff; earlier phone frames remain untouched.
+
 ## Platform omissions and exact copy
 
-Hide Google sign-in, cloud backups, cloud slots/upload and Google account management, including deep-link entry points. Hide Android fingerprint/system-prompt illustrations, Android storage permissions, Android splash/status/gesture bars, iOS home indicator, Face ID-only instructions, mobile share sheets and recents-cover demonstrations. Export/restore use native Save/Open dialogs and `.dftar`; cancel returns without a success message. Do not claim OS backup/sync. Keep local recovery, encrypted export and restore.
+Offer Google sign-in, cloud backups, slots/upload and cloud account management as specified below. Hide Android fingerprint/system-prompt illustrations, Android storage permissions, Android splash/status/gesture bars, iOS home indicator, Face ID-only instructions, mobile share sheets and recents-cover demonstrations. Export/restore use native Save/Open dialogs and `.dftar`; cancel returns without a success message. Do not claim OS backup/sync. Keep local recovery, encrypted export and restore.
 
 Screen capture exclusion, hardware-backed storage and inactivity/minimize/hide locking are release gates. Cover content before hiding/minimizing; resume into the lock surface. Desktop has no mobile recents design. A cover is not a substitute for capture exclusion. If a platform cannot meet an engineering gate, it is not silently represented as supported by this design.
 
@@ -138,6 +192,8 @@ Test **720×600**, **1024×768**, **1440×900dp client areas** on both macOS and
 - [ ] Capture exclusion, immediate minimize/hide lock, inactivity, hardware storage and no sensitive clipboard/selection are verified on both desktop platforms. Native Save/Open succeeds, authenticates, cancels cleanly; recovery-key copying follows its exception.
 - [ ] Restore window bounds after monitor removal, scaling change and maximized quit; title remains brand-only. No hidden/minimized startup or off-screen window.
 - [ ] Android phone and iPhone 18 Pro: before/after screenshots at the same logical size, locale, theme, text scale and synthetic data are pixel-identical on all affected surfaces, including Phase 25 PIN and Phase 27 Prices/Home. Repeat phone landscape and keyboard-visible editors; mobile code path remains unchanged even above 600dp. Verify biometric episode regression tests and existing mobile navigation/IME behavior.
+- [ ] Desktop cloud: sign into the same Google account on phone/macOS/Windows; restore a phone upload on each desktop with its backup password, then restore a desktop upload on the phone. Verify the shared three-slot retention, empty/wrong-account display, sign-out, deletion/reauthentication, quota and unavailable builds.
+- [ ] Exercise browser launch failure, denial, tab close, Cancel/Back/Esc, three-minute timeout, late callback, offline/token failure and account switching. Test both languages/themes and 200% text; full email wraps. Browser return contains only approved brand/copy. Minimize/lock during OAuth never exposes the vault or resumes upload/deletion automatically.
 - [ ] Implementation runs the repository's required PR checks and applicable security/lifecycle device tests. Add new wide states to DesignCatalog when components are implemented; do not change shared default tokens to satisfy desktop frames.
 
 ## Frame index and verification scope
