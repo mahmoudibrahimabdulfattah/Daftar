@@ -102,7 +102,11 @@ fun DaftarKeypad(
                 Row(horizontalArrangement = Arrangement.spacedBy(DaftarSpacing.xs)) {
                     digits.forEach { digit ->
                         KeypadKey(enabled = enabled, onClick = { onDigit(digit) }) {
-                            Text(digit.toString(), style = DaftarTheme.typography.pinDigit)
+                            Text(
+                                digit.toString(),
+                                style = DaftarTheme.typography.pinDigit,
+                                color = DaftarTheme.colors.ink,
+                            )
                         }
                     }
                 }
@@ -120,7 +124,7 @@ fun DaftarKeypad(
                     Spacer(Modifier.weight(1f).defaultMinSize(minHeight = DaftarSpacing.keypadKeyMinHeight))
                 }
                 KeypadKey(enabled = enabled, onClick = { onDigit(0) }) {
-                    Text("0", style = DaftarTheme.typography.pinDigit)
+                    Text("0", style = DaftarTheme.typography.pinDigit, color = DaftarTheme.colors.ink)
                 }
                 KeypadKey(enabled = enabled, onClick = onErase) {
                     DaftarIcon(
