@@ -68,8 +68,15 @@ class GoldEditorViewModel(
                 )
             }
             // A new holding has no record to observe, so it follows the session through the list: a lock drops its draft.
+            // The gold hint shows while the vault has never saved gold, so it reads the same list.
             viewModelScope.launch {
-                observeHoldings().collect { read -> if (read == VaultRead.Locked) onLocked() }
+                observeHoldings().collect { read ->
+                    when (read) {
+                        VaultRead.Locked -> onLocked()
+                        is VaultRead.Ready -> reduce { copy(goldHint = read.value.isEmpty()) }
+                        else -> Unit
+                    }
+                }
             }
         } else {
             reduce { copy(isNew = false) }

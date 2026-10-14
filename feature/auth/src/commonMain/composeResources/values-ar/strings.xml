@@ -1,17 +1,15 @@
 <?xml version="1.0" encoding="utf-8"?>
 <resources>
-    <string name="auth_step_1">الخطوة 1 من 3</string>
-    <string name="auth_step_2">الخطوة 2 من 3</string>
+    <string name="auth_step_1">الخطوة ⁦1⁩ من ⁦3⁩</string>
+    <string name="auth_step_2">الخطوة ⁦2⁩ من ⁦3⁩</string>
     <string name="auth_step_3">الخطوة 3 من 3</string>
     <string name="auth_create_heading">رمز خاص بدفترك</string>
-    <string name="auth_create_body">اختر 6 أرقام أو أكثر، مختلفة عن رمز هاتفك.</string>
+    <string name="auth_create_body">اختر من ⁦6⁩ إلى ⁦16⁩ رقمًا، مختلفة عن رمز هاتفك.</string>
     <string name="auth_create_action">متابعة</string>
-    <string name="auth_security_footnote">الرمز يحمي بياناتك المشفّرة. لا يمكن استعادته إذا نسيته.</string>
+    <string name="auth_security_footnote">لا يمكن استعادة الرمز إذا نسيته.</string>
     <string name="auth_confirm_heading">أكّد رمزك</string>
-    <string name="auth_confirm_body">أدخل الرمز مرة ثانية.</string>
+    <string name="auth_confirm_body">أدخل الرمز نفسه مرة ثانية.</string>
     <string name="auth_confirm_action">تأكيد</string>
-    <string name="auth_mismatch_heading">جرّب التأكيد مرة أخرى</string>
-    <string name="auth_mismatch_error">الرمزان غير متطابقين. أعد إدخال الرمز الذي اخترته.</string>
     <string name="auth_restart_creation">اختيار رمز آخر</string>
     <string name="auth_unlock_heading">افتح دفتر</string>
     <string name="auth_unlock_body">أدخل رمز دفتر للمتابعة.</string>
@@ -20,10 +18,9 @@
     <string name="auth_field_state">%1$s، %2$s</string>
     <string name="auth_forgot_pin">نسيت الرمز؟</string>
     <string name="auth_incorrect_pin">الرمز غير صحيح. حاول مرة أخرى.</string>
-    <string name="auth_keypad_paused">لوحة الأرقام متوقفة مؤقتًا</string>
-    <string name="auth_open_failed">تعذّر فتح دفتر الآن. حاول مرة أخرى.</string>
-    <string name="auth_busy_creating">جارٍ إنشاء دفتر…</string>
-    <string name="auth_busy_unlocking">جارٍ الفتح…</string>
+    <string name="auth_open_failed">تعذّر فتح دفتر. حاول مرة أخرى.</string>
+    <string name="auth_busy_creating">جارٍ إنشاء دفترك…</string>
+    <string name="auth_busy_unlocking">جارٍ فتح دفتر…</string>
     <string name="auth_biometric_heading">افتحه بلمسة</string>
     <string name="auth_biometric_body">استخدم بصمة الجهاز لفتح دفتر بسرعة. سيظل رمز دفتر متاحًا دائمًا.</string>
     <string name="auth_biometric_enable">تفعيل البصمة</string>
@@ -31,8 +28,6 @@
     <string name="auth_biometric_privacy">لا تُرسل بيانات البصمة إلى دفتر.</string>
     <string name="auth_biometric_unavailable">البصمة غير متاحة الآن، أو تغيّرت بصمات الجهاز. يمكنك فتح بياناتك بالرمز.</string>
     <string name="auth_biometric_not_enrolled">أكمل بالرمز وفعّلها لاحقًا.</string>
-    <string name="auth_biometric_locked_out">البصمة مقفلة مؤقتًا. استخدم رمزك.</string>
-    <string name="auth_biometric_not_enabled">لم تُفعَّل البصمة. أكمل بالرمز.</string>
     <string name="auth_busy_enrolling">جارٍ تفعيل البصمة…</string>
     <string name="auth_recovery_heading">لا يمكن استعادة الرمز</string>
     <string name="auth_recovery_body">إذا كانت البصمة مفعّلة، يمكنك فتح دفتر بها. تغيير الرمز يحتاج الرمز الحالي.</string>
@@ -56,12 +51,19 @@
         <item quantity="many">%1$d رقمًا مُدخلًا</item>
         <item quantity="other">%1$d رقم مُدخل</item>
     </plurals>
-    <plurals name="auth_backoff_seconds">
-        <item quantity="one">الرمز غير صحيح. حاول بعد ثانية واحدة.</item>
-        <item quantity="two">الرمز غير صحيح. حاول بعد ثانيتين.</item>
-        <item quantity="few">الرمز غير صحيح. حاول بعد ⁦%1$d⁩ ثوانٍ.</item>
-        <item quantity="many">الرمز غير صحيح. حاول بعد ⁦%1$d⁩ ثانية.</item>
-        <item quantity="other">الرمز غير صحيح. حاول بعد ⁦%1$d⁩ ثانية.</item>
-    </plurals>
     <string name="auth_restore_cloud">الاستعادة من النسخ السحابية</string>
+    <string name="p25_pin_mismatch">الرمزان غير متطابقين. أعد إدخال الرمز.</string>
+    <string name="p25_pin_backoff">انتظر %1$s قبل المحاولة.</string>
+    <plurals name="p25_pin_duration_seconds">
+        <item quantity="zero">لحظات</item>
+        <item quantity="one">ثانية واحدة</item>
+        <item quantity="two">ثانيتين</item>
+        <item quantity="few">⁦%1$d⁩ ثوانٍ</item>
+        <item quantity="many">⁦%1$d⁩ ثانية</item>
+        <item quantity="other">⁦%1$d⁩ ثانية</item>
+    </plurals>
+    <string name="p25_pin_ready">يمكنك المحاولة الآن.</string>
+    <string name="p25_pin_biometric_unavailable">البصمة غير متاحة الآن. استخدم رمز دفتر.</string>
+    <string name="p25_pin_biometric_locked">البصمة متوقفة مؤقتًا. استخدم رمز دفتر.</string>
+    <string name="p25_pin_biometric_disabled">افتح دفتر بالرمز، ثم فعّل البصمة من الإعدادات.</string>
 </resources>

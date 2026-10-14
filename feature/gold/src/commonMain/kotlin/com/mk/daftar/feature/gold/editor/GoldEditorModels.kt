@@ -146,6 +146,8 @@ data class GoldEditorUiState(
     val completed: Boolean = false,
     /** The current selected quotes. Missing ones only make the preview unavailable. */
     val quotes: SelectedQuotes = SelectedQuotes.EMPTY,
+    /** True for a new holding while the vault has never saved gold. The supporting hint shows under the heading. */
+    val goldHint: Boolean = false,
 ) : UiState {
     val errors: GoldErrors
         get() = draft.errors()

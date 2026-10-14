@@ -9,12 +9,18 @@ import com.mk.daftar.core.domain.repository.BankInput
 import com.mk.daftar.core.domain.repository.BankRepository
 import com.mk.daftar.core.domain.repository.CashBalanceInput
 import com.mk.daftar.core.domain.repository.CashRepository
+import com.mk.daftar.core.domain.repository.FirstRunGuideRepository
 import com.mk.daftar.core.domain.repository.GoldHoldingInput
 import com.mk.daftar.core.domain.repository.GoldRepository
+import com.mk.daftar.core.domain.repository.JournalRepository
 import com.mk.daftar.core.domain.repository.ManualQuoteInput
+import com.mk.daftar.core.domain.repository.NoteRepository
+import com.mk.daftar.core.domain.repository.PersonalNoteInput
 import com.mk.daftar.core.domain.repository.PriceRepository
 import com.mk.daftar.core.domain.repository.QuoteSnapshot
 import com.mk.daftar.core.domain.repository.RefreshReport
+import com.mk.daftar.core.domain.repository.ZakatPaymentInput
+import com.mk.daftar.core.domain.repository.ZakatRepository
 import com.mk.daftar.core.domain.repository.ZakatTrackingState
 import com.mk.daftar.core.domain.repository.ZakatYearRepository
 import com.mk.daftar.core.domain.session.VaultSession
@@ -32,7 +38,11 @@ import com.mk.daftar.core.model.CashBalanceId
 import com.mk.daftar.core.model.GoldHolding
 import com.mk.daftar.core.model.GoldHoldingId
 import com.mk.daftar.core.model.GoldKarat
+import com.mk.daftar.core.model.NoteId
+import com.mk.daftar.core.model.PersonalNote
 import com.mk.daftar.core.model.QuoteKey
+import com.mk.daftar.core.model.ZakatPayment
+import com.mk.daftar.core.model.ZakatPaymentId
 import com.mk.daftar.core.model.ZakatYear
 import kotlin.time.Clock
 import kotlin.time.Instant
@@ -188,4 +198,56 @@ internal class FakeZakatTracking(private val read: VaultRead<ZakatTrackingState>
 /** The Cairo day the Home tests see: fixed, so due years are deterministic. */
 internal fun fixedZakatDay(day: LocalDate): ObserveZakatDayUseCase = object : ObserveZakatDayUseCase(FixedClock) {
     override operator fun invoke(): Flow<LocalDate> = flowOf(day)
+}
+
+/** The first-run flag: [done] starts as given, and marking it done is counted. */
+internal class FakeFirstRunGuide(initial: Boolean? = false) : FirstRunGuideRepository {
+    val done = MutableStateFlow(initial)
+    var marks = 0
+
+    override fun observeDone(): Flow<Boolean?> = done
+
+    override suspend fun markDone(): Outcome<Unit, StorageError> {
+        marks++
+        done.value = true
+        return Outcome.Success(Unit)
+    }
+
+    override suspend fun reset(): Outcome<Unit, StorageError> {
+        done.value = false
+        return Outcome.Success(Unit)
+    }
+}
+
+/** Journal records, empty unless a test fills them. Only the list reads are used by the guide. */
+internal class FakeJournal : JournalRepository {
+    val paymentRecords = MutableStateFlow<VaultRead<List<Stored<ZakatPayment>>>>(VaultRead.Ready(1, emptyList()))
+    val noteRecords = MutableStateFlow<VaultRead<List<Stored<PersonalNote>>>>(VaultRead.Ready(1, emptyList()))
+
+    override val zakat: ZakatRepository = object : ZakatRepository {
+        override fun observeAll(): Flow<VaultRead<List<Stored<ZakatPayment>>>> = paymentRecords
+        override fun observe(id: ZakatPaymentId): Flow<VaultRead<Stored<ZakatPayment>?>> = error("unused")
+        override suspend fun create(input: ZakatPaymentInput): Outcome<Stored<ZakatPayment>, StorageError> =
+            error("unused")
+        override suspend fun update(
+            id: ZakatPaymentId,
+            expectedRevision: Long,
+            input: ZakatPaymentInput,
+        ): Outcome<Stored<ZakatPayment>, StorageError> = error("unused")
+        override suspend fun delete(id: ZakatPaymentId, expectedRevision: Long): Outcome<Unit, StorageError> =
+            error("unused")
+    }
+
+    override val notes: NoteRepository = object : NoteRepository {
+        override fun observeAll(): Flow<VaultRead<List<Stored<PersonalNote>>>> = noteRecords
+        override fun observe(id: NoteId): Flow<VaultRead<Stored<PersonalNote>?>> = error("unused")
+        override suspend fun create(input: PersonalNoteInput): Outcome<Stored<PersonalNote>, StorageError> =
+            error("unused")
+        override suspend fun update(
+            id: NoteId,
+            expectedRevision: Long,
+            input: PersonalNoteInput,
+        ): Outcome<Stored<PersonalNote>, StorageError> = error("unused")
+        override suspend fun delete(id: NoteId, expectedRevision: Long): Outcome<Unit, StorageError> = error("unused")
+    }
 }
