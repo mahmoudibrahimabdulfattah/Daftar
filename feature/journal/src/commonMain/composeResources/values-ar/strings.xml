@@ -220,5 +220,8 @@
         <item quantity="other">⁦%1$d⁩ سنة بانتظار تأكيدك</item>
     </plurals>
     <string name="zakat_category_cash_help">أرصدة النقد والمحافظ</string>
+    <string name="zakat_category_investments">الاستثمارات</string>
+    <string name="zakat_category_investments_help">قيم حسابات الوساطة التي سجّلتها</string>
+    <string name="zakat_investments_disclosure">يشمل تقدير التجهيز قيم الاستثمارات التي سجّلتها؛ لا يحدّد دفتر حكم زكاتها.</string>
     <string name="journal_unit_short">ج.م</string>
 </resources>

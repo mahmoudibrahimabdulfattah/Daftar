@@ -4,6 +4,7 @@ import com.mk.daftar.core.common.Outcome
 import com.mk.daftar.core.domain.repository.BankRepository
 import com.mk.daftar.core.domain.repository.CashRepository
 import com.mk.daftar.core.domain.repository.GoldRepository
+import com.mk.daftar.core.domain.repository.InvestmentRepository
 import com.mk.daftar.core.domain.repository.PriceRepository
 import com.mk.daftar.core.domain.repository.ZakatTrackingState
 import com.mk.daftar.core.domain.repository.ZakatYearRepository
@@ -87,10 +88,11 @@ open class ObserveZakatEstimateUseCase(
     gold: GoldRepository,
     banks: BankRepository,
     cash: CashRepository,
+    investments: InvestmentRepository,
     prices: PriceRepository,
     clock: Clock,
 ) {
-    private val valuation = ObservePortfolioValuationUseCase(session, gold, banks, cash, prices, clock)
+    private val valuation = ObservePortfolioValuationUseCase(session, gold, banks, cash, investments, prices, clock)
 
     open operator fun invoke(): Flow<VaultRead<ZakatEstimate>> = valuation().map { read ->
         when (read) {

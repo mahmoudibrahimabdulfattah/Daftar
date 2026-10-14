@@ -2,8 +2,8 @@ plugins {
     id("daftar.kmp.compose")
 }
 
-// `-Pdaftar.bankArtwork=official` (default) packages the official bank marks; `monogram` packages none of them, on
-// Android and iOS alike. The marks live outside commonMain, and the resources the module compiles are a merged copy.
+// `-Pdaftar.bankArtwork=official` (default) packages the official bank and broker marks; `monogram` packages none of
+// them, on Android and iOS alike. The marks live outside commonMain, and the resources the module compiles are a merged copy.
 val bankArtworkMode: String = providers.gradleProperty("daftar.bankArtwork").orElse("official").get()
 check(bankArtworkMode == "official" || bankArtworkMode == "monogram") {
     "daftar.bankArtwork must be 'official' or 'monogram', was '$bankArtworkMode'"
@@ -34,9 +34,11 @@ val verifyBankArtworkAssets = tasks.register("verifyBankArtworkAssets") {
     inputs.files(assets).optional()
     dependsOn("copyAndroidMainComposeResourcesToAndroidAssets")
     doLast {
-        val marks = assets.get().asFile.walkTopDown().filter { it.isFile && it.name.startsWith("bank_eg_") }.count()
+        val marks = assets.get().asFile.walkTopDown()
+            .filter { it.isFile && (it.name.startsWith("bank_") || it.name.startsWith("broker_")) }
+            .count()
         check(mode == "official" || marks == 0) {
-            "The monogram build still holds $marks official bank marks from an earlier build; run ./gradlew clean."
+            "The monogram build still holds $marks official bank or broker marks from an earlier build; run ./gradlew clean."
         }
     }
 }

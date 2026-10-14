@@ -78,6 +78,7 @@ import com.mk.daftar.feature.home.resources.home_greeting
 import com.mk.daftar.feature.home.resources.home_hidden_note
 import com.mk.daftar.feature.home.resources.home_hide_values
 import com.mk.daftar.feature.home.resources.home_incomplete
+import com.mk.daftar.feature.home.resources.home_investments
 import com.mk.daftar.feature.home.resources.home_masked_value
 import com.mk.daftar.feature.home.resources.home_missing_karat
 import com.mk.daftar.feature.home.resources.home_missing_usd
@@ -262,6 +263,7 @@ private fun Total(figures: HomeFigures, hidden: Boolean, refreshing: Boolean) {
                 Res.string.home_allocation,
                 percentText(parts.percentOf(AssetCategory.GOLD)),
                 percentText(parts.percentOf(AssetCategory.BANKS)),
+                percentText(parts.percentOf(AssetCategory.INVESTMENTS)),
                 percentText(parts.percentOf(AssetCategory.CASH)),
             )
         }
@@ -341,6 +343,7 @@ private fun Categories(figures: HomeFigures, hidden: Boolean, onIntent: (HomeInt
     val gold = figures.categoryOf(AssetCategory.GOLD)
     val banks = figures.categoryOf(AssetCategory.BANKS)
     val cash = figures.categoryOf(AssetCategory.CASH)
+    val investments = figures.categoryOf(AssetCategory.INVESTMENTS)
     CategoryRow(
         title = stringResource(Res.string.home_gold),
         subtitle = countLabel(gold.count, CountNoun.HOLDINGS),
@@ -364,6 +367,18 @@ private fun Categories(figures: HomeFigures, hidden: Boolean, onIntent: (HomeInt
         unavailableDescription = unavailable,
         unit = unit,
         onClick = { onIntent(HomeIntent.OpenCategory(HomeCategory.BANKS)) },
+    )
+    CategoryRow(
+        title = stringResource(Res.string.home_investments),
+        subtitle = countLabel(investments.count, CountNoun.INVESTMENT_ACCOUNTS),
+        icon = DaftarIcons.Investments,
+        tone = DaftarTileTone.Investments,
+        amount = investments.total?.moneyText(),
+        hidden = hidden,
+        maskedDescription = masked,
+        unavailableDescription = unavailable,
+        unit = unit,
+        onClick = { onIntent(HomeIntent.OpenCategory(HomeCategory.INVESTMENTS)) },
     )
     CategoryRow(
         title = stringResource(Res.string.home_cash),
@@ -526,7 +541,8 @@ private fun percentText(percent: Int): String = "$percent%"
 private fun categoryColor(category: AssetCategory): Color = when (category) {
     AssetCategory.GOLD -> DaftarTheme.colors.gold
     AssetCategory.BANKS -> DaftarTheme.colors.primary
-    AssetCategory.CASH -> DaftarTheme.colors.muted
+    AssetCategory.CASH -> DaftarTheme.colors.cashAccent
+    AssetCategory.INVESTMENTS -> DaftarTheme.colors.investmentAccent
 }
 
 private val CAIRO: TimeZone = TimeZone.of("Africa/Cairo")

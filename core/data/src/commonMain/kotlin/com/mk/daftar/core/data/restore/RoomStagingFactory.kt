@@ -120,4 +120,5 @@ internal fun BackupSnapshot.toRestoreRows(): RestoreRows = RestoreRows(
     manualQuotes = manualQuotes.map { it.toManualEntity(RecordRules.FIRST_REVISION) },
     zakatYears = zakatYears.map { it.toEntity() },
     zakatTracking = zakatTrackingStartYear?.let { startYearRow(it) },
+    investmentAccounts = investmentAccounts.map { it.value.toEntity(it.revision) },
 )

@@ -79,6 +79,7 @@ class HomeViewModelTest {
                 gold = portfolio.gold,
                 banks = portfolio.banks,
                 cash = portfolio.cash,
+                investments = NoInvestments(portfolio.cash.observeAll()),
                 prices = portfolio.prices,
                 clock = FixedClock,
             ),

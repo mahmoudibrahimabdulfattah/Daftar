@@ -11,6 +11,7 @@ import com.mk.daftar.core.database.mapper.trackingStartYear
 import com.mk.daftar.core.database.schema.ValidationTriggersV1
 import com.mk.daftar.core.database.schema.ValidationTriggersV2
 import com.mk.daftar.core.database.schema.ValidationTriggersV3
+import com.mk.daftar.core.database.schema.ValidationTriggersV4
 import com.mk.daftar.core.model.ZakatYear
 import kotlin.test.Test
 import kotlin.test.assertEquals
@@ -86,6 +87,8 @@ class ZakatYearDatabaseTest {
             connection.execute(paymentSql("legacy", "NULL"))
             // Return the file to its version one shape: no declarations, no tracking row, no payment year column, and
             // none of the version two or three additions.
+            ValidationTriggersV4.triggerNames.forEach { connection.execute("DROP TRIGGER IF EXISTS $it") }
+            connection.execute("DROP TABLE IF EXISTS investment_accounts")
             ValidationTriggersV3.triggerNames.forEach { connection.execute("DROP TRIGGER IF EXISTS $it") }
             ValidationTriggersV2.triggerNames.forEach { connection.execute("DROP TRIGGER IF EXISTS $it") }
             connection.execute("ALTER TABLE banks DROP COLUMN identity_reviewed")
@@ -111,7 +114,7 @@ class ZakatYearDatabaseTest {
             assertEquals(
                 (
                     ValidationTriggersV1.triggerNames + ValidationTriggersV2.triggerNames +
-                        ValidationTriggersV3.triggerNames
+                        ValidationTriggersV3.triggerNames + ValidationTriggersV4.triggerNames
                     ).toSet(),
                 triggers.toSet(),
             )

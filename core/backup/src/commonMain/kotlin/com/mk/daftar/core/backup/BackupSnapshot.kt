@@ -5,10 +5,12 @@ import com.mk.daftar.core.domain.repository.AppLanguage
 import com.mk.daftar.core.domain.repository.InactivityTimeout
 import com.mk.daftar.core.domain.repository.RemoteQuoteRecord
 import com.mk.daftar.core.domain.repository.ThemeMode
+import com.mk.daftar.core.domain.storage.Stored
 import com.mk.daftar.core.model.Bank
 import com.mk.daftar.core.model.BankAccount
 import com.mk.daftar.core.model.CashBalance
 import com.mk.daftar.core.model.GoldHolding
+import com.mk.daftar.core.model.InvestmentAccount
 import com.mk.daftar.core.model.PersonalNote
 import com.mk.daftar.core.model.PriceQuote
 import com.mk.daftar.core.model.ZakatPayment
@@ -44,11 +46,15 @@ data class BackupSnapshot(
     val zakatYears: List<ZakatYear> = emptyList(),
     /** The first tracked Hijri year, or null when tracking has not started. Null means no declarations exist. */
     val zakatTrackingStartYear: Int? = null,
+    /**
+     * Broker accounts with their storage revisions. Empty for a version one to three payload, which predates them.
+     */
+    val investmentAccounts: List<Stored<InvestmentAccount>> = emptyList(),
 ) {
     /** Every record across all collections. Preferences and the tracking start are not counted. */
     val recordCount: Int
         get() = goldHoldings.size + banks.size + bankAccounts.size + cashBalances.size + zakatPayments.size +
-            personalNotes.size + remoteQuotes.size + manualQuotes.size + zakatYears.size
+            personalNotes.size + remoteQuotes.size + manualQuotes.size + zakatYears.size + investmentAccounts.size
 }
 
 /**

@@ -113,7 +113,7 @@ fun VaultGate(
     LaunchedEffect(state) {
         if (state !is VaultSessionState.Open) {
             shell.release()
-            // Locking destroys the privacy choice: the next generation starts with values shown.
+            // Locking drops any temporary reveal: the next generation starts from the remembered choice.
             visibility.reset()
         }
         if (state == VaultSessionState.Locked || state == VaultSessionState.Unavailable) {

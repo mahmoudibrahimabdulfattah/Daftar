@@ -102,7 +102,11 @@ class BackupZakatYearsTest {
         )
         val text = BackupJson.encodeToString(PayloadDocumentV1.serializer(), versionOne)
         val decoded = assertIs<Outcome.Success<DecodedBackup>>(decodeText(text)).data
-        assertEquals(base, decoded.snapshot)
+        assertEquals(
+            base.copy(investmentAccounts = emptyList()),
+            decoded.snapshot,
+            "a version 1 backup holds no investments",
+        )
         assertEquals(emptyList(), decoded.snapshot.zakatYears)
         assertEquals(null, decoded.snapshot.zakatTrackingStartYear)
         assertEquals(null, decoded.snapshot.zakatPayments.single().forHijriYear)
@@ -110,7 +114,8 @@ class BackupZakatYearsTest {
 
     @Test
     fun aPayloadNewerThanTheCurrentVersionIsRefused() = runTest {
-        val text = canonicalText(withYears()).replace("\"schemaVersion\":3", "\"schemaVersion\":4")
+        val current = BackupFormat.PAYLOAD_SCHEMA_VERSION
+        val text = canonicalText(withYears()).replace("\"schemaVersion\":$current", "\"schemaVersion\":${current + 1}")
         assertRejected(text, BackupError.UnsupportedFormat)
     }
 

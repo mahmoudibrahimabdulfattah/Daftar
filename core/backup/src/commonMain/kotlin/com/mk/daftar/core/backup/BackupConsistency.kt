@@ -26,8 +26,30 @@ internal fun BackupSnapshot.isConsistent(): Boolean {
     if (bankAccounts.any { it.bankId !in bankIds }) return false
     if (remoteQuotes.map { remoteSlot(it) }.hasDuplicates()) return false
     if (manualQuotes.map { quoteKeyOf(it) }.hasDuplicates()) return false
-    return yearsAreConsistent()
+    return yearsAreConsistent() && investmentsAreConsistent()
 }
+
+/**
+ * Investment accounts: unique IDs, portable identifiers for the record and its conversion source, and at most one
+ * investment per converted source. A converted source must be gone from the cash table: an entry cannot exist both as a
+ * cash entry and as the investment it became, and a restore never reconstructs a source that was intentionally deleted.
+ */
+private fun BackupSnapshot.investmentsAreConsistent(): Boolean {
+    val accounts = investmentAccounts.map { it.value }
+    if (accounts.map { it.id }.hasDuplicates()) return false
+    if (accounts.any { !it.id.value.isPortableIdentifier() }) return false
+    val sources = accounts.mapNotNull { it.convertedFromCashId }
+    if (sources.hasDuplicates()) return false
+    if (sources.any { !it.value.isPortableIdentifier() }) return false
+    val cashIds = cashBalances.map { it.id }.toSet()
+    return sources.none { it in cashIds }
+}
+
+/** One to 64 ASCII letters, digits or hyphens. The generator's canonical IDs are UUIDs and always fit. */
+private fun String.isPortableIdentifier(): Boolean = length in 1..MAX_PORTABLE_ID_LENGTH &&
+    all { ch -> ch in 'a'..'z' || ch in 'A'..'Z' || ch in '0'..'9' || ch == '-' }
+
+private const val MAX_PORTABLE_ID_LENGTH = 64
 
 /**
  * Declarations and their links: unique supported years, valid date adjustments, a mark time exactly for paid years,

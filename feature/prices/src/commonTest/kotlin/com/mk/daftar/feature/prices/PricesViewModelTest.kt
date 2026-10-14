@@ -59,6 +59,7 @@ class PricesViewModelTest {
                 gold = repos.gold,
                 banks = repos.banks,
                 cash = repos.cash,
+                investments = NoInvestments(repos.cash.observeAll()),
                 prices = repos.prices,
                 clock = FixedClock,
             ),

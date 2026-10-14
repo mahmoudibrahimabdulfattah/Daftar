@@ -34,7 +34,13 @@ class HomeSummaryTest {
         assertEquals("677812.74", figures.categoryOf(AssetCategory.GOLD).total!!.toPlainString())
         assertEquals("388500", figures.categoryOf(AssetCategory.BANKS).total!!.toPlainString())
         assertEquals("9900", figures.categoryOf(AssetCategory.CASH).total!!.toPlainString())
-        assertEquals(listOf(63, 36, 1), figures.allocation!!.map { it.percent })
+        assertEquals(
+            listOf(63, 36, 0, 1),
+            figures.allocation!!.map {
+                it.percent
+            },
+            "investments take no share when none exist",
+        )
         assertEquals(3, figures.categoryOf(AssetCategory.GOLD).count)
         assertEquals(3, figures.categoryOf(AssetCategory.BANKS).count, "the bank count is the account count here")
         assertEquals(3, figures.bankCount)

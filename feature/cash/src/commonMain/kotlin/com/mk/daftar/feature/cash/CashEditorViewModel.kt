@@ -14,6 +14,7 @@ import com.mk.daftar.core.domain.usecase.UpdateCashBalanceUseCase
 import com.mk.daftar.core.model.CashBalance
 import com.mk.daftar.core.model.CashBalanceId
 import com.mk.daftar.core.model.Money
+import com.mk.daftar.core.navigation.ConvertCashRoute
 import com.mk.daftar.core.ui.mvi.MviViewModel
 import com.mk.daftar.core.ui.presentation.ValuesVisibility
 import kotlinx.coroutines.launch
@@ -105,6 +106,8 @@ class CashEditorViewModel(
             CashEditorIntent.DismissConfirmation -> dismissConfirmation()
 
             CashEditorIntent.RevealForm -> visibility.reveal()
+
+            CashEditorIntent.ConvertToInvestment -> convertToInvestment()
         }
     }
 
@@ -242,6 +245,14 @@ class CashEditorViewModel(
             StorageError.Locked -> onLocked()
             else -> reduce { copy(busy = null, failure = CashFailure(action, error)) }
         }
+    }
+
+    /** Leaves the saved entry for the conversion flow. Unsaved edits never travel with it, so the entry must be clean. */
+    private fun convertToInvestment() {
+        val state = currentState
+        val id = balanceId ?: return
+        if (state.busy != null || state.completed || state.concealed || state.isNew || state.dirty) return
+        emitEffect(CashEffect.Navigate(ConvertCashRoute(id.value)))
     }
 
     private fun requestConfirmation(confirmation: CashConfirmation) {

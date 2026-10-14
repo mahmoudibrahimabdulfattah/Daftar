@@ -7,6 +7,7 @@ import com.mk.daftar.core.database.entity.BankAccountEntity
 import com.mk.daftar.core.database.entity.BankEntity
 import com.mk.daftar.core.database.entity.CashBalanceEntity
 import com.mk.daftar.core.database.entity.GoldHoldingEntity
+import com.mk.daftar.core.database.entity.InvestmentAccountEntity
 import com.mk.daftar.core.database.entity.ManualQuoteEntity
 import com.mk.daftar.core.database.entity.PersonalNoteEntity
 import com.mk.daftar.core.database.entity.RemoteQuoteEntity
@@ -26,12 +27,13 @@ data class BackupRows(
     val manualQuotes: List<ManualQuoteEntity>,
     val zakatYears: List<ZakatYearEntity>,
     val zakatTracking: List<ZakatTrackingEntity>,
+    val investmentAccounts: List<InvestmentAccountEntity>,
 )
 
 /** The read side of a backup. It only reads; writes never go through this DAO. */
 @Dao
 abstract class BackupSnapshotDao {
-    /** One transaction over all ten tables. Room runs it on the write connection, so the rows agree with each other. */
+    /** One transaction over all eleven tables. Room runs it on the write connection, so the rows agree with each other. */
     @Transaction
     open suspend fun readAll(): BackupRows = BackupRows(
         goldHoldings = goldHoldings(),
@@ -44,6 +46,7 @@ abstract class BackupSnapshotDao {
         manualQuotes = manualQuotes(),
         zakatYears = zakatYears(),
         zakatTracking = zakatTracking(),
+        investmentAccounts = investmentAccounts(),
     )
 
     @Query("SELECT * FROM gold_holdings ORDER BY id ASC")
@@ -75,4 +78,7 @@ abstract class BackupSnapshotDao {
 
     @Query("SELECT * FROM zakat_tracking WHERE id = 1")
     protected abstract suspend fun zakatTracking(): List<ZakatTrackingEntity>
+
+    @Query("SELECT * FROM investment_accounts ORDER BY id ASC")
+    protected abstract suspend fun investmentAccounts(): List<InvestmentAccountEntity>
 }

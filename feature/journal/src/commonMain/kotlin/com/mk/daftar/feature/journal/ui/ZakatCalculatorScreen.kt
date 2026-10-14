@@ -74,6 +74,8 @@ import com.mk.daftar.feature.journal.resources.zakat_category_cash
 import com.mk.daftar.feature.journal.resources.zakat_category_cash_help
 import com.mk.daftar.feature.journal.resources.zakat_category_gold
 import com.mk.daftar.feature.journal.resources.zakat_category_gold_help
+import com.mk.daftar.feature.journal.resources.zakat_category_investments
+import com.mk.daftar.feature.journal.resources.zakat_category_investments_help
 import com.mk.daftar.feature.journal.resources.zakat_clock_ahead
 import com.mk.daftar.feature.journal.resources.zakat_countdown
 import com.mk.daftar.feature.journal.resources.zakat_date_caveat
@@ -84,6 +86,7 @@ import com.mk.daftar.feature.journal.resources.zakat_estimate_label
 import com.mk.daftar.feature.journal.resources.zakat_estimate_loading
 import com.mk.daftar.feature.journal.resources.zakat_estimate_unavailable
 import com.mk.daftar.feature.journal.resources.zakat_estimated_date
+import com.mk.daftar.feature.journal.resources.zakat_investments_disclosure
 import com.mk.daftar.feature.journal.resources.zakat_missing_quote
 import com.mk.daftar.feature.journal.resources.zakat_next_ramadan
 import com.mk.daftar.feature.journal.resources.zakat_next_unavailable
@@ -415,15 +418,34 @@ private fun BasisSection(estimate: ZakatEstimate, hidden: Boolean, hiddenText: S
             Text(stringResource(Res.string.zakat_basis_details))
         }
         if (expanded) {
-            estimate.categories.forEach { basis ->
-                CategoryRow(basis = basis, hidden = hidden, hiddenText = hiddenText, unit = unit)
-            }
-            Text(
-                text = provenanceText(estimate, months),
-                style = DaftarTheme.typography.fineText,
-                color = DaftarTheme.colors.muted,
-            )
+            BasisDetails(estimate = estimate, hidden = hidden, hiddenText = hiddenText, unit = unit, months = months)
         }
+    }
+}
+
+/** The expanded basis: each category's figure, the planning disclosure, and the provenance of the prices. */
+@Composable
+private fun BasisDetails(
+    estimate: ZakatEstimate.Available,
+    hidden: Boolean,
+    hiddenText: String,
+    unit: String,
+    months: List<String>,
+) {
+    Column {
+        estimate.categories.forEach { basis ->
+            CategoryRow(basis = basis, hidden = hidden, hiddenText = hiddenText, unit = unit)
+        }
+        Text(
+            text = stringResource(Res.string.zakat_investments_disclosure),
+            style = DaftarTheme.typography.fineText,
+            color = DaftarTheme.colors.muted,
+        )
+        Text(
+            text = provenanceText(estimate, months),
+            style = DaftarTheme.typography.fineText,
+            color = DaftarTheme.colors.muted,
+        )
     }
 }
 
@@ -437,6 +459,7 @@ private fun CategoryRow(basis: ZakatCategoryBasis, hidden: Boolean, hiddenText: 
             AssetCategory.GOLD -> DaftarTileTone.Gold
             AssetCategory.BANKS -> DaftarTileTone.Bank
             AssetCategory.CASH -> DaftarTileTone.Cash
+            AssetCategory.INVESTMENTS -> DaftarTileTone.Investments
         },
         value = {
             DaftarAmount(
@@ -522,16 +545,19 @@ private fun categoryTitle(category: AssetCategory): StringResource = when (categ
     AssetCategory.GOLD -> Res.string.zakat_category_gold
     AssetCategory.BANKS -> Res.string.zakat_category_banks
     AssetCategory.CASH -> Res.string.zakat_category_cash
+    AssetCategory.INVESTMENTS -> Res.string.zakat_category_investments
 }
 
 private fun categoryHelp(category: AssetCategory): StringResource = when (category) {
     AssetCategory.GOLD -> Res.string.zakat_category_gold_help
     AssetCategory.BANKS -> Res.string.zakat_category_banks_help
     AssetCategory.CASH -> Res.string.zakat_category_cash_help
+    AssetCategory.INVESTMENTS -> Res.string.zakat_category_investments_help
 }
 
 private fun categoryIcon(category: AssetCategory): ImageVector = when (category) {
     AssetCategory.GOLD -> DaftarIcons.GoldBar
     AssetCategory.BANKS -> DaftarIcons.Bank
     AssetCategory.CASH -> DaftarIcons.Wallet
+    AssetCategory.INVESTMENTS -> DaftarIcons.Investments
 }

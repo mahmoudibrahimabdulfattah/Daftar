@@ -79,6 +79,29 @@ data object CashAddRoute : NavKey
 @Serializable
 data class CashEditRoute(val balanceId: String) : NavKey
 
+/** Investment accounts, the broker balances inside Assets. The list pane when the window is wide enough for two panes. */
+@Serializable
+data object InvestmentsRoute : NavKey
+
+/** One investment account: its current value, its value date and the actions on it. Identifiers only. */
+@Serializable
+data class InvestmentDetailRoute(val investmentId: String) : NavKey
+
+/** A new investment account: the broker is chosen first, then the form. */
+@Serializable
+data object InvestmentAddRoute : NavKey
+
+/** One investment account, edited or deleted. */
+@Serializable
+data class InvestmentEditRoute(val investmentId: String) : NavKey
+
+/**
+ * Converts one EGP cash entry into an investment account by explicit choice. [sourceId] preselects the entry, such as
+ * from the cash entry's own action; null starts at the entry picker.
+ */
+@Serializable
+data class ConvertCashRoute(val sourceId: String? = null) : NavKey
+
 /** Merchant quotes, their sources and the global estimate. Reached from Home. */
 @Serializable
 data object PricesRoute : NavKey

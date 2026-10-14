@@ -9,6 +9,10 @@ import com.mk.daftar.core.domain.repository.CashBalanceInput
 import com.mk.daftar.core.domain.repository.CashRepository
 import com.mk.daftar.core.domain.repository.GoldHoldingInput
 import com.mk.daftar.core.domain.repository.GoldRepository
+import com.mk.daftar.core.domain.repository.InvestmentConversion
+import com.mk.daftar.core.domain.repository.InvestmentConversionFailure
+import com.mk.daftar.core.domain.repository.InvestmentInput
+import com.mk.daftar.core.domain.repository.InvestmentRepository
 import com.mk.daftar.core.domain.repository.ManualQuoteInput
 import com.mk.daftar.core.domain.repository.PriceRepository
 import com.mk.daftar.core.domain.repository.QuoteSnapshot
@@ -26,6 +30,9 @@ import com.mk.daftar.core.model.CashBalance
 import com.mk.daftar.core.model.CashBalanceId
 import com.mk.daftar.core.model.GoldHolding
 import com.mk.daftar.core.model.GoldHoldingId
+import com.mk.daftar.core.model.InstitutionId
+import com.mk.daftar.core.model.InvestmentAccount
+import com.mk.daftar.core.model.InvestmentAccountId
 import com.mk.daftar.core.model.QuoteKey
 import kotlin.time.Clock
 import kotlin.time.Instant
@@ -131,6 +138,33 @@ internal class FakeCashRepository(
     ): Outcome<Stored<CashBalance>, StorageError> = unused()
 
     override suspend fun delete(id: CashBalanceId, expectedRevision: Long): Outcome<Unit, StorageError> = unused()
+}
+
+internal class FakeInvestmentRepository(
+    val investments: MutableStateFlow<VaultRead<List<Stored<InvestmentAccount>>>> =
+        MutableStateFlow(VaultRead.Loading),
+) : InvestmentRepository {
+    override fun observeAll(): Flow<VaultRead<List<Stored<InvestmentAccount>>>> = investments
+
+    override fun observe(id: InvestmentAccountId): Flow<VaultRead<Stored<InvestmentAccount>?>> = unused()
+
+    override suspend fun create(input: InvestmentInput): Outcome<Stored<InvestmentAccount>, StorageError> = unused()
+
+    override suspend fun update(
+        id: InvestmentAccountId,
+        expectedRevision: Long,
+        input: InvestmentInput,
+    ): Outcome<Stored<InvestmentAccount>, StorageError> = unused()
+
+    override suspend fun delete(id: InvestmentAccountId, expectedRevision: Long): Outcome<Unit, StorageError> = unused()
+
+    override suspend fun convertCashToInvestment(
+        sourceId: CashBalanceId,
+        expectedRevision: Long,
+        draftId: InvestmentAccountId,
+        providerId: InstitutionId?,
+        valueAsOf: Instant,
+    ): Outcome<InvestmentConversion, InvestmentConversionFailure> = unused()
 }
 
 internal class FakePriceRepository(

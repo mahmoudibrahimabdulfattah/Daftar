@@ -28,6 +28,12 @@ import com.mk.daftar.core.designsystem.resources.count_holdings_one
 import com.mk.daftar.core.designsystem.resources.count_holdings_other
 import com.mk.daftar.core.designsystem.resources.count_holdings_two
 import com.mk.daftar.core.designsystem.resources.count_holdings_zero
+import com.mk.daftar.core.designsystem.resources.count_investment_accounts_few
+import com.mk.daftar.core.designsystem.resources.count_investment_accounts_many
+import com.mk.daftar.core.designsystem.resources.count_investment_accounts_one
+import com.mk.daftar.core.designsystem.resources.count_investment_accounts_other
+import com.mk.daftar.core.designsystem.resources.count_investment_accounts_two
+import com.mk.daftar.core.designsystem.resources.count_investment_accounts_zero
 import org.jetbrains.compose.resources.StringResource
 import org.jetbrains.compose.resources.stringResource
 
@@ -80,6 +86,18 @@ enum class CountNoun(internal val forms: CountForms) {
             Res.string.count_accounts_few,
             Res.string.count_accounts_many,
             Res.string.count_accounts_other,
+        ),
+    ),
+
+    /** Broker accounts: the investment list and the Assets row. Investments count accounts, never holdings. */
+    INVESTMENT_ACCOUNTS(
+        CountForms(
+            Res.string.count_investment_accounts_zero,
+            Res.string.count_investment_accounts_one,
+            Res.string.count_investment_accounts_two,
+            Res.string.count_investment_accounts_few,
+            Res.string.count_investment_accounts_many,
+            Res.string.count_investment_accounts_other,
         ),
     ),
     BALANCES(

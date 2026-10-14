@@ -15,6 +15,7 @@ import com.mk.daftar.core.navigation.AssetsRoute
 import com.mk.daftar.core.navigation.BanksRoute
 import com.mk.daftar.core.navigation.CashRoute
 import com.mk.daftar.core.navigation.GoldRoute
+import com.mk.daftar.core.navigation.InvestmentsRoute
 import com.mk.daftar.core.navigation.PricesRoute
 import com.mk.daftar.core.navigation.ZakatCalculatorRoute
 import com.mk.daftar.core.navigation.ZakatHistoryRoute
@@ -85,6 +86,7 @@ class HomeViewModel(
         HomeCategory.GOLD -> GoldRoute
         HomeCategory.BANKS -> BanksRoute
         HomeCategory.CASH -> CashRoute
+        HomeCategory.INVESTMENTS -> InvestmentsRoute
     }
 }
 

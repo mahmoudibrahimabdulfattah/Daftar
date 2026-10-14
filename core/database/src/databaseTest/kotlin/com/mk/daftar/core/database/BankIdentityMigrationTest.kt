@@ -7,6 +7,7 @@ import com.mk.daftar.core.database.driver.createSqlCipherDriver
 import com.mk.daftar.core.database.schema.ValidationTriggersV1
 import com.mk.daftar.core.database.schema.ValidationTriggersV2
 import com.mk.daftar.core.database.schema.ValidationTriggersV3
+import com.mk.daftar.core.database.schema.ValidationTriggersV4
 import kotlin.test.Test
 import kotlin.test.assertEquals
 import kotlin.test.assertFails
@@ -52,6 +53,8 @@ class BankIdentityMigrationTest {
 
     /** Returns the file to its version two shape: no identity or basis columns, no version three triggers. */
     private fun revertToVersionTwo(connection: SQLiteConnection) {
+        ValidationTriggersV4.triggerNames.forEach { connection.execute("DROP TRIGGER IF EXISTS $it") }
+        connection.execute("DROP TABLE IF EXISTS investment_accounts")
         ValidationTriggersV3.triggerNames.forEach { connection.execute("DROP TRIGGER IF EXISTS $it") }
         connection.execute("ALTER TABLE banks DROP COLUMN identity_reviewed")
         connection.execute("ALTER TABLE banks DROP COLUMN institution_id")
@@ -130,11 +133,15 @@ class BankIdentityMigrationTest {
             assertEquals(
                 (
                     ValidationTriggersV1.triggerNames + ValidationTriggersV2.triggerNames +
-                        ValidationTriggersV3.triggerNames
+                        ValidationTriggersV3.triggerNames + ValidationTriggersV4.triggerNames
                     ).toSet(),
                 connection.names("SELECT name FROM sqlite_master WHERE type = 'trigger'").toSet(),
             )
-            assertEquals(3L, connection.scalarLong("PRAGMA user_version"))
+            assertEquals(
+                4L,
+                connection.scalarLong("PRAGMA user_version"),
+                "a version two file migrates through to four",
+            )
             // The upgraded file accepts a Banque Misr rate with its basis; the old provider list refused it.
             connection.execute(
                 "INSERT INTO remote_quotes (quote_key, provider, value, source_url, source_time_kind, " +

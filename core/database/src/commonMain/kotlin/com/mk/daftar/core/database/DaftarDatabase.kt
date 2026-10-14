@@ -9,6 +9,7 @@ import com.mk.daftar.core.database.dao.BankAccountDao
 import com.mk.daftar.core.database.dao.BankDao
 import com.mk.daftar.core.database.dao.CashBalanceDao
 import com.mk.daftar.core.database.dao.GoldHoldingDao
+import com.mk.daftar.core.database.dao.InvestmentAccountDao
 import com.mk.daftar.core.database.dao.ManualQuoteDao
 import com.mk.daftar.core.database.dao.PersonalNoteDao
 import com.mk.daftar.core.database.dao.RemoteQuoteDao
@@ -19,6 +20,7 @@ import com.mk.daftar.core.database.entity.BankAccountEntity
 import com.mk.daftar.core.database.entity.BankEntity
 import com.mk.daftar.core.database.entity.CashBalanceEntity
 import com.mk.daftar.core.database.entity.GoldHoldingEntity
+import com.mk.daftar.core.database.entity.InvestmentAccountEntity
 import com.mk.daftar.core.database.entity.ManualQuoteEntity
 import com.mk.daftar.core.database.entity.PersonalNoteEntity
 import com.mk.daftar.core.database.entity.RemoteQuoteEntity
@@ -26,7 +28,7 @@ import com.mk.daftar.core.database.entity.ZakatPaymentEntity
 import com.mk.daftar.core.database.entity.ZakatTrackingEntity
 import com.mk.daftar.core.database.entity.ZakatYearEntity
 
-/** The private notebook database. Schema version 3, reached from earlier versions by [daftarMigrations]; there is no destructive fallback. */
+/** The private notebook database. Schema version 4, reached from earlier versions by [daftarMigrations]; there is no destructive fallback. */
 @Database(
     entities = [
         GoldHoldingEntity::class,
@@ -39,8 +41,9 @@ import com.mk.daftar.core.database.entity.ZakatYearEntity
         ManualQuoteEntity::class,
         ZakatYearEntity::class,
         ZakatTrackingEntity::class,
+        InvestmentAccountEntity::class,
     ],
-    version = 3,
+    version = 4,
     exportSchema = true,
 )
 @ConstructedBy(DaftarDatabaseConstructor::class)
@@ -66,6 +69,8 @@ abstract class DaftarDatabase : RoomDatabase() {
     abstract fun restoreWriteDao(): RestoreWriteDao
 
     abstract fun zakatYearDao(): ZakatYearDao
+
+    abstract fun investmentAccountDao(): InvestmentAccountDao
 }
 
 /** Room generates the implementation for each platform. */

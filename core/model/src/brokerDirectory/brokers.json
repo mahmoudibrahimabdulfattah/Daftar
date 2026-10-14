@@ -1,0 +1,32 @@
+{
+  "schemaVersion": 1,
+  "directoryVersion": 1,
+  "countries": [
+    {
+      "code": "EG",
+      "nameAr": "مصر",
+      "nameEn": "Egypt"
+    }
+  ],
+  "institutions": [
+    {
+      "id": "eg.thndr",
+      "country": "EG",
+      "nameAr": "ثاندر",
+      "nameEn": "Thndr",
+      "aliasesAr": [
+        "ثندر"
+      ],
+      "aliasesEn": [
+        "Thundr"
+      ],
+      "monogram": "TH",
+      "brandBackground": "#FFE147",
+      "monogramForeground": "#262D24",
+      "officialAsset": "broker_eg_thndr",
+      "manifestRef": "eg.thndr",
+      "officialBacking": "dark",
+      "officialBackground": "#141414"
+    }
+  ]
+}

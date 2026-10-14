@@ -125,6 +125,35 @@ data class PersonalNoteEntity(
 )
 
 /*
+ * Schema version 4. One row per broker account with its single manually maintained EGP value. [providerId] is null for
+ * Other. [valueAsOf] is the effective time of [amount] and is stored apart from [updatedSeconds]. [convertedFromCashId]
+ * is the historical source cash ID of a user-confirmed conversion: unique, immutable, and deliberately without a foreign
+ * key because the source row is removed by the same transaction.
+ */
+@Entity(
+    tableName = "investment_accounts",
+    indices = [
+        Index(value = ["created_seconds", "created_nanos", "id"]),
+        Index(value = ["converted_from_cash_id"], unique = true),
+    ],
+)
+data class InvestmentAccountEntity(
+    @PrimaryKey @ColumnInfo(name = "id") val id: String,
+    @ColumnInfo(name = "created_seconds") val createdSeconds: Long,
+    @ColumnInfo(name = "created_nanos") val createdNanos: Int,
+    @ColumnInfo(name = "updated_seconds") val updatedSeconds: Long,
+    @ColumnInfo(name = "updated_nanos") val updatedNanos: Int,
+    @ColumnInfo(name = "revision") val revision: Long,
+    @ColumnInfo(name = "provider_id") val providerId: String?,
+    @ColumnInfo(name = "name") val name: String,
+    @ColumnInfo(name = "amount") val amount: String,
+    @ColumnInfo(name = "value_as_of_seconds") val valueAsOfSeconds: Long,
+    @ColumnInfo(name = "value_as_of_nanos") val valueAsOfNanos: Int,
+    @ColumnInfo(name = "note") val note: String?,
+    @ColumnInfo(name = "converted_from_cash_id") val convertedFromCashId: String?,
+)
+
+/*
  * Schema version 2. One row per Hijri year of Ramadan. [paid] is the declaration; [markedSeconds] and [markedNanos] are
  * both set exactly when it is paid. [overrideDays] is -1, 0 or +1; [userAdjusted] is true exactly when it is not 0.
  */

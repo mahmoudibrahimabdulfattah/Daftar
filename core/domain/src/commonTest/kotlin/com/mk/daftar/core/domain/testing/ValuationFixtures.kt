@@ -21,6 +21,9 @@ import com.mk.daftar.core.model.GoldKarat
 import com.mk.daftar.core.model.GoldPrice
 import com.mk.daftar.core.model.GoldQuote
 import com.mk.daftar.core.model.GoldWeight
+import com.mk.daftar.core.model.InstitutionId
+import com.mk.daftar.core.model.InvestmentAccount
+import com.mk.daftar.core.model.InvestmentAccountId
 import com.mk.daftar.core.model.MerchantSide
 import com.mk.daftar.core.model.Money
 import com.mk.daftar.core.model.PriceQuote
@@ -131,6 +134,20 @@ internal fun cashBalance(id: String, name: String, balance: Money): CashBalance 
     createdAt = NOW,
     updatedAt = NOW,
 )
+
+/** A broker account with one EGP value, valued at [NOW]. */
+internal fun investment(id: String, amount: String, providerId: InstitutionId? = null): InvestmentAccount =
+    InvestmentAccount.create(
+        id = InvestmentAccountId(id),
+        providerId = providerId,
+        name = "Broker $id",
+        amount = egp(amount),
+        note = null,
+        valueAsOf = NOW,
+        convertedFromCashId = null,
+        createdAt = NOW,
+        updatedAt = NOW,
+    )
 
 /** The illustrative design portfolio from the approved design. */
 internal fun designInput(): PortfolioInput = PortfolioInput(

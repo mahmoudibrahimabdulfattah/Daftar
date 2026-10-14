@@ -9,14 +9,20 @@ import com.mk.daftar.core.model.Decimal
 import com.mk.daftar.core.model.DecimalRounding
 import com.mk.daftar.core.model.GoldHolding
 import com.mk.daftar.core.model.GoldHoldingId
+import com.mk.daftar.core.model.InvestmentAccount
+import com.mk.daftar.core.model.InvestmentAccountId
 import com.mk.daftar.core.model.Money
 import com.mk.daftar.core.model.QuoteKey
 
-/** Records that count towards wealth. Journal entries are not part of this input by design. */
+/**
+ * Records that count towards wealth. Journal entries are not part of this input by design. Investment accounts carry an
+ * exact EGP value that never needs a quote, so they always contribute.
+ */
 data class PortfolioInput(
     val gold: List<GoldHolding>,
     val bankAccounts: List<BankAccount>,
     val cash: List<CashBalance>,
+    val investments: List<InvestmentAccount> = emptyList(),
 )
 
 /** A typed reference to one valued record. */
@@ -26,6 +32,8 @@ sealed interface AssetRef {
     data class Account(val id: BankAccountId) : AssetRef
 
     data class Cash(val id: CashBalanceId) : AssetRef
+
+    data class Investment(val id: InvestmentAccountId) : AssetRef
 }
 
 sealed interface AssetValuation {
@@ -39,7 +47,7 @@ sealed interface AssetValuation {
     data class Unvalued(override val asset: AssetRef, val requiredQuoteKey: QuoteKey) : AssetValuation
 }
 
-enum class AssetCategory { GOLD, BANKS, CASH }
+enum class AssetCategory { GOLD, BANKS, INVESTMENTS, CASH }
 
 /**
  * One category. [subtotalEgp] sums the valued assets only and is never a complete total. [totalEgp] is present only
@@ -61,6 +69,7 @@ data class PortfolioValuation(
     val gold: CategoryValuation,
     val banks: CategoryValuation,
     val cash: CategoryValuation,
+    val investments: CategoryValuation,
     val exactSubtotalEgp: Decimal,
     val subtotalEgp: Decimal,
     val exactTotalEgp: Decimal?,
@@ -68,7 +77,7 @@ data class PortfolioValuation(
     val totalEgp: Decimal?,
     val unvaluedAssets: List<AssetValuation.Unvalued>,
     val warnings: List<SelectedQuoteWarning>,
-    /** True when there are no gold holdings, bank accounts or cash balances. Totals are then exact zero and complete. */
+    /** True when there are no gold holdings, bank accounts, cash balances or investment accounts. Totals are then exact zero. */
     val isEmpty: Boolean,
 )
 
@@ -89,8 +98,12 @@ fun valuePortfolio(input: PortfolioInput, quotes: SelectedQuotes): PortfolioValu
             },
         )
     val cash = categoryOf(AssetCategory.CASH, input.cash.map { valueMoney(AssetRef.Cash(it.id), it.balance, quotes) })
+    val investments = categoryOf(
+        AssetCategory.INVESTMENTS,
+        input.investments.map { valueMoney(AssetRef.Investment(it.id), it.amount, quotes) },
+    )
 
-    val all = gold.assets + banks.assets + cash.assets
+    val all = gold.assets + banks.assets + cash.assets + investments.assets
     val exactSubtotal = sumValued(all)
     val unvalued = all.filterIsInstance<AssetValuation.Unvalued>()
     val exactTotal = if (unvalued.isEmpty()) exactSubtotal else null
@@ -98,13 +111,15 @@ fun valuePortfolio(input: PortfolioInput, quotes: SelectedQuotes): PortfolioValu
         gold = gold,
         banks = banks,
         cash = cash,
+        investments = investments,
         exactSubtotalEgp = exactSubtotal,
         subtotalEgp = exactSubtotal.presentation(),
         exactTotalEgp = exactTotal,
         totalEgp = exactTotal?.presentation(),
         unvaluedAssets = unvalued,
         warnings = (gold.warnings + banks.warnings + cash.warnings).distinct(),
-        isEmpty = input.gold.isEmpty() && input.bankAccounts.isEmpty() && input.cash.isEmpty(),
+        isEmpty = input.gold.isEmpty() && input.bankAccounts.isEmpty() && input.cash.isEmpty() &&
+            input.investments.isEmpty(),
     )
 }
 

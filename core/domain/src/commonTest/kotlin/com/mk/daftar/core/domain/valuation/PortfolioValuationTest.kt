@@ -10,6 +10,7 @@ import com.mk.daftar.core.domain.testing.designInput
 import com.mk.daftar.core.domain.testing.designQuotes
 import com.mk.daftar.core.domain.testing.egp
 import com.mk.daftar.core.domain.testing.holding
+import com.mk.daftar.core.domain.testing.investment
 import com.mk.daftar.core.domain.testing.remote
 import com.mk.daftar.core.domain.testing.sell
 import com.mk.daftar.core.domain.testing.snapshot
@@ -262,14 +263,58 @@ class PortfolioValuationTest {
     }
 
     @Test
-    fun valuationCategoriesAreGoldBanksAndCashOnly() {
+    fun valuationCategoriesAreGoldBanksInvestmentsAndCashOnly() {
         // Journal entries (zakat payments and personal notes) have no place in the valuation input. The categories
         // below are the only ones that can count towards wealth.
         assertEquals(
-            listOf(AssetCategory.GOLD, AssetCategory.BANKS, AssetCategory.CASH),
+            listOf(AssetCategory.GOLD, AssetCategory.BANKS, AssetCategory.INVESTMENTS, AssetCategory.CASH),
             AssetCategory.entries,
         )
         assertEquals(dec("1076212.74"), valueDesign().totalEgp)
+    }
+
+    @Test
+    fun investmentsAddTheirExactAmountToTheTotalAndTheirOwnCategory() {
+        val input = PortfolioInput(
+            gold = emptyList(),
+            bankAccounts = emptyList(),
+            cash = listOf(cashBalance("cash", "Cash", egp("1076212.74"))),
+            investments = listOf(investment("broker", "157000"), investment("other", "0.10")),
+        )
+
+        val portfolio = valuePortfolio(input, SelectedQuotes.EMPTY)
+
+        assertEquals(dec("1233212.84"), portfolio.totalEgp)
+        assertEquals(dec("157000.10"), portfolio.investments.totalEgp)
+        assertEquals(2, portfolio.investments.assets.size)
+        assertTrue(portfolio.unvaluedAssets.isEmpty(), "an investment never waits for a quote")
+    }
+
+    @Test
+    fun aZeroInvestmentIsValuedAndMakesThePortfolioNonEmpty() {
+        val portfolio = valuePortfolio(
+            PortfolioInput(emptyList(), emptyList(), emptyList(), listOf(investment("zero", "0"))),
+            SelectedQuotes.EMPTY,
+        )
+
+        assertEquals(dec("0"), portfolio.totalEgp)
+        assertFalse(portfolio.isEmpty)
+    }
+
+    @Test
+    fun twoInvestmentsSumExactlyBeforeAnyRounding() {
+        val portfolio = valuePortfolio(
+            PortfolioInput(
+                emptyList(),
+                emptyList(),
+                emptyList(),
+                listOf(investment("a", "0.10"), investment("b", "0.10")),
+            ),
+            SelectedQuotes.EMPTY,
+        )
+
+        assertEquals(dec("0.2"), portfolio.exactTotalEgp)
+        assertEquals(dec("0.2"), portfolio.totalEgp)
     }
 
     @Test

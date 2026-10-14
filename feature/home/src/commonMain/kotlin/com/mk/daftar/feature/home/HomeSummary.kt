@@ -69,7 +69,7 @@ data class HomeFigures(
     val incomplete: Boolean,
     /** Distinct quote keys that unvalued assets are waiting for, in order of first appearance. */
     val missingQuotes: List<QuoteKey>,
-    /** Gold, banks, cash in that order. */
+    /** Gold, banks, investments, cash in that order. */
     val categories: List<CategoryFigures>,
     /** The allocation strip, when the total is complete and positive. */
     val allocation: List<AllocationPart>?,
@@ -85,7 +85,9 @@ const val EXCHANGE_RATE_ATTRIBUTION_URL: String = "https://www.exchangerate-api.
 
 /** Figures for the Home screen. Uses the domain's totals and subtotals only; gold and FX are never recalculated. */
 fun summarizeHome(valuation: PortfolioValuation, quotes: SelectedQuotes, bankCount: Int): HomeFigures {
-    val categories = listOf(valuation.gold, valuation.banks, valuation.cash).map { it.toFigures() }
+    val categories = listOf(valuation.gold, valuation.banks, valuation.investments, valuation.cash).map {
+        it.toFigures()
+    }
     val missing = valuation.unvaluedAssets.map { it.requiredQuoteKey }.distinct()
     val complete = valuation.totalEgp != null
     val exactTotal = valuation.exactTotalEgp

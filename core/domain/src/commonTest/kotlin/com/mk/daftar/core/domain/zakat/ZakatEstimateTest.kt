@@ -9,11 +9,13 @@ import com.mk.daftar.core.domain.testing.cashBalance
 import com.mk.daftar.core.domain.testing.dec
 import com.mk.daftar.core.domain.testing.egp
 import com.mk.daftar.core.domain.testing.holding
+import com.mk.daftar.core.domain.testing.investment
 import com.mk.daftar.core.domain.testing.manual
 import com.mk.daftar.core.domain.testing.remote
 import com.mk.daftar.core.domain.testing.sell
 import com.mk.daftar.core.domain.testing.snapshot
 import com.mk.daftar.core.domain.testing.usd
+import com.mk.daftar.core.domain.valuation.AssetCategory
 import com.mk.daftar.core.domain.valuation.PortfolioInput
 import com.mk.daftar.core.domain.valuation.PortfolioValuation
 import com.mk.daftar.core.domain.valuation.QUOTE_STALE_AFTER
@@ -43,6 +45,60 @@ class ZakatEstimateTest {
 
     private fun available(input: PortfolioInput, quotes: QuoteSnapshot = snapshot()): ZakatEstimate.Available =
         assertIs<ZakatEstimate.Available>(estimateZakat(valuationOf(input, quotes)))
+
+    @Test
+    fun investmentsCountInTheTotalAndTheZakatEstimate() {
+        val input = PortfolioInput(
+            gold = emptyList(),
+            bankAccounts = emptyList(),
+            cash = listOf(cashBalance("cash", "Cash", egp("1076212.74"))),
+            investments = listOf(investment("broker", "157000")),
+        )
+        val estimate = available(input)
+        assertEquals(dec("1233212.74"), estimate.totalEgp)
+        assertEquals(dec("30830.3185"), estimate.exactEstimateEgp)
+        assertEquals(dec("30830.32"), estimate.estimateEgp)
+        assertEquals(dec("30830.32"), estimate.prefillEgp)
+        val investmentBasis = estimate.categories.single { it.category == AssetCategory.INVESTMENTS }
+        assertEquals(dec("157000"), investmentBasis.totalEgp)
+    }
+
+    @Test
+    fun zakatOfTheExactSumIsTwoPointFivePercentOfTheWholeTotal() {
+        // Gold-sized base plus one investment: 493,200 + 50,000 = 543,200, so zakat is exactly 13,580.
+        val input = PortfolioInput(
+            gold = emptyList(),
+            bankAccounts = emptyList(),
+            cash = listOf(cashBalance("gold-sized", "Base", egp("493200"))),
+            investments = listOf(investment("broker", "50000")),
+        )
+        val estimate = available(input)
+        assertEquals(dec("543200"), estimate.totalEgp)
+        assertEquals(dec("13580"), estimate.estimateEgp)
+    }
+
+    @Test
+    fun twoSmallInvestmentsRoundHalfUpOnlyAfterSummingAndMultiplying() {
+        val input = PortfolioInput(
+            gold = emptyList(),
+            bankAccounts = emptyList(),
+            cash = emptyList(),
+            investments = listOf(investment("a", "0.10"), investment("b", "0.10")),
+        )
+        val estimate = available(input)
+        assertEquals(dec("0.2"), estimate.totalEgp)
+        assertEquals(dec("0.005"), estimate.exactEstimateEgp)
+        assertEquals(dec("0.01"), estimate.estimateEgp)
+    }
+
+    @Test
+    fun aZeroInvestmentAloneIsAnAvailableEstimateOfZero() {
+        val estimate = available(
+            PortfolioInput(emptyList(), emptyList(), emptyList(), listOf(investment("zero", "0"))),
+        )
+        assertEquals(dec("0"), estimate.estimateEgp)
+        assertNull(estimate.prefillEgp)
+    }
 
     @Test
     fun designFixtureRoundsOnlyAfterMultiplying() {

@@ -49,7 +49,8 @@ private val MonogramForeground = Color(0xFFFFFFFF)
 sealed interface DaftarBankMark {
     data object Neutral : DaftarBankMark
 
-    data class Monogram(val initials: String, val background: Color) : DaftarBankMark
+    data class Monogram(val initials: String, val background: Color, val foreground: Color = MonogramForeground) :
+        DaftarBankMark
 
     data class Official(val assetKey: String, val brandBacking: Color?, val fallback: Monogram) : DaftarBankMark
 }
@@ -136,7 +137,7 @@ private fun MonogramTile(mark: DaftarBankMark.Monogram, modifier: Modifier = Mod
                 fontWeight = FontWeight.Medium,
                 textAlign = TextAlign.Center,
             ),
-            color = MonogramForeground,
+            color = mark.foreground,
             maxLines = 1,
         )
     }

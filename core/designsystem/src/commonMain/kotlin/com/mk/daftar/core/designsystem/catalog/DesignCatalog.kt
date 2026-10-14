@@ -156,6 +156,8 @@ import com.mk.daftar.core.designsystem.resources.ledger_cash_sub
 import com.mk.daftar.core.designsystem.resources.ledger_gold
 import com.mk.daftar.core.designsystem.resources.ledger_gold_sub
 import com.mk.daftar.core.designsystem.resources.ledger_incomplete
+import com.mk.daftar.core.designsystem.resources.ledger_investments
+import com.mk.daftar.core.designsystem.resources.ledger_investments_sub
 import com.mk.daftar.core.designsystem.resources.nav_assets
 import com.mk.daftar.core.designsystem.resources.nav_home
 import com.mk.daftar.core.designsystem.resources.nav_journal
@@ -757,6 +759,14 @@ private fun LedgerSection() {
             selected = true,
         )
         DaftarLedgerRow(
+            title = stringResource(Res.string.ledger_investments),
+            subtitle = stringResource(Res.string.ledger_investments_sub),
+            icon = DaftarIcons.Investments,
+            tone = DaftarTileTone.Investments,
+            value = { DaftarAmount(amount = "157,000.00", unit = "EGP", style = typography.ledgerValue) },
+            onClick = {},
+        )
+        DaftarLedgerRow(
             title = stringResource(Res.string.ledger_gold),
             subtitle = stringResource(Res.string.ledger_gold_sub),
             icon = DaftarIcons.GoldBar,
@@ -786,6 +796,21 @@ private fun IdentitySection() {
             DaftarBankTile(mark = DaftarBankMark.Monogram("NBE", Color(0xFF006341)))
             DaftarBankTile(mark = DaftarBankMark.Monogram("CIB", Color(0xFF003B71)))
             DaftarBankTile(mark = DaftarBankMark.Monogram("ALEX", Color(0xFFA64000)))
+            DaftarBankTile(mark = DaftarBankMark.Neutral)
+        }
+        Row(
+            horizontalArrangement = Arrangement.spacedBy(DaftarSpacing.sm),
+            verticalAlignment = Alignment.CenterVertically,
+        ) {
+            // The official Thndr mark sits on its near-black tile; the monogram is the offline fallback.
+            DaftarBankTile(
+                mark = DaftarBankMark.Official(
+                    assetKey = "broker_eg_thndr",
+                    brandBacking = Color(0xFF141414),
+                    fallback = DaftarBankMark.Monogram("TH", Color(0xFFFFE147), Color(0xFF262D24)),
+                ),
+            )
+            DaftarBankTile(mark = DaftarBankMark.Monogram("TH", Color(0xFFFFE147), Color(0xFF262D24)))
             DaftarBankTile(mark = DaftarBankMark.Neutral)
         }
         Row(
@@ -875,7 +900,8 @@ private fun BalanceSection() {
         val allocation = listOf(
             DaftarAllocationSegment(677812.74f, colors.gold),
             DaftarAllocationSegment(388500f, colors.primary),
-            DaftarAllocationSegment(9900f, colors.muted),
+            DaftarAllocationSegment(9900f, colors.cashAccent),
+            DaftarAllocationSegment(50000f, colors.investmentAccent),
         )
         DaftarBalanceSummary(
             label = stringResource(Res.string.balance_total),

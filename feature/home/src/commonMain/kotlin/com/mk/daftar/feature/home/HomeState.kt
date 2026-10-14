@@ -57,4 +57,4 @@ sealed interface HomeEffect : UiEffect {
 }
 
 /** The asset categories Home links to. */
-enum class HomeCategory { GOLD, BANKS, CASH }
+enum class HomeCategory { GOLD, BANKS, CASH, INVESTMENTS }

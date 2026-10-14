@@ -16,7 +16,9 @@ data class BankCountry(val code: String, val nameAr: String, val nameEn: String)
 /**
  * One catalog institution from the bundled directory. The monogram and both colours are always present, even when an
  * official asset exists. [officialAsset] and [manifestRef] are null until an artwork is bundled for the institution.
- * [officialBacking] is `white` for a mark drawn on a white tile and `brand` for a light mark drawn on [brandBackground].
+ * [officialBacking] is `white` for a mark drawn on a white tile, `brand` for a light mark drawn on [brandBackground],
+ * and `dark` for a bright mark drawn on the near-black [officialBackground] tile. `dark` is the only backing that needs
+ * an [officialBackground], and it is never combined with any other backing.
  */
 data class BankInstitution(
     val id: InstitutionId,
@@ -31,6 +33,7 @@ data class BankInstitution(
     val officialAsset: String?,
     val manifestRef: String?,
     val officialBacking: String? = null,
+    val officialBackground: String? = null,
 ) {
     init {
         require(COUNTRY_CODE.matches(countryCode)) { "country code must be ISO alpha-2 in uppercase" }
@@ -42,8 +45,12 @@ data class BankInstitution(
         require(HEX_COLOR.matches(monogramForeground)) { "monogram foreground must be #RRGGBB" }
         officialAsset?.let { require(it.isNotBlank()) { "official asset key must not be blank" } }
         manifestRef?.let { require(it.isNotBlank()) { "manifest reference must not be blank" } }
-        require(officialAsset == null || officialBacking == BACKING_WHITE || officialBacking == BACKING_BRAND) {
-            "an official asset needs a white or brand backing"
+        require(officialAsset == null || officialBacking in OFFICIAL_BACKINGS) {
+            "an official asset needs a white, brand or dark backing"
+        }
+        officialBackground?.let { require(HEX_COLOR.matches(it)) { "official background must be #RRGGBB" } }
+        require((officialBacking == BACKING_DARK) == (officialBackground != null)) {
+            "only a dark backing carries an official background"
         }
     }
 
@@ -51,6 +58,8 @@ data class BankInstitution(
         const val MAX_MONOGRAM_LENGTH: Int = 4
         const val BACKING_WHITE: String = "white"
         const val BACKING_BRAND: String = "brand"
+        const val BACKING_DARK: String = "dark"
+        val OFFICIAL_BACKINGS: Set<String> = setOf(BACKING_WHITE, BACKING_BRAND, BACKING_DARK)
     }
 }
 

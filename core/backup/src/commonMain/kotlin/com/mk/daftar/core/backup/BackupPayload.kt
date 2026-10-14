@@ -5,6 +5,7 @@ import com.mk.daftar.core.domain.repository.InactivityTimeout
 import com.mk.daftar.core.domain.repository.RemoteQuoteRecord
 import com.mk.daftar.core.domain.repository.ThemeMode
 import com.mk.daftar.core.domain.repository.isManuallyEntered
+import com.mk.daftar.core.domain.storage.Stored
 import com.mk.daftar.core.model.Bank
 import com.mk.daftar.core.model.BankAccount
 import com.mk.daftar.core.model.BankAccountId
@@ -25,6 +26,8 @@ import com.mk.daftar.core.model.GoldPrice
 import com.mk.daftar.core.model.GoldQuote
 import com.mk.daftar.core.model.GoldWeight
 import com.mk.daftar.core.model.InstitutionId
+import com.mk.daftar.core.model.InvestmentAccount
+import com.mk.daftar.core.model.InvestmentAccountId
 import com.mk.daftar.core.model.MerchantSide
 import com.mk.daftar.core.model.Money
 import com.mk.daftar.core.model.NoteId
@@ -43,17 +46,38 @@ import kotlinx.datetime.LocalDate
 import kotlinx.serialization.Serializable
 
 /*
- * The portable payload, schema version 3. It is plain UTF-8 JSON with the property order below, so one snapshot always
+ * The portable payload, schema version 4. It is plain UTF-8 JSON with the property order below, so one snapshot always
  * serializes to the same bytes. Decimals are canonical plain strings, timestamps are Instant.toString() text, dates are
  * ISO text, and enums are their constant names. Nothing here is a database column or a device key.
  *
- * Version 3 adds the bank identity and the FX basis of remote quotes. Versions 1 and 2 are kept as their own frozen
- * documents, so old backups still decode and re-encode to their own bytes. A version 1 payload has no declarations and
- * no tracking start, and its payments have no year. A version 2 payload has no identity and no FX basis.
+ * Version 4 adds the simple investment accounts: one EGP value per broker account, with its provider, value date and
+ * conversion provenance. Versions 1, 2 and 3 are kept as their own frozen documents, so old backups still decode and
+ * re-encode to their own bytes. A version 1 payload has no declarations and no tracking start, and its payments have no
+ * year. A version 2 payload has no identity and no FX basis. A version 3 payload has no investment accounts.
  */
 
 @Serializable
 internal class PayloadDocument(
+    val schemaVersion: Int,
+    val exportedAt: String,
+    val appVersion: String,
+    val preferences: PreferencesPayload,
+    val goldHoldings: List<GoldPayload>,
+    val banks: List<BankPayload>,
+    val bankAccounts: List<BankAccountPayload>,
+    val cashBalances: List<CashPayload>,
+    val zakatPayments: List<ZakatPayload>,
+    val personalNotes: List<NotePayload>,
+    val remoteQuotes: List<RemoteQuotePayload>,
+    val manualQuotes: List<ManualQuotePayload>,
+    val zakatTrackingStartYear: Int?,
+    val zakatYears: List<ZakatYearPayload>,
+    val investmentAccounts: List<InvestmentPayload>,
+)
+
+/** The frozen version-three document: the current shape before investment accounts. */
+@Serializable
+internal class PayloadDocumentV3(
     val schemaVersion: Int,
     val exportedAt: String,
     val appVersion: String,
@@ -236,6 +260,24 @@ internal class RemoteQuotePayloadV2(
     val attributionUrl: String?,
 )
 
+/**
+ * One broker account. [revision] is the record's storage revision, carried so a restored record keeps its place in
+ * optimistic concurrency. Instants are UTC text and the amount is canonical EGP text. [providerId] is null for Other.
+ */
+@Serializable
+internal class InvestmentPayload(
+    val id: String,
+    val createdAt: String,
+    val updatedAt: String,
+    val revision: Long,
+    val providerId: String?,
+    val name: String,
+    val amount: String,
+    val valueAsOf: String,
+    val note: String?,
+    val convertedFromCashId: String?,
+)
+
 @Serializable
 internal class ManualQuotePayload(
     val quoteKey: String,
@@ -273,6 +315,7 @@ internal fun BackupSnapshot.toDocument(exportedAt: Instant, appVersion: String):
     manualQuotes = manualQuotes.map { it.toManualPayload() }.sortedBy { it.quoteKey },
     zakatTrackingStartYear = zakatTrackingStartYear,
     zakatYears = zakatYears.sortedBy { it.hijriYear }.map { it.toPayload() },
+    investmentAccounts = investmentAccounts.sortedBy { it.value.id.value }.map { it.toPayload() },
 )
 
 /** A version-one document as version two: no declarations, no tracking start, and unassigned payments. */
@@ -305,11 +348,11 @@ internal fun PayloadDocumentV1.toV2(): PayloadDocumentV2 = PayloadDocumentV2(
 )
 
 /**
- * A version-two document as the current shape. A bank has no identity, so it is unreviewed. A stored FX rate gets the
- * basis its provider identity proves; a rate whose identity does not prove one is legacy unknown.
+ * A version-two document as version three. A bank has no identity, so it is unreviewed. A stored FX rate gets the basis
+ * its provider identity proves; a rate whose identity does not prove one is legacy unknown.
  */
-internal fun PayloadDocumentV2.toCurrent(): PayloadDocument = PayloadDocument(
-    schemaVersion = BackupFormat.PAYLOAD_SCHEMA_VERSION,
+internal fun PayloadDocumentV2.toV3(): PayloadDocumentV3 = PayloadDocumentV3(
+    schemaVersion = 3,
     exportedAt = exportedAt,
     appVersion = appVersion,
     preferences = preferences,
@@ -321,13 +364,32 @@ internal fun PayloadDocumentV2.toCurrent(): PayloadDocument = PayloadDocument(
     cashBalances = cashBalances,
     zakatPayments = zakatPayments,
     personalNotes = personalNotes,
-    remoteQuotes = remoteQuotes.map { it.toCurrent() },
+    remoteQuotes = remoteQuotes.map { it.toV3() },
     manualQuotes = manualQuotes,
     zakatTrackingStartYear = zakatTrackingStartYear,
     zakatYears = zakatYears,
 )
 
-private fun RemoteQuotePayloadV2.toCurrent(): RemoteQuotePayload {
+/** A version-three document as the current shape. A version-three payload has no investment accounts. */
+internal fun PayloadDocumentV3.toCurrent(): PayloadDocument = PayloadDocument(
+    schemaVersion = BackupFormat.PAYLOAD_SCHEMA_VERSION,
+    exportedAt = exportedAt,
+    appVersion = appVersion,
+    preferences = preferences,
+    goldHoldings = goldHoldings,
+    banks = banks,
+    bankAccounts = bankAccounts,
+    cashBalances = cashBalances,
+    zakatPayments = zakatPayments,
+    personalNotes = personalNotes,
+    remoteQuotes = remoteQuotes,
+    manualQuotes = manualQuotes,
+    zakatTrackingStartYear = zakatTrackingStartYear,
+    zakatYears = zakatYears,
+    investmentAccounts = emptyList(),
+)
+
+private fun RemoteQuotePayloadV2.toV3(): RemoteQuotePayload {
     val basis = if (quoteKey != "USD_EGP") {
         null
     } else if (provider == "EXCHANGE_RATE_API" || provider == "FAWAZ_CURRENCY_API") {
@@ -375,6 +437,7 @@ internal fun PayloadDocument.toSnapshot(): BackupSnapshot {
             manualQuotes = manualQuotes.map { it.toModel() },
             zakatYears = zakatYears.map { it.toModel() },
             zakatTrackingStartYear = zakatTrackingStartYear,
+            investmentAccounts = investmentAccounts.map { it.toModel() },
         )
     } catch (failure: IllegalArgumentException) {
         // A model constructor refused the value. The message could name a record, so it is dropped here.
@@ -482,6 +545,38 @@ private fun ZakatPayload.toModel(): ZakatPayment = ZakatPayment(
     updatedAt = updatedAt.instant(),
     forHijriYear = forHijriYear,
 )
+
+private fun Stored<InvestmentAccount>.toPayload(): InvestmentPayload {
+    val account = value
+    return InvestmentPayload(
+        id = account.id.value,
+        createdAt = account.createdAt.text(),
+        updatedAt = account.updatedAt.text(),
+        revision = revision,
+        providerId = account.providerId?.value,
+        name = account.name,
+        amount = account.amount.amount.toPlainString(),
+        valueAsOf = account.valueAsOf.text(),
+        note = account.note,
+        convertedFromCashId = account.convertedFromCashId?.value,
+    )
+}
+
+/** Every value goes through its model constructor, and the amount must be EGP canonical text. */
+private fun InvestmentPayload.toModel(): Stored<InvestmentAccount> {
+    val account = InvestmentAccount(
+        id = InvestmentAccountId(id),
+        providerId = providerId?.let { InstitutionId.parseOrNull(it) ?: throw CorruptPayloadException() },
+        name = name,
+        amount = Money(decimal(amount), Currency.EGP),
+        note = note,
+        valueAsOf = valueAsOf.instant(),
+        convertedFromCashId = convertedFromCashId?.let { CashBalanceId(it) },
+        createdAt = createdAt.instant(),
+        updatedAt = updatedAt.instant(),
+    )
+    return Stored(account, revision)
+}
 
 private fun ZakatYear.toPayload(): ZakatYearPayload = ZakatYearPayload(
     hijriYear = hijriYear,

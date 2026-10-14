@@ -22,6 +22,7 @@ kotlin {
             implementation(projects.feature.home)
             implementation(projects.feature.assets)
             implementation(projects.feature.gold)
+            implementation(projects.feature.investments)
 
             implementation(projects.feature.banks)
             implementation(projects.feature.backup)

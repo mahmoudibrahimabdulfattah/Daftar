@@ -11,6 +11,7 @@ import com.mk.daftar.core.database.mapper.toStored
 import com.mk.daftar.core.database.schema.ValidationTriggersV1
 import com.mk.daftar.core.database.schema.ValidationTriggersV2
 import com.mk.daftar.core.database.schema.ValidationTriggersV3
+import com.mk.daftar.core.database.schema.ValidationTriggersV4
 import com.mk.daftar.core.domain.repository.ManualQuoteInput
 import com.mk.daftar.core.model.Bank
 import com.mk.daftar.core.model.BankAccount
@@ -298,7 +299,7 @@ class DaftarDatabaseRoomTest {
             assertEquals(
                 (
                     ValidationTriggersV1.triggerNames + ValidationTriggersV2.triggerNames +
-                        ValidationTriggersV3.triggerNames
+                        ValidationTriggersV3.triggerNames + ValidationTriggersV4.triggerNames
                     )
                     .toSet(),
                 triggers.toSet(),

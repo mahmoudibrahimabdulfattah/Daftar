@@ -8,6 +8,7 @@ import com.mk.daftar.core.data.ids.UuidV4Generator
 import com.mk.daftar.core.data.repository.BankRecordRepository
 import com.mk.daftar.core.data.repository.CashRecordRepository
 import com.mk.daftar.core.data.repository.GoldRecordRepository
+import com.mk.daftar.core.data.repository.InvestmentRecordRepository
 import com.mk.daftar.core.data.repository.JournalRecordRepository
 import com.mk.daftar.core.data.repository.PriceRecordRepository
 import com.mk.daftar.core.data.repository.UserPreferencesRecordRepository
@@ -23,11 +24,14 @@ import com.mk.daftar.core.data.session.activeGeneration
 import com.mk.daftar.core.domain.repository.BankRepository
 import com.mk.daftar.core.domain.repository.CashRepository
 import com.mk.daftar.core.domain.repository.GoldRepository
+import com.mk.daftar.core.domain.repository.InvestmentDraftIds
+import com.mk.daftar.core.domain.repository.InvestmentRepository
 import com.mk.daftar.core.domain.repository.JournalRepository
 import com.mk.daftar.core.domain.repository.PriceRepository
 import com.mk.daftar.core.domain.repository.UserPreferencesRepository
 import com.mk.daftar.core.domain.repository.ZakatYearRepository
 import com.mk.daftar.core.domain.session.VaultSession
+import com.mk.daftar.core.model.InvestmentAccountId
 import com.mk.daftar.core.network.FxNetworkDataSource
 import com.mk.daftar.core.network.GoldNetworkDataSource
 import com.mk.daftar.core.security.PostCommitInstaller
@@ -62,6 +66,11 @@ val dataModule: Module = module {
     single<GoldRepository> { GoldRecordRepository(get<DaftarVaultSession>().host) }
     single<BankRepository> { BankRecordRepository(get<DaftarVaultSession>().host) }
     single<CashRepository> { CashRecordRepository(get<DaftarVaultSession>().host) }
+    single<InvestmentRepository> { InvestmentRecordRepository(get<DaftarVaultSession>().host) }
+    single<InvestmentDraftIds> {
+        val ids: IdGenerator = get()
+        InvestmentDraftIds { InvestmentAccountId(ids.nextId()) }
+    }
     single<JournalRepository> { JournalRecordRepository(get<DaftarVaultSession>().host) }
     single<ZakatYearRepository> { ZakatYearRecordRepository(get<DaftarVaultSession>().host) }
     single<PriceRepository> {

@@ -9,6 +9,7 @@ import com.mk.daftar.core.database.entity.BankAccountEntity
 import com.mk.daftar.core.database.entity.BankEntity
 import com.mk.daftar.core.database.entity.CashBalanceEntity
 import com.mk.daftar.core.database.entity.GoldHoldingEntity
+import com.mk.daftar.core.database.entity.InvestmentAccountEntity
 import com.mk.daftar.core.database.entity.ManualQuoteEntity
 import com.mk.daftar.core.database.entity.PersonalNoteEntity
 import com.mk.daftar.core.database.entity.RemoteQuoteEntity
@@ -28,6 +29,7 @@ data class RestoreRows(
     val manualQuotes: List<ManualQuoteEntity>,
     val zakatYears: List<ZakatYearEntity>,
     val zakatTracking: ZakatTrackingEntity?,
+    val investmentAccounts: List<InvestmentAccountEntity> = emptyList(),
 )
 
 /** The number of rows in each table. Used to confirm a staged vault before it can be committed. */
@@ -42,6 +44,7 @@ data class RestoreCounts(
     val manualQuotes: Int,
     val zakatYears: Int,
     val zakatTracking: Int,
+    val investmentAccounts: Int,
 )
 
 /**
@@ -63,6 +66,7 @@ abstract class RestoreWriteDao {
         rows.manualQuotes.forEach { insertManualQuote(it) }
         rows.zakatYears.forEach { insertZakatYear(it) }
         rows.zakatTracking?.let { insertZakatTracking(it) }
+        rows.investmentAccounts.forEach { insertInvestmentAccount(it) }
     }
 
     @Query(
@@ -76,7 +80,8 @@ abstract class RestoreWriteDao {
             "(SELECT COUNT(*) FROM remote_quotes) AS remoteQuotes, " +
             "(SELECT COUNT(*) FROM manual_quotes) AS manualQuotes, " +
             "(SELECT COUNT(*) FROM zakat_years) AS zakatYears, " +
-            "(SELECT COUNT(*) FROM zakat_tracking) AS zakatTracking",
+            "(SELECT COUNT(*) FROM zakat_tracking) AS zakatTracking, " +
+            "(SELECT COUNT(*) FROM investment_accounts) AS investmentAccounts",
     )
     abstract suspend fun counts(): RestoreCounts
 
@@ -109,4 +114,7 @@ abstract class RestoreWriteDao {
 
     @Insert(onConflict = OnConflictStrategy.ABORT)
     protected abstract suspend fun insertZakatTracking(entity: ZakatTrackingEntity): Long
+
+    @Insert(onConflict = OnConflictStrategy.ABORT)
+    protected abstract suspend fun insertInvestmentAccount(entity: InvestmentAccountEntity): Long
 }
