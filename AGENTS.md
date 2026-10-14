@@ -11,7 +11,8 @@ encrypted on the device behind an app-specific PIN. Arabic (RTL) is the primary 
   squash-merge into `master`, delete the branch locally and on the remote, pull `master`, then start the next phase.
 - Commits and PRs never mention AI tools or assistants and carry no `Co-authored-by` trailers.
 - Never commit real balances, keystores, `keystore.properties`, signing passwords or Firebase config.
-- Never commit `androidApp/google-services.json` or `iosApp/iosApp/GoogleService-Info.plist`. Firebase config is
+- Never commit `androidApp/google-services.json`, `iosApp/iosApp/GoogleService-Info.plist` or
+  `desktopApp/firebase-desktop.properties`. Firebase config is
   ignored, variant-specific, and installed locally or by CI from a secret. Without it the build succeeds and cloud
   backups are unavailable.
 
@@ -101,7 +102,10 @@ mapping (`androidApp/build/outputs/mapping/release`), not a package-wide keep.
   `UnsupportedHardware` otherwise. Debug builds may use a software key file and show the debug banner.
 - Privacy: every window is excluded from screen capture (`NSWindowSharingNone`, `WDA_EXCLUDEFROMCAPTURE`). Minimizing,
   hiding the app, display or system sleep and session deactivation cover and lock; Cmd+L (macOS) or Ctrl+L (Windows)
-  locks at once. Cloud backups are absent on desktop.
+  locks at once.
+- Cloud: Google sign-in in the system browser (PKCE, loopback), a Firebase session in memory only, and Firestore over
+  REST under the same rules. The project values come from the git-ignored `desktopApp/firebase-desktop.properties`;
+  without it cloud backups are unavailable. Firestore App Check enforcement stays off for desktop (see `docs/firebase`).
 
 ## Backup and restore
 
@@ -113,7 +117,7 @@ mapping (`androidApp/build/outputs/mapping/release`), not a package-wide keep.
 - Corrupt, truncated or wrong-password files fail authentication and are rejected; the header is authenticated.
 - Recovery limits: without a recovery key, a lost backup password or a forgotten PIN with no backup means the data
   cannot be recovered. A recovery key opens only backups made after it was set up.
-- Optional cloud backups (Android only, Google sign-in) store the same `.dftar` file in Firestore on the Spark plan:
+- Optional cloud backups (Android and desktop, Google sign-in) store the same `.dftar` file in Firestore on the Spark plan:
   three fixed slots, a 768 KiB ciphertext cap and no Storage, Functions, Analytics or Crashlytics. Sign-in never
   unlocks the vault, and restoring still requires the backup password. Local OS backup stays disabled.
   The rules and runbook live in `docs/firebase`; deploy them only with `firebase deploy --only firestore`.

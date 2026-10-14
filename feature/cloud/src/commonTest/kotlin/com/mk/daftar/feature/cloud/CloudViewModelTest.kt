@@ -5,10 +5,12 @@ import com.mk.daftar.core.domain.cloud.CloudAccountState
 import com.mk.daftar.core.domain.cloud.CloudAvailability
 import com.mk.daftar.core.domain.cloud.CloudDownload
 import com.mk.daftar.core.domain.cloud.CloudError
+import com.mk.daftar.core.domain.cloud.CloudSignInHandoff
 import kotlin.test.AfterTest
 import kotlin.test.BeforeTest
 import kotlin.test.Test
 import kotlin.test.assertEquals
+import kotlin.test.assertFalse
 import kotlin.test.assertIs
 import kotlin.test.assertNull
 import kotlin.test.assertTrue
@@ -19,6 +21,7 @@ import kotlinx.coroutines.test.StandardTestDispatcher
 import kotlinx.coroutines.test.TestScope
 import kotlinx.coroutines.test.advanceUntilIdle
 import kotlinx.coroutines.test.resetMain
+import kotlinx.coroutines.test.runCurrent
 import kotlinx.coroutines.test.runTest
 import kotlinx.coroutines.test.setMain
 
@@ -222,5 +225,48 @@ class CloudViewModelTest {
         viewModel.onIntent(CloudIntent.PrivacyInvalidated)
         assertEquals(false, viewModel.state.value.confirmAccountDelete)
         assertIs<CloudView.Versions>(CloudView.Versions)
+    }
+
+    @Test
+    fun aBrowserSignInWaitsCancellablyAndCancelLeavesNoProblem() = runTest {
+        val repository = FakeCloudRepository(signedIn = false).apply {
+            signInHandoff = CloudSignInHandoff.BROWSER
+            gate = CompletableDeferred()
+        }
+        val viewModel = model(repository)
+        viewModel.onIntent(CloudIntent.SignIn)
+        runCurrent()
+        assertTrue(viewModel.state.value.waitingForBrowser)
+        viewModel.onIntent(CloudIntent.CancelSignIn)
+        runCurrent()
+        assertFalse(viewModel.state.value.waitingForBrowser)
+        assertNull(viewModel.state.value.busy)
+        assertNull(viewModel.state.value.problem)
+        assertEquals(CloudView.SignedOut, viewModel.state.value.view)
+    }
+
+    @Test
+    fun anInAppSignInIsNeverShownAsWaitingForTheBrowser() = runTest {
+        val repository = FakeCloudRepository(signedIn = false).apply { gate = CompletableDeferred() }
+        val viewModel = model(repository)
+        viewModel.onIntent(CloudIntent.SignIn)
+        runCurrent()
+        assertFalse(viewModel.state.value.waitingForBrowser)
+        viewModel.onIntent(CloudIntent.CancelSignIn)
+        runCurrent()
+        assertEquals(CloudBusy.SIGNING_IN, viewModel.state.value.busy)
+    }
+
+    @Test
+    fun aTimedOutBrowserSignInIsShownAndTheEmailIsClearedOnSignOut() = runTest {
+        val repository = FakeCloudRepository(signedIn = false).apply {
+            signInHandoff = CloudSignInHandoff.BROWSER
+            signInResult = Outcome.Failure(CloudError.TIMED_OUT)
+        }
+        val viewModel = model(repository)
+        viewModel.onIntent(CloudIntent.SignIn)
+        advanceUntilIdle()
+        assertEquals(CloudError.TIMED_OUT, viewModel.state.value.problem)
+        assertNull(viewModel.state.value.busy)
     }
 }

@@ -1,6 +1,6 @@
 # Daftar cloud backups: Firebase runbook
 
-Scope: Android only, Google sign-in, Firebase Auth, Firestore and App Check on the Spark plan. No Storage, Functions,
+Scope: Android and desktop (macOS, Windows), Google sign-in, Firebase Auth and Firestore on the Spark plan. No Storage, Functions,
 Analytics, Crashlytics or billing account. Backups are the encrypted `.dftar` file, stored as raw bytes in three fixed
 slots per user. Firebase never sees a backup password, vault PIN, database key or decrypted content.
 
@@ -11,6 +11,11 @@ slots per user. Firebase never sees a backup password, vault PIN, database key o
 - The OAuth **web client** (client type 3) is generated into `google-services.json`. The google-services plugin exposes
   it as the string resource `default_web_client_id`, which the app reads by name. Without that resource Google sign-in
   reports unavailable.
+- Desktop: `desktopApp/firebase-desktop.properties` (ignored; see the `.example` beside it) with the project's Web API
+  key, the project ID and an OAuth client of type **Desktop app** (client ID and its non-confidential secret). The
+  desktop signs in through the system browser (PKCE, loopback redirect to 127.0.0.1), exchanges Google's ID token for a
+  Firebase session with the Auth REST API, keeps that session in memory only, and uses the Firestore REST API under the
+  same rules. Without the file desktop builds report cloud backups as unavailable.
 - Firestore: one default database, Standard edition, production (locked) mode. Choose the region deliberately.
 - Firestore document layout: `users/{uid}` (`schemaVersion`, `state`, `revision`, `updatedAt`) and
   `users/{uid}/backups/{slot}` with `slot` in `0`, `1`, `2`.
@@ -31,8 +36,10 @@ atomic revision check and the deleting state. Run them against the emulator befo
 
 ## App Check
 
-Play Integrity in release, the debug provider in debug builds only. Register Play Integrity in App Check, then enforce
-Firestore only after testing on a device. Release has no fallback to the debug provider.
+Android installs Play Integrity in release and the debug provider in debug builds only. Firestore App Check enforcement
+is **off**: a desktop app cannot be attested on the free plan, so access is limited by Firebase Auth and the per-user
+rules above, and every backup stays encrypted with its password. Turning enforcement on again blocks desktop cloud
+backups.
 
 ## Spark limits and manual cleanup
 
@@ -46,4 +53,4 @@ Firestore only after testing on a device. Release has no fallback to the debug p
 ## Not done in this release
 
 Account linking is not supported. A Google backup and an Apple backup stay separate; migrate with a local `.dftar`
-export and import. iOS has no cloud backup.
+export and import. iOS has no cloud backup. Desktop sessions are not kept after the app quits.

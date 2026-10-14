@@ -12,6 +12,11 @@ kotlin {
             implementation(project.dependencies.platform(libs.koin.bom))
             implementation(libs.koin.core)
         }
+        // Desktop talks to Firestore over REST with the desktop Firebase session.
+        getByName("desktopMain").dependencies {
+            implementation(projects.core.account)
+            implementation(libs.kotlinx.serialization.json)
+        }
         androidMain.dependencies {
             // Firestore only: no Storage, Functions, Analytics or Crashlytics. App Check is installed by the app shell.
             implementation(project.dependencies.platform(libs.firebase.bom))

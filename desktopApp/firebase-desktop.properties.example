@@ -1,0 +1,10 @@
+# Copy to firebase-desktop.properties (git-ignored) to enable cloud backups in desktop builds.
+# Values come from the same Firebase project as Android:
+#   apiKey            Firebase console > Project settings > General > Web API key
+#   projectId         Firebase console > Project settings > General > Project ID
+#   oauthClientId     Google Cloud console > APIs & Services > Credentials > OAuth client ID (type "Desktop app")
+#   oauthClientSecret the same Desktop app client's secret (not confidential for installed apps)
+apiKey=
+projectId=
+oauthClientId=
+oauthClientSecret=

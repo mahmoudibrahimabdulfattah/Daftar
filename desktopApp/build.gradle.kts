@@ -1,3 +1,4 @@
+import java.util.Properties
 import org.jetbrains.compose.desktop.application.dsl.TargetFormat
 
 plugins {
@@ -13,14 +14,30 @@ plugins {
 val desktopRelease = providers.gradleProperty("daftar.desktop.release").map { it.toBoolean() }.orElse(false)
 val desktopVersion = "1.0.0"
 
+/*
+ * Optional cloud backups: the Firebase project of this build, from a local, git-ignored file (see
+ * firebase-desktop.properties.example). Without it the build succeeds and cloud backups are unavailable.
+ */
+val cloudConfigFile = layout.projectDirectory.file("firebase-desktop.properties")
+val cloudKeys = listOf("apiKey", "projectId", "oauthClientId", "oauthClientSecret")
+
 val generateDesktopBuildFlavor = tasks.register("generateDesktopBuildFlavor") {
     val release = desktopRelease
     val version = desktopVersion
+    val configFile = cloudConfigFile.asFile
+    val keys = cloudKeys
     val output = layout.buildDirectory.dir("generated/desktopBuildFlavor")
     inputs.property("release", release)
     inputs.property("version", version)
+    inputs.files(cloudConfigFile).optional()
     outputs.dir(output)
     doLast {
+        val cloud = Properties().apply {
+            if (configFile.exists()) configFile.inputStream().use { load(it) }
+        }
+        val complete = keys.all { !cloud.getProperty(it).isNullOrBlank() }
+        fun literal(key: String): String =
+            if (complete) "\"" + cloud.getProperty(key).trim().replace("\\", "").replace("\"", "") + "\"" else "null"
         val file = output.get().file("com/mk/daftar/desktop/DesktopBuildFlavor.kt").asFile
         file.parentFile.mkdirs()
         file.writeText(
@@ -31,6 +48,10 @@ val generateDesktopBuildFlavor = tasks.register("generateDesktopBuildFlavor") {
             |internal object DesktopBuildFlavor {
             |    const val DEBUG: Boolean = ${!release.get()}
             |    const val VERSION: String = "$version"
+            |    val CLOUD_API_KEY: String? = ${literal("apiKey")}
+            |    val CLOUD_PROJECT_ID: String? = ${literal("projectId")}
+            |    val CLOUD_OAUTH_CLIENT_ID: String? = ${literal("oauthClientId")}
+            |    val CLOUD_OAUTH_CLIENT_SECRET: String? = ${literal("oauthClientSecret")}
             |}
             |
             """.trimMargin(),
@@ -49,6 +70,7 @@ kotlin {
                 implementation(projects.core.common)
                 implementation(projects.core.data)
                 implementation(projects.core.security)
+                implementation(projects.core.account)
                 implementation(compose.desktop.currentOs)
                 implementation(libs.kotlinx.coroutines.swing)
                 implementation(project.dependencies.platform(libs.koin.bom))
