@@ -22,7 +22,7 @@ kotlin {
             api(libs.androidx.room.runtime)
             api(libs.androidx.sqlite)
         }
-        // Room integration tests run on the Android device and on the iOS simulator. Both compile the same tests from
+        // Room integration tests run on the Android device, the iOS simulator and the desktop JVM. Both compile the same tests from
         // databaseTest/, and both open the database through core:database-driver's SQLCipher driver.
         getByName("androidDeviceTest") {
             kotlin.srcDir("src/databaseTest/kotlin")
@@ -41,6 +41,16 @@ kotlin {
                 implementation(projects.core.databaseDriver)
             }
         }
+        // Desktop runs the same integration tests on the JVM, over the desktop SQLCipher-format driver.
+        getByName("desktopTest") {
+            kotlin.srcDir("src/databaseTest/kotlin")
+            dependencies {
+                implementation(projects.core.databaseDriver)
+            }
+        }
+        getByName("desktopMain").dependencies {
+            implementation(projects.core.common)
+        }
     }
 }
 
@@ -49,7 +59,9 @@ room {
 }
 
 dependencies {
-    listOf("kspAndroid", "kspIosArm64", "kspIosSimulatorArm64").forEach { add(it, libs.androidx.room.compiler) }
+    listOf("kspAndroid", "kspIosArm64", "kspIosSimulatorArm64", "kspDesktop").forEach {
+        add(it, libs.androidx.room.compiler)
+    }
 }
 
 apply(from = rootProject.file("core/architecture-guard.gradle.kts"))

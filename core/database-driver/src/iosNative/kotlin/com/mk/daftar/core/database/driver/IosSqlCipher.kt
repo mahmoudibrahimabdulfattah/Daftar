@@ -244,3 +244,6 @@ private fun sqliteFailure(rc: Int, db: CPointer<sqlite3>): SQLiteException {
     val message = sqlite3_errmsg(db)?.toKString() ?: "SQLite error"
     return SQLiteException("SQLite error $rc: $message")
 }
+
+/** SQLCipher reports its version; a plain SQLite build has no such pragma. */
+internal actual val CIPHER_ENGINE_QUERY: String = "PRAGMA cipher_version"

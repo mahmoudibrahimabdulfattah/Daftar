@@ -22,6 +22,10 @@ kotlin {
         iosMain.dependencies {
             implementation(libs.ktor.client.darwin)
         }
+        // Desktop uses the same OkHttp engine as Android, over the JVM's TLS.
+        getByName("desktopMain").dependencies {
+            implementation(libs.ktor.client.okhttp)
+        }
         commonTest.dependencies {
             implementation(libs.ktor.client.mock)
         }
