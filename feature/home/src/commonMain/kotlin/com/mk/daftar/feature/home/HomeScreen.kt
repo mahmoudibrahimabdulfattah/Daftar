@@ -133,6 +133,7 @@ import com.mk.daftar.feature.home.resources.p25_guide_investment_title
 import com.mk.daftar.feature.home.resources.p25_guide_money_body
 import com.mk.daftar.feature.home.resources.p25_guide_money_title
 import com.mk.daftar.feature.home.resources.p25_guide_title
+import com.mk.daftar.feature.home.resources.p25_price_waiting
 import com.mk.daftar.feature.home.resources.zakat_due_count
 import com.mk.daftar.feature.home.resources.zakat_reminder
 import com.mk.daftar.feature.home.resources.zakat_year_label
@@ -270,10 +271,16 @@ private fun ReadyBody(
             FirstRunGuideState.Unknown -> Unit
         }
     } else {
-        Total(figures = figures, hidden = state.valuesHidden, refreshing = state.refreshing)
+        Total(
+            figures = figures,
+            hidden = state.valuesHidden,
+            refreshing = state.refreshing,
+            waiting = state.waitingForPrices,
+        )
         Categories(figures = figures, hidden = state.valuesHidden, onIntent = onIntent)
     }
-    ZakatSection(due = state.zakatDue, onIntent = onIntent)
+    // An empty vault has nothing to give zakat on yet, so the yearly reminder waits for the first record.
+    if (state.firstRun is FirstRunGuideState.HasRecords) ZakatSection(due = state.zakatDue, onIntent = onIntent)
     QuoteSection(
         quotes = figures.quotes,
         refreshing = state.refreshing,
@@ -374,7 +381,7 @@ private fun MoneyChoice(onChoose: (FirstRunEntry) -> Unit) {
 }
 
 @Composable
-private fun Total(figures: HomeFigures, hidden: Boolean, refreshing: Boolean) {
+private fun Total(figures: HomeFigures, hidden: Boolean, refreshing: Boolean, waiting: Boolean) {
     val colors = DaftarTheme.colors
     val allocation = figures.allocation
     val segments = allocation?.let { parts ->
@@ -421,7 +428,7 @@ private fun Total(figures: HomeFigures, hidden: Boolean, refreshing: Boolean) {
             null
         },
         footer = if (figures.incomplete) {
-            { IncompleteFooter(figures = figures, hidden = hidden) }
+            { IncompleteFooter(figures = figures, hidden = hidden, waiting = waiting) }
         } else {
             {
                 Text(
@@ -435,12 +442,13 @@ private fun Total(figures: HomeFigures, hidden: Boolean, refreshing: Boolean) {
 }
 
 @Composable
-private fun ColumnScope.IncompleteFooter(figures: HomeFigures, hidden: Boolean) {
+private fun ColumnScope.IncompleteFooter(figures: HomeFigures, hidden: Boolean, waiting: Boolean) {
     val colors = DaftarTheme.colors
+    // While prices are still on their way the total is awaited quietly, not reported as a problem.
     Text(
-        stringResource(Res.string.home_incomplete),
+        stringResource(if (waiting) Res.string.p25_price_waiting else Res.string.home_incomplete),
         style = DaftarTheme.typography.fineText,
-        color = colors.warning,
+        color = if (waiting) colors.muted else colors.warning,
     )
     Row(
         modifier = Modifier.fillMaxWidth(),
@@ -460,9 +468,11 @@ private fun ColumnScope.IncompleteFooter(figures: HomeFigures, hidden: Boolean) 
             style = DaftarTheme.typography.ledgerValue,
         )
     }
-    figures.missingQuotes.forEach { key ->
-        DaftarNotePanel(tone = DaftarNoteTone.Warning) {
-            Text(missingQuoteText(key))
+    if (!waiting) {
+        figures.missingQuotes.forEach { key ->
+            DaftarNotePanel(tone = DaftarNoteTone.Warning) {
+                Text(missingQuoteText(key))
+            }
         }
     }
 }

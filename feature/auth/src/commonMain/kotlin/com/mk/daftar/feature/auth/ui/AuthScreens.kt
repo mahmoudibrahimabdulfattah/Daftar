@@ -56,6 +56,7 @@ import androidx.compose.ui.unit.dp
 import androidx.lifecycle.Lifecycle
 import androidx.lifecycle.compose.LocalLifecycleOwner
 import com.mk.daftar.core.designsystem.component.DaftarIcon
+import com.mk.daftar.core.designsystem.component.DaftarIconButton
 import com.mk.daftar.core.designsystem.component.DaftarKeypad
 import com.mk.daftar.core.designsystem.component.DaftarMark
 import com.mk.daftar.core.designsystem.component.DaftarNotePanel
@@ -452,20 +453,10 @@ private fun StepLabel(text: String) {
  */
 @Composable
 private fun PinScreen(state: AuthUiState, onIntent: (AuthIntent) -> Unit, modifier: Modifier = Modifier) {
-    Column(modifier = modifier.fillMaxWidth()) {
-        Box(
-            modifier = Modifier.fillMaxWidth().height(DaftarSpacing.topBarMinHeight),
-            contentAlignment = Alignment.Center,
-        ) {
-            if (state.phase == AuthPhase.Confirm) {
-                DaftarTopBar(
-                    title = "",
-                    onBack = { onIntent(AuthIntent.Back) },
-                    backLabel = stringResource(DesignRes.string.btn_back),
-                )
-            }
-        }
-        BoxWithConstraints(modifier = Modifier.weight(1f).fillMaxWidth()) {
+    // No top-bar lane: confirm's Back floats over the intro's start corner, so every phase keeps the same geometry and
+    // the whole flow fits a phone screen without scrolling.
+    Box(modifier = modifier.fillMaxWidth()) {
+        BoxWithConstraints(modifier = Modifier.fillMaxSize()) {
             val padding = DaftarSpacing.md
             val contentWidth = minOf(MAX_CONTENT_WIDTH, maxWidth - padding * 2)
             val lanes = rememberPinLanes(contentWidth)
@@ -484,6 +475,15 @@ private fun PinScreen(state: AuthUiState, onIntent: (AuthIntent) -> Unit, modifi
                     modifier = Modifier.widthIn(max = MAX_CONTENT_WIDTH).fillMaxWidth(),
                 )
             }
+        }
+        if (state.phase == AuthPhase.Confirm) {
+            DaftarIconButton(
+                onClick = { onIntent(AuthIntent.Back) },
+                icon = DaftarIcons.Back,
+                contentDescription = stringResource(DesignRes.string.btn_back),
+                mirrorInRtl = true,
+                modifier = Modifier.align(Alignment.TopStart).padding(DaftarSpacing.xs),
+            )
         }
     }
 }
@@ -914,11 +914,11 @@ private val MAX_CONTENT_WIDTH = 400.dp
 private val PIN_MARK_SIZE = 44.dp
 private val PIN_KEYPAD_MIN_HEIGHT = 256.dp
 private val STEP_LANE_MIN = 20.dp
-private val HEADING_LANE_MIN = 84.dp
-private val MESSAGE_LANE_MIN = 80.dp
+private val HEADING_LANE_MIN = 40.dp
+private val MESSAGE_LANE_MIN = 64.dp
 private val MESSAGE_PADDING = 12.dp
 private val MESSAGE_ICON_ALLOWANCE = 32.dp
-private val FOOTER_LANE_MIN = 56.dp
+private val FOOTER_LANE_MIN = 48.dp
 private const val LONGEST_BACKOFF_SECONDS = 900
 private const val FEW_FORM_SECONDS = 3
 private const val BACKOFF_ANNOUNCE_MS = 1_000L

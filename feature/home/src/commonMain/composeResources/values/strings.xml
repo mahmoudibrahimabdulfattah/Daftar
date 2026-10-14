@@ -73,4 +73,5 @@
     <string name="p25_empty_title">Your notebook is ready</string>
     <string name="p25_empty_body">Add an asset when you’re ready.</string>
     <string name="p25_empty_action">Add an asset</string>
+    <string name="p25_price_waiting">Waiting for prices</string>
 </resources>

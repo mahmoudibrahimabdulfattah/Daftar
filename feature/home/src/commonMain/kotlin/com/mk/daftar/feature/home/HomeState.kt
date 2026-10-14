@@ -26,6 +26,8 @@ data class HomeUiState(
     val valuesHidden: Boolean = false,
     val refreshing: Boolean = false,
     val refreshFailed: Boolean = false,
+    /** A refresh (quiet or not) is still running, so missing prices are awaited rather than reported. */
+    val waitingForPrices: Boolean = false,
     /** The declared years awaiting confirmation, oldest first. Empty when none is due or tracking is not read. */
     val zakatDue: List<ZakatDueYear> = emptyList(),
     /** The first-run guide for this vault: shown, dismissed, or hidden because the vault holds records. */

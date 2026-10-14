@@ -176,6 +176,7 @@ fun homeStateOf(
         load = HomeLoad.Ready(summarizeHome(v.value, q.value, b.value)),
         valuesHidden = valuesHidden,
         refreshing = refresh.showsProgress && refresh.generation == generation,
+        waitingForPrices = refresh is PriceRefreshStatus.Refreshing && refresh.generation == generation,
         refreshFailed = refresh is PriceRefreshStatus.Finished &&
             refresh.generation == generation &&
             refresh.outcome != RefreshOutcome.Succeeded,

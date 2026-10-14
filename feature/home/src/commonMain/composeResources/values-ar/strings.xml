@@ -76,4 +76,5 @@
     <string name="p25_empty_title">دفترك جاهز</string>
     <string name="p25_empty_body">أضف أصلًا عندما تكون مستعدًا.</string>
     <string name="p25_empty_action">إضافة أصل</string>
+    <string name="p25_price_waiting">في انتظار الأسعار</string>
 </resources>
