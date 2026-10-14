@@ -18,7 +18,9 @@ import com.mk.daftar.core.model.MerchantSide
 import com.mk.daftar.core.model.QuoteKey
 import com.mk.daftar.core.model.QuoteKind
 import com.mk.daftar.core.model.QuoteProvider
+import com.mk.daftar.core.ui.presentation.QuoteBoardSummary
 import com.mk.daftar.core.ui.presentation.allocationPercents
+import com.mk.daftar.core.ui.presentation.quoteBoardSummaryOf
 import kotlin.time.Instant
 
 /** Where a displayed quote came from, weakest assurance last. The worst badge in a group is the one shown. */
@@ -59,6 +61,8 @@ data class QuoteStripFigures(
     val referenceAt: Instant?,
     /** What the USD rate is: Banque Misr's transfer buy, a mid-market estimate, or manual. Null when unknown or absent. */
     val usdBasis: FxBasis? = null,
+    /** One freshness statement for the four shown prices, with markers for the ones that differ. */
+    val summary: QuoteBoardSummary = quoteBoardSummaryOf(emptyList()),
 )
 
 /** Everything the Home screen shows about the portfolio, derived from one valuation and one quote set. */
@@ -135,7 +139,7 @@ private fun quoteStrip(quotes: SelectedQuotes): QuoteStripFigures {
     val badge = shown.map { it.badge() }.maxByOrNull { it.ordinal }
     val referenceAt = shown.minOfOrNull { it.referenceAt }
     val usdBasis = quotes[QuoteKey.UsdEgp]?.fxBasis?.takeIf { it != FxBasis.LEGACY_UNKNOWN }
-    return QuoteStripFigures(figures, badge, referenceAt, usdBasis)
+    return QuoteStripFigures(figures, badge, referenceAt, usdBasis, quoteBoardSummaryOf(STRIP_KEYS.map { quotes[it] }))
 }
 
 /** The attribution owed when the displayed USD rate comes from the exchange-rate provider itself. */

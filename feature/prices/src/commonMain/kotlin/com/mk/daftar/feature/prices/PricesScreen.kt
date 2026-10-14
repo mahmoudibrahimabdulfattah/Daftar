@@ -75,6 +75,7 @@ import com.mk.daftar.feature.prices.resources.prices_col_buy
 import com.mk.daftar.feature.prices.resources.prices_col_karat
 import com.mk.daftar.feature.prices.resources.prices_col_sell
 import com.mk.daftar.feature.prices.resources.prices_date
+import com.mk.daftar.feature.prices.resources.prices_details_title
 import com.mk.daftar.feature.prices.resources.prices_enter_karat
 import com.mk.daftar.feature.prices.resources.prices_enter_usd
 import com.mk.daftar.feature.prices.resources.prices_form_bar
@@ -145,7 +146,7 @@ import org.koin.compose.viewmodel.koinViewModel
 
 /** The prices screen: the view model's state, with the navigator opening the manual editor. */
 @Composable
-fun PricesScreen(modifier: Modifier = Modifier) {
+fun PricesScreen(modifier: Modifier = Modifier, details: Boolean = false) {
     val viewModel: PricesViewModel = koinViewModel()
     val state by viewModel.state.collectAsStateWithLifecycle()
     val navigator = LocalNavigator.current
@@ -159,6 +160,7 @@ fun PricesScreen(modifier: Modifier = Modifier) {
         onIntent = viewModel::onIntent,
         onBack = { navigator.goBack() },
         modifier = modifier,
+        details = details,
     )
 }
 
@@ -173,21 +175,26 @@ fun PricesContent(
     onIntent: (PricesIntent) -> Unit,
     onBack: () -> Unit,
     modifier: Modifier = Modifier,
+    details: Boolean = false,
 ) {
     val refreshLabel = stringResource(Res.string.prices_refresh)
     ShellScreen(modifier = modifier) {
         Column(modifier = Modifier.fillMaxSize()) {
             DaftarTopBar(
-                title = stringResource(Res.string.prices_title),
+                title = stringResource(if (details) Res.string.prices_details_title else Res.string.prices_title),
                 onBack = onBack,
                 backLabel = stringResource(DesignRes.string.btn_back),
-                actions = {
-                    DaftarIconButton(
-                        onClick = { onIntent(PricesIntent.Refresh) },
-                        icon = DaftarIcons.Refresh,
-                        contentDescription = refreshLabel,
-                        enabled = !state.refreshing,
-                    )
+                actions = if (details) {
+                    {}
+                } else {
+                    {
+                        DaftarIconButton(
+                            onClick = { onIntent(PricesIntent.Refresh) },
+                            icon = DaftarIcons.Refresh,
+                            contentDescription = refreshLabel,
+                            enabled = !state.refreshing,
+                        )
+                    }
                 },
             )
             Column(
@@ -208,11 +215,11 @@ fun PricesContent(
                             Text(stringResource(Res.string.prices_load_failed))
                         }
 
-                        is PricesLoad.Ready -> PricesBody(
-                            board = load.board,
-                            state = state,
-                            onIntent = onIntent,
-                        )
+                        is PricesLoad.Ready -> if (details) {
+                            PricesBody(board = load.board, state = state, onIntent = onIntent)
+                        } else {
+                            PricesBoardBody(board = load.board, state = state, onIntent = onIntent)
+                        }
                     }
                 }
             }
@@ -252,8 +259,6 @@ private fun PricesBody(board: PricesBoard, state: PricesUiState, onIntent: (Pric
         SourcesSection(board = board)
         Spacer(Modifier.height(DaftarSpacing.lg))
         UsdSection(usd = board.usd, source = board.usdSource)
-        Spacer(Modifier.height(DaftarSpacing.lg))
-        XauPanel()
         Spacer(Modifier.height(DaftarSpacing.lg))
         OutlineButton(
             onClick = { onIntent(PricesIntent.OpenManual(ManualQuoteRoute(null))) },
@@ -661,30 +666,6 @@ private fun SourceLine(quote: SelectedQuote, label: String) {
 }
 
 @Composable
-private fun XauPanel() {
-    Column(modifier = Modifier.fillMaxWidth()) {
-        val colors = DaftarTheme.colors
-        Text(
-            stringResource(Res.string.prices_xau_title),
-            style = DaftarTheme.typography.sectionHeading,
-            color = colors.ink,
-            modifier = Modifier.semantics {
-                heading()
-            },
-        )
-        Spacer(Modifier.height(DaftarSpacing.xs))
-        DaftarStatusTag(label = stringResource(Res.string.prices_xau_tag), tone = DaftarStatusTone.Warning)
-        Spacer(Modifier.height(DaftarSpacing.xs))
-        Text(
-            stringResource(Res.string.prices_xau_formula),
-            style = DaftarTheme.typography.fineText,
-            color = colors.muted,
-        )
-        Text(stringResource(Res.string.prices_xau_rule), style = DaftarTheme.typography.fineText, color = colors.muted)
-    }
-}
-
-@Composable
 private fun sourceTimeText(time: SourceTime): String = when (time) {
     is SourceTime.Timestamp -> stringResource(Res.string.prices_source_time, stampOf(time.value))
     is SourceTime.DateOnly -> stringResource(Res.string.prices_source_date, dateOf(time.value))
@@ -693,7 +674,7 @@ private fun sourceTimeText(time: SourceTime): String = when (time) {
 
 /** Day, month and time in Cairo, as the approved design writes them. */
 @Composable
-private fun stampOf(at: Instant): String {
+internal fun stampOf(at: Instant): String {
     val local = at.toLocalDateTime(CAIRO)
     val time = "${local.hour.toString().padStart(2, '0')}:${local.minute.toString().padStart(2, '0')}"
     return ltr(stringResource(Res.string.prices_stamp, local.day, stringResource(MONTHS[local.month.ordinal]), time))
@@ -719,7 +700,7 @@ private fun providerResource(provider: QuoteProvider): StringResource = when (pr
     QuoteProvider.USER -> Res.string.prices_provider_manual
 }
 
-private fun RefreshNotice.messageResource(): StringResource = when (this) {
+internal fun RefreshNotice.messageResource(): StringResource = when (this) {
     RefreshNotice.PARTIAL -> Res.string.prices_notice_partial
     RefreshNotice.RATE_LIMITED -> Res.string.prices_notice_rate_limited
     RefreshNotice.INVALID_PAYLOAD -> Res.string.prices_notice_invalid
@@ -739,11 +720,11 @@ private fun missingEnterResource(key: QuoteKey): StringResource = when (key) {
 }
 
 /** Numbers stay left-to-right inside Arabic text, isolated from the surrounding sentence. */
-private fun ltr(text: String): String = "⁦$text⁩"
+internal fun ltr(text: String): String = "⁦$text⁩"
 
 private val CAIRO: TimeZone = TimeZone.of("Africa/Cairo")
 
-private const val MISSING_VALUE = "—"
+internal const val MISSING_VALUE = "—"
 
 private val CONTENT_MAX_WIDTH = 640.dp
 

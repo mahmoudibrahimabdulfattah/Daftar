@@ -65,7 +65,6 @@
     <string name="prices_enter_usd">إدخال سعر الدولار</string>
     <string name="prices_hidden">مخفي</string>
     <string name="prices_usd_heading">الدولار مقابل الجنيه</string>
-    <string name="prices_usd_unit">ج.م لكل دولار</string>
     <string name="prices_sources_heading">المصادر</string>
     <string name="prices_attribution">Rates By Exchange Rate API</string>
     <string name="prices_xau_title">تقدير عالمي منفصل</string>
@@ -118,4 +117,15 @@
     <string name="fx_basis_manual">يدوي · أُدخل: %1$s</string>
     <string name="fx_time_published_checked">نُشر: %1$s / تم التحقق: %2$s</string>
     <string name="fx_time_checked">تم التحقق: %1$s</string>
+    <string name="prices_details_title">المصادر والتفاصيل</string>
+    <string name="prices_gold_heading">أسعار الذهب</string>
+    <string name="prices_gold_unit">ج.م / جرام</string>
+    <string name="prices_usd_title">الدولار الأمريكي</string>
+    <string name="prices_usd_unit">ج.م / دولار</string>
+    <string name="prices_valuation_note">نقيّم ذهبك بسعر «يبيع لك».</string>
+    <string name="prices_details_link">المصادر والتفاصيل</string>
+    <string name="prices_usd_bank">بنك مصر · شراء التحويلات</string>
+    <string name="prices_usd_estimate">تقدير سوقي</string>
+    <string name="prices_usd_manual">سعر يدوي</string>
+    <string name="prices_usd_unknown">نوع السعر غير متاح</string>
 </resources>

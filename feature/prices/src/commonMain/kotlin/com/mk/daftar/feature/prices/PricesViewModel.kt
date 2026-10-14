@@ -13,6 +13,7 @@ import com.mk.daftar.core.domain.usecase.ObserveSelectedQuotesUseCase
 import com.mk.daftar.core.domain.valuation.PortfolioValuation
 import com.mk.daftar.core.domain.valuation.SelectedQuotes
 import com.mk.daftar.core.model.GoldHolding
+import com.mk.daftar.core.navigation.PriceDetailsRoute
 import com.mk.daftar.core.ui.mvi.MviViewModel
 import com.mk.daftar.core.ui.presentation.ValuesVisibility
 import kotlin.time.Clock
@@ -65,6 +66,7 @@ class PricesViewModel(
         when (intent) {
             PricesIntent.Refresh -> refresh.refresh()
             is PricesIntent.OpenManual -> emitEffect(PricesEffect.Open(intent.route))
+            PricesIntent.OpenDetails -> emitEffect(PricesEffect.Open(PriceDetailsRoute))
         }
     }
 

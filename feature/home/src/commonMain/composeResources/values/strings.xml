@@ -76,4 +76,7 @@
     <string name="p25_price_waiting">Waiting for prices</string>
     <string name="home_recovery_suggestion">Protect your notebook from a forgotten PIN with a recovery key.</string>
     <string name="home_recovery_action">Create a recovery key</string>
+    <string name="home_quote_title">Gold and dollar</string>
+    <string name="home_quote_units">Gold: EGP / gram · Dollar: EGP / USD</string>
+    <string name="home_quote_action">Gold and dollar prices, open details</string>
 </resources>

@@ -27,6 +27,10 @@ data object PreferencesRoute : NavKey
 @Serializable
 data object ChangePinRoute : NavKey
 
+/** The prices' sources, exact times, attribution and manual entry, behind the simple board. */
+@Serializable
+data object PriceDetailsRoute : NavKey
+
 /** Creating or replacing the recovery key. */
 @Serializable
 data object RecoveryKeyRoute : NavKey

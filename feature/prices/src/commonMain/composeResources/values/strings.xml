@@ -65,7 +65,6 @@
     <string name="prices_enter_usd">Enter a USD quote</string>
     <string name="prices_hidden">Hidden</string>
     <string name="prices_usd_heading">USD to EGP</string>
-    <string name="prices_usd_unit">EGP per USD</string>
     <string name="prices_sources_heading">Sources</string>
     <string name="prices_attribution">Rates By Exchange Rate API</string>
     <string name="prices_xau_title">Separate global estimate</string>
@@ -118,4 +117,15 @@
     <string name="fx_basis_manual">Manual · entered: %1$s</string>
     <string name="fx_time_published_checked">Published: %1$s / Checked: %2$s</string>
     <string name="fx_time_checked">Checked: %1$s</string>
+    <string name="prices_details_title">Sources and details</string>
+    <string name="prices_gold_heading">Gold prices</string>
+    <string name="prices_gold_unit">EGP / gram</string>
+    <string name="prices_usd_title">US dollar</string>
+    <string name="prices_usd_unit">EGP / USD</string>
+    <string name="prices_valuation_note">Your gold is valued at “Sells to you”.</string>
+    <string name="prices_details_link">Sources and details</string>
+    <string name="prices_usd_bank">Banque Misr · transfer buy</string>
+    <string name="prices_usd_estimate">Market estimate</string>
+    <string name="prices_usd_manual">Manual rate</string>
+    <string name="prices_usd_unknown">Rate basis unavailable</string>
 </resources>
