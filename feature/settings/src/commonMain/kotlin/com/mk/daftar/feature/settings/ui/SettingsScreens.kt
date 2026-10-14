@@ -36,6 +36,7 @@ import com.mk.daftar.core.navigation.ChangePinRoute
 import com.mk.daftar.core.navigation.CloudRoute
 import com.mk.daftar.core.navigation.LocalNavigator
 import com.mk.daftar.core.navigation.PreferencesRoute
+import com.mk.daftar.core.navigation.RecoveryKeyRoute
 import com.mk.daftar.core.navigation.TopLevelDestination
 import com.mk.daftar.feature.settings.AppBuildInfo
 import com.mk.daftar.feature.settings.BiometricAvailability
@@ -74,6 +75,10 @@ import com.mk.daftar.feature.settings.resources.settings_lock_value
 import com.mk.daftar.feature.settings.resources.settings_pin_body
 import com.mk.daftar.feature.settings.resources.settings_pin_change
 import com.mk.daftar.feature.settings.resources.settings_pin_title
+import com.mk.daftar.feature.settings.resources.settings_recovery_body
+import com.mk.daftar.feature.settings.resources.settings_recovery_off
+import com.mk.daftar.feature.settings.resources.settings_recovery_on
+import com.mk.daftar.feature.settings.resources.settings_recovery_title
 import com.mk.daftar.feature.settings.resources.settings_section_about
 import com.mk.daftar.feature.settings.resources.settings_section_appearance
 import com.mk.daftar.feature.settings.resources.settings_section_security
@@ -104,6 +109,7 @@ fun SettingsScreen(modifier: Modifier = Modifier) {
         appInfo = appInfo,
         onIntent = viewModel::onIntent,
         onChangePin = { navigator.goTo(ChangePinRoute) },
+        onOpenRecoveryKey = { navigator.goTo(RecoveryKeyRoute) },
         onOpenPreferences = { navigator.goTo(PreferencesRoute) },
         onOpenAbout = { navigator.goTo(AboutRoute) },
         onOpenExport = { navigator.goTo(BackupExportRoute) },
@@ -121,6 +127,7 @@ fun SettingsContent(
     onIntent: (SettingsIntent) -> Unit,
     onChangePin: () -> Unit,
     onOpenPreferences: () -> Unit,
+    onOpenRecoveryKey: () -> Unit = {},
     onOpenAbout: () -> Unit,
     onOpenExport: () -> Unit,
     cloudOffered: Boolean = false,
@@ -140,6 +147,22 @@ fun SettingsContent(
             trailing = DaftarSettingTrailing.Link(stringResource(Res.string.settings_pin_change), onChangePin),
         )
         BiometricsRow(state = state, onIntent = onIntent)
+        DaftarSettingRow(
+            title = stringResource(Res.string.settings_recovery_title),
+            subtitle = stringResource(Res.string.settings_recovery_body),
+            trailing = DaftarSettingTrailing.Link(
+                stringResource(
+                    if (state.recoveryActive ==
+                        true
+                    ) {
+                        Res.string.settings_recovery_on
+                    } else {
+                        Res.string.settings_recovery_off
+                    },
+                ),
+                onOpenRecoveryKey,
+            ),
+        )
         DaftarSettingRow(
             title = stringResource(Res.string.settings_lock_title),
             subtitle = stringResource(Res.string.settings_lock_body),

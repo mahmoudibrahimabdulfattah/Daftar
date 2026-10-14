@@ -27,6 +27,7 @@ import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.rememberUpdatedState
+import androidx.compose.runtime.saveable.rememberSaveable
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
@@ -55,6 +56,7 @@ import androidx.compose.ui.unit.Dp
 import androidx.compose.ui.unit.dp
 import androidx.lifecycle.Lifecycle
 import androidx.lifecycle.compose.LocalLifecycleOwner
+import com.mk.daftar.core.designsystem.component.DaftarFieldKind
 import com.mk.daftar.core.designsystem.component.DaftarIcon
 import com.mk.daftar.core.designsystem.component.DaftarIconButton
 import com.mk.daftar.core.designsystem.component.DaftarKeypad
@@ -63,6 +65,7 @@ import com.mk.daftar.core.designsystem.component.DaftarNotePanel
 import com.mk.daftar.core.designsystem.component.DaftarNoteTone
 import com.mk.daftar.core.designsystem.component.DaftarPinField
 import com.mk.daftar.core.designsystem.component.DaftarTextButton
+import com.mk.daftar.core.designsystem.component.DaftarTextField
 import com.mk.daftar.core.designsystem.component.DaftarTopBar
 import com.mk.daftar.core.designsystem.component.OutlineButton
 import com.mk.daftar.core.designsystem.component.PrimaryButton
@@ -93,6 +96,7 @@ import com.mk.daftar.feature.auth.resources.auth_biometric_privacy
 import com.mk.daftar.feature.auth.resources.auth_biometric_unavailable
 import com.mk.daftar.feature.auth.resources.auth_busy_creating
 import com.mk.daftar.feature.auth.resources.auth_busy_enrolling
+import com.mk.daftar.feature.auth.resources.auth_busy_recovering
 import com.mk.daftar.feature.auth.resources.auth_busy_unlocking
 import com.mk.daftar.feature.auth.resources.auth_checking
 import com.mk.daftar.feature.auth.resources.auth_confirm_action
@@ -110,7 +114,19 @@ import com.mk.daftar.feature.auth.resources.auth_incorrect_pin
 import com.mk.daftar.feature.auth.resources.auth_open_failed
 import com.mk.daftar.feature.auth.resources.auth_recovery_backup_warning
 import com.mk.daftar.feature.auth.resources.auth_recovery_body
+import com.mk.daftar.feature.auth.resources.auth_recovery_confirm_heading
+import com.mk.daftar.feature.auth.resources.auth_recovery_continue
 import com.mk.daftar.feature.auth.resources.auth_recovery_heading
+import com.mk.daftar.feature.auth.resources.auth_recovery_key_body
+import com.mk.daftar.feature.auth.resources.auth_recovery_key_heading
+import com.mk.daftar.feature.auth.resources.auth_recovery_key_incomplete
+import com.mk.daftar.feature.auth.resources.auth_recovery_key_label
+import com.mk.daftar.feature.auth.resources.auth_recovery_key_offer_body
+import com.mk.daftar.feature.auth.resources.auth_recovery_key_offer_heading
+import com.mk.daftar.feature.auth.resources.auth_recovery_key_rejected
+import com.mk.daftar.feature.auth.resources.auth_recovery_new_body
+import com.mk.daftar.feature.auth.resources.auth_recovery_new_heading
+import com.mk.daftar.feature.auth.resources.auth_recovery_use_key
 import com.mk.daftar.feature.auth.resources.auth_restart_creation
 import com.mk.daftar.feature.auth.resources.auth_restore_backup
 import com.mk.daftar.feature.auth.resources.auth_restore_cloud
@@ -172,7 +188,8 @@ fun AuthContent(
             .focusRequester(focus)
             .focusable()
             .onPreviewKeyEvent { event ->
-                val intent = event.toIntent()
+                // Only the PIN screens take hardware keys; the recovery key field types its own characters.
+                val intent = if (state.phase.usesPinLayout) event.toIntent() else null
                 if (intent != null) onIntent(intent)
                 intent != null
             },
@@ -189,6 +206,11 @@ fun AuthContent(
                 AuthPhase.Recovery -> AuthTopBar(
                     title = stringResource(Res.string.auth_forgot_pin),
                     onBack = { onIntent(AuthIntent.LeaveRecovery) },
+                )
+
+                AuthPhase.RecoveryKey -> AuthTopBar(
+                    title = stringResource(Res.string.auth_forgot_pin),
+                    onBack = { onIntent(AuthIntent.Back) },
                 )
 
                 else -> Unit
@@ -221,6 +243,8 @@ private fun AuthPhaseContent(state: AuthUiState, onIntent: (AuthIntent) -> Unit,
         AuthPhase.Biometric -> BiometricBody(state, onIntent)
 
         AuthPhase.Recovery -> RecoveryBody(state, onIntent, cloudRestoreOffered)
+
+        AuthPhase.RecoveryKey -> RecoveryKeyBody(state, onIntent)
 
         is AuthPhase.Unavailable -> UnavailableBody(phase.reason, state, onIntent)
 
@@ -351,20 +375,39 @@ private fun RecoveryBody(state: AuthUiState, onIntent: (AuthIntent) -> Unit, clo
         val colors = DaftarTheme.colors
         val typography = DaftarTheme.typography
         Text(
-            text = stringResource(Res.string.auth_recovery_heading),
+            text = stringResource(
+                if (state.recoveryOffered) {
+                    Res.string.auth_recovery_key_offer_heading
+                } else {
+                    Res.string.auth_recovery_heading
+                },
+            ),
             style = typography.screenHeading,
             color = colors.ink,
             textAlign = TextAlign.Center,
             modifier = Modifier.fillMaxWidth().semantics { heading() },
         )
         Text(
-            text = stringResource(Res.string.auth_recovery_body),
+            text = stringResource(
+                if (state.recoveryOffered) Res.string.auth_recovery_key_offer_body else Res.string.auth_recovery_body,
+            ),
             style = typography.supportingBody,
             color = colors.muted,
             textAlign = TextAlign.Center,
         )
-        DaftarNotePanel(modifier = Modifier.fillMaxWidth(), tone = DaftarNoteTone.Warning) {
-            Text(stringResource(Res.string.auth_recovery_backup_warning), style = typography.noteBody)
+        if (state.recoveryOffered) {
+            PrimaryButton(
+                onClick = { onIntent(AuthIntent.UseRecoveryKey) },
+                enabled = state.busy == null,
+                fullWidth = true,
+                modifier = Modifier.fillMaxWidth(),
+            ) {
+                Text(stringResource(Res.string.auth_recovery_use_key))
+            }
+        } else {
+            DaftarNotePanel(modifier = Modifier.fillMaxWidth(), tone = DaftarNoteTone.Warning) {
+                Text(stringResource(Res.string.auth_recovery_backup_warning), style = typography.noteBody)
+            }
         }
         OutlineButton(
             onClick = { onIntent(AuthIntent.LeaveRecovery) },
@@ -389,6 +432,58 @@ private fun RecoveryBody(state: AuthUiState, onIntent: (AuthIntent) -> Unit, clo
             ) {
                 Text(stringResource(Res.string.auth_restore_cloud))
             }
+        }
+    }
+}
+
+/**
+ * The recovery key entry. The text stays in this field and the view model; the state only says whether it is a
+ * complete key. A rejected key shows its error here, after the new PIN was chosen, and changes nothing.
+ */
+@Composable
+private fun RecoveryKeyBody(state: AuthUiState, onIntent: (AuthIntent) -> Unit) {
+    PhaseLayout {
+        val colors = DaftarTheme.colors
+        val typography = DaftarTheme.typography
+        var text by rememberSaveable { mutableStateOf("") }
+        Text(
+            text = stringResource(Res.string.auth_recovery_key_heading),
+            style = typography.screenHeading,
+            color = colors.ink,
+            textAlign = TextAlign.Center,
+            modifier = Modifier.fillMaxWidth().semantics { heading() },
+        )
+        Text(
+            text = stringResource(Res.string.auth_recovery_key_body),
+            style = typography.supportingBody,
+            color = colors.muted,
+            textAlign = TextAlign.Center,
+        )
+        val incomplete = text.isNotBlank() && !state.recoveryKeyReady
+        DaftarTextField(
+            value = text,
+            onValueChange = { value ->
+                text = value
+                onIntent(AuthIntent.RecoveryKeyChanged(value))
+            },
+            label = stringResource(Res.string.auth_recovery_key_label),
+            kind = DaftarFieldKind.Code,
+            placeholder = "XXXX-XXXX-XXXX-XXXX-XXXX-XXXX-XXXX-XXXX",
+            helper = if (incomplete) stringResource(Res.string.auth_recovery_key_incomplete) else null,
+            invalid = incomplete,
+            enabled = state.busy == null,
+            modifier = Modifier.fillMaxWidth(),
+        )
+        if (state.error == AuthError.RecoveryKeyRejected) {
+            ErrorNote(icon = DaftarIcons.Alert, message = stringResource(Res.string.auth_recovery_key_rejected))
+        }
+        PrimaryButton(
+            onClick = { onIntent(AuthIntent.SubmitRecoveryKey) },
+            enabled = state.recoveryKeyReady && state.busy == null,
+            fullWidth = true,
+            modifier = Modifier.fillMaxWidth(),
+        ) {
+            Text(stringResource(Res.string.auth_recovery_continue))
         }
     }
 }
@@ -476,7 +571,7 @@ private fun PinScreen(state: AuthUiState, onIntent: (AuthIntent) -> Unit, modifi
                 )
             }
         }
-        if (state.phase == AuthPhase.Confirm) {
+        if (state.phase == AuthPhase.Confirm || (state.recovering && state.phase == AuthPhase.Create)) {
             DaftarIconButton(
                 onClick = { onIntent(AuthIntent.Back) },
                 icon = DaftarIcons.Back,
@@ -527,6 +622,8 @@ private fun rememberPinLanes(width: Dp): PinLanes {
         stringResource(Res.string.auth_create_heading),
         stringResource(Res.string.auth_confirm_heading),
         stringResource(Res.string.auth_unlock_heading),
+        stringResource(Res.string.auth_recovery_new_heading),
+        stringResource(Res.string.auth_recovery_confirm_heading),
     )
     // The longest countdown the penalty schedule can show, and a few-form plural, so every backoff variant fits.
     val longest =
@@ -541,6 +638,8 @@ private fun rememberPinLanes(width: Dp): PinLanes {
         stringResource(Res.string.auth_open_failed),
         stringResource(Res.string.auth_busy_creating),
         stringResource(Res.string.auth_busy_unlocking),
+        stringResource(Res.string.auth_busy_recovering),
+        stringResource(Res.string.auth_recovery_new_body),
         stringResource(Res.string.p25_pin_biometric_unavailable),
         stringResource(Res.string.p25_pin_biometric_locked),
         stringResource(Res.string.p25_pin_biometric_disabled),
@@ -577,15 +676,18 @@ private fun rememberPinLanes(width: Dp): PinLanes {
 
 @Composable
 private fun PinIntro(state: AuthUiState, lanes: PinLanes) {
-    val heading = when (state.phase) {
-        AuthPhase.Create -> stringResource(Res.string.auth_create_heading)
-        AuthPhase.Confirm -> stringResource(Res.string.auth_confirm_heading)
+    val heading = when {
+        state.recovering && state.phase == AuthPhase.Create -> stringResource(Res.string.auth_recovery_new_heading)
+        state.recovering -> stringResource(Res.string.auth_recovery_confirm_heading)
+        state.phase == AuthPhase.Create -> stringResource(Res.string.auth_create_heading)
+        state.phase == AuthPhase.Confirm -> stringResource(Res.string.auth_confirm_heading)
         else -> stringResource(Res.string.auth_unlock_heading)
     }
-    // Unlock reserves the step line without speaking it.
-    val step = when (state.phase) {
-        AuthPhase.Create -> stringResource(Res.string.auth_step_1)
-        AuthPhase.Confirm -> stringResource(Res.string.auth_step_2)
+    // Unlock and a recovery reserve the step line without speaking it.
+    val step = when {
+        state.recovering -> null
+        state.phase == AuthPhase.Create -> stringResource(Res.string.auth_step_1)
+        state.phase == AuthPhase.Confirm -> stringResource(Res.string.auth_step_2)
         else -> null
     }
     Column(
@@ -743,18 +845,27 @@ private fun pinMessageText(message: PinMessage): String = when (message) {
     is PinMessage.Failure -> stringResource(message.error.messageResource())
 
     is PinMessage.Busy -> stringResource(
-        if (message.busy == AuthBusy.Creating) Res.string.auth_busy_creating else Res.string.auth_busy_unlocking,
+        when (message.busy) {
+            AuthBusy.Creating -> Res.string.auth_busy_creating
+            AuthBusy.Recovering -> Res.string.auth_busy_recovering
+            else -> Res.string.auth_busy_unlocking
+        },
     )
 
     is PinMessage.Notice -> stringResource(message.notice.messageResource())
 
     is PinMessage.Explanation -> stringResource(
-        when (message.phase) {
-            AuthPhase.Create -> Res.string.auth_create_body
-            AuthPhase.Confirm -> Res.string.auth_confirm_body
-            else -> Res.string.auth_unlock_body
+        when {
+            message.recovering -> Res.string.auth_recovery_new_body
+            else -> message.phase.explanationResource()
         },
     )
+}
+
+private fun AuthPhase.explanationResource(): StringResource = when (this) {
+    AuthPhase.Create -> Res.string.auth_create_body
+    AuthPhase.Confirm -> Res.string.auth_confirm_body
+    else -> Res.string.auth_unlock_body
 }
 
 /**
@@ -879,6 +990,7 @@ private fun AuthError.messageResource(): StringResource = when (this) {
     AuthError.PinMismatch -> Res.string.p25_pin_mismatch
     AuthError.IncorrectPin -> Res.string.auth_incorrect_pin
     AuthError.OpenFailed -> Res.string.auth_open_failed
+    AuthError.RecoveryKeyRejected -> Res.string.auth_recovery_key_rejected
 }
 
 private fun AuthNotice.messageResource(): StringResource = when (this) {

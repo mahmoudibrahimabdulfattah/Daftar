@@ -4,6 +4,7 @@ import androidx.lifecycle.viewModelScope
 import androidx.navigation3.runtime.NavKey
 import com.mk.daftar.core.domain.refresh.PriceRefreshController
 import com.mk.daftar.core.domain.repository.ZakatTrackingState
+import com.mk.daftar.core.domain.security.RecoveryKeyStatus
 import com.mk.daftar.core.domain.storage.VaultRead
 import com.mk.daftar.core.domain.usecase.CompleteFirstRunGuideUseCase
 import com.mk.daftar.core.domain.usecase.FirstRunGuideState
@@ -24,6 +25,7 @@ import com.mk.daftar.core.navigation.GoldRoute
 import com.mk.daftar.core.navigation.InvestmentAddRoute
 import com.mk.daftar.core.navigation.InvestmentsRoute
 import com.mk.daftar.core.navigation.PricesRoute
+import com.mk.daftar.core.navigation.RecoveryKeyRoute
 import com.mk.daftar.core.navigation.ZakatCalculatorRoute
 import com.mk.daftar.core.navigation.ZakatHistoryRoute
 import com.mk.daftar.core.navigation.ZakatYearRoute
@@ -49,6 +51,7 @@ class HomeViewModel(
     private val refresh: PriceRefreshController,
     observeFirstRun: ObserveFirstRunGuideUseCase,
     private val completeFirstRun: CompleteFirstRunGuideUseCase,
+    private val recoveryKey: RecoveryKeyStatus = RecoveryKeyStatus { null },
 ) : MviViewModel<HomeUiState, HomeIntent, HomeEffect>(HomeUiState()) {
 
     init {
@@ -81,6 +84,13 @@ class HomeViewModel(
             HomeIntent.ToggleValues -> visibility.toggle()
 
             HomeIntent.Refresh -> refresh.refresh()
+
+            HomeIntent.CheckRecoveryKey -> viewModelScope.launch {
+                val missing = recoveryKey.isSetUp() == false
+                reduce { copy(recoveryKeyMissing = missing) }
+            }
+
+            HomeIntent.OpenRecoveryKey -> emitEffect(HomeEffect.Open(RecoveryKeyRoute))
 
             is HomeIntent.OpenCategory -> emitEffect(HomeEffect.Open(intent.category.route()))
 

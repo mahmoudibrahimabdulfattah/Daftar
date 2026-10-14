@@ -3,6 +3,7 @@ package com.mk.daftar.feature.auth
 import androidx.lifecycle.viewModelScope
 import com.mk.daftar.core.common.MonotonicTime
 import com.mk.daftar.core.security.PinEntryBuffer
+import com.mk.daftar.core.security.RecoveryKeyFormat
 import com.mk.daftar.core.security.SecretBytes
 import com.mk.daftar.core.security.SecurityError
 import com.mk.daftar.core.security.SecurityStatus
@@ -39,6 +40,9 @@ class AuthViewModel(
 
     /** The PIN the user chose. Owned here until creation takes it. */
     private var candidate: SecretBytes? = null
+
+    /** The typed recovery key. Never in the state; dropped on every privacy event, lock and status change. */
+    private var recoveryKey: String? = null
 
     /**
      * A permanent fault that a failed open reported. A later status read cannot replace it: the gate rechecks the status
@@ -81,6 +85,9 @@ class AuthViewModel(
             AuthIntent.AutomaticBiometric -> automaticBiometric()
             AuthIntent.OpenRestore -> dismissAutoRequest()
             AuthIntent.OpenCloudRestore -> dismissAutoRequest()
+            AuthIntent.UseRecoveryKey -> useRecoveryKey()
+            is AuthIntent.RecoveryKeyChanged -> recoveryKeyChanged(intent.text)
+            AuthIntent.SubmitRecoveryKey -> submitRecoveryKey()
         }
     }
 
@@ -139,7 +146,9 @@ class AuthViewModel(
         }
         val matched = entry.matches(expected)
         entry.clear()
-        if (matched) {
+        if (matched && currentState.recovering) {
+            recoverVault()
+        } else if (matched) {
             reduce {
                 copy(
                     phase = AuthPhase.Biometric,
@@ -172,7 +181,20 @@ class AuthViewModel(
         when (currentState.phase) {
             AuthPhase.Confirm, AuthPhase.Biometric -> restartCreation()
 
-            AuthPhase.Create, AuthPhase.Unlock -> {
+            AuthPhase.Create -> if (currentState.recovering) {
+                wipeDrafts()
+                reduce { copy(phase = AuthPhase.RecoveryKey, recovering = false, error = null) }
+            } else {
+                entry.clear()
+                reduce { copy(enteredCount = 0, error = null) }
+            }
+
+            AuthPhase.RecoveryKey -> {
+                recoveryKey = null
+                reduce { copy(phase = AuthPhase.Recovery, recoveryKeyReady = false, error = null) }
+            }
+
+            AuthPhase.Unlock -> {
                 entry.clear()
                 reduce { copy(enteredCount = 0, error = null) }
             }
@@ -433,6 +455,70 @@ class AuthViewModel(
         dismissAutoRequest()
         entry.clear()
         reduce { copy(phase = AuthPhase.Recovery, enteredCount = 0, error = null) }
+        viewModelScope.launch {
+            val available = gateway.recoveryAvailable()
+            reduce { copy(recoveryOffered = available) }
+        }
+    }
+
+    private fun useRecoveryKey() {
+        if (currentState.phase != AuthPhase.Recovery || currentState.busy != null) return
+        recoveryKey = null
+        reduce { copy(phase = AuthPhase.RecoveryKey, recoveryKeyReady = false, error = null) }
+    }
+
+    private fun recoveryKeyChanged(text: String) {
+        if (currentState.phase != AuthPhase.RecoveryKey || currentState.busy != null) return
+        recoveryKey = text
+        reduce { copy(recoveryKeyReady = RecoveryKeyFormat.isWellFormed(text), error = null) }
+    }
+
+    /** A complete key moves on to choosing the new PIN. Whether it is this vault's key is known only at the end. */
+    private fun submitRecoveryKey() {
+        if (currentState.phase != AuthPhase.RecoveryKey || !currentState.recoveryKeyReady) return
+        wipeDrafts()
+        reduce { copy(phase = AuthPhase.Create, recovering = true, error = null) }
+    }
+
+    /** Opens the vault with the recovery key and the confirmed new PIN. A rejected key returns to the key entry. */
+    private fun recoverVault() {
+        val pin = candidate ?: return restartCreation()
+        val key = recoveryKey ?: return restartCreation()
+        candidate = null
+        run(AuthBusy.Recovering) {
+            val result = try {
+                gateway.recover(key, pin)
+            } finally {
+                pin.wipe()
+            }
+            coroutineContext.ensureActive()
+            when {
+                result == AuthResult.Opened -> {
+                    openedSinceLock = true
+                    gateway.clearAutoAttempt()
+                    recoveryKey = null
+                    wipeDrafts()
+                    reduce { copy(recovering = false, recoveryKeyReady = false) }
+                }
+
+                result is AuthResult.Security && result.error == SecurityError.RecoveryKeyRejected -> {
+                    wipeDrafts()
+                    reduce {
+                        copy(
+                            phase = AuthPhase.RecoveryKey,
+                            recovering = false,
+                            error = AuthError.RecoveryKeyRejected,
+                        )
+                    }
+                }
+
+                result is AuthResult.Security -> afterFailedOpen(result.error, AuthError.OpenFailed)
+
+                result is AuthResult.Storage -> recheckAfterFailure(AuthError.OpenFailed)
+
+                else -> refreshNow()
+            }
+        }
     }
 
     private fun leaveRecovery() {
@@ -456,6 +542,11 @@ class AuthViewModel(
         ready: Boolean,
         automaticDue: Boolean,
     ) {
+        // Any status answer ends a recovery in progress: the key is dropped and the flow starts again from the lock.
+        recoveryKey = null
+        if (currentState.recovering || currentState.recoveryKeyReady) {
+            reduce { copy(recovering = false, recoveryKeyReady = false) }
+        }
         when (status) {
             SecurityStatus.NotInitialized -> {
                 wipeDrafts()
@@ -550,16 +641,23 @@ class AuthViewModel(
      * operation is not cancelled here: the prompt deactivates the app, and an actual lock cancels it in the session.
      */
     private fun invalidate() {
+        val recovering = currentState.recovering || currentState.phase == AuthPhase.RecoveryKey
+        recoveryKey = null
+        if (recovering) reduce { copy(recovering = false, recoveryKeyReady = false) }
         wipeDrafts()
         if (currentState.busy?.isBiometric == true) return
         workToken++
         work?.cancel()
         statusJob?.cancel()
         offerJob?.cancel()
-        val creating = currentState.phase.isCreation
+        val creating = currentState.phase.isCreation && !recovering
         reduce {
             copy(
-                phase = if (creating) AuthPhase.Create else phase,
+                phase = when {
+                    recovering -> AuthPhase.Recovery
+                    creating -> AuthPhase.Create
+                    else -> phase
+                },
                 busy = null,
                 error = null,
                 retrySeconds = retrySeconds,
@@ -582,6 +680,7 @@ class AuthViewModel(
         entry.clear()
         candidate?.wipe()
         candidate = null
+        if (!currentState.recovering && currentState.phase != AuthPhase.RecoveryKey) recoveryKey = null
         reduce { copy(enteredCount = 0) }
     }
 

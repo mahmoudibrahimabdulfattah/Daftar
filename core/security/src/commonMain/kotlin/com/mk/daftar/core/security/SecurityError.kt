@@ -39,6 +39,12 @@ sealed interface SecurityError {
 
     /** The session was locked while this unlock was in flight, so the late result was discarded. */
     data object SessionSuperseded : SecurityError
+
+    /** The recovery key is malformed or is not this vault's recovery key. */
+    data object RecoveryKeyRejected : SecurityError
+
+    /** This vault has no recovery key. */
+    data object RecoveryNotSetUp : SecurityError
 }
 
 /** Startup-visible state of the vault. */

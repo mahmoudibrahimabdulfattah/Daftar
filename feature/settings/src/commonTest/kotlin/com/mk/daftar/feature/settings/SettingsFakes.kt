@@ -85,6 +85,19 @@ class FakeSettingsGateway : SettingsSecurityGateway {
     val changed = mutableListOf<Pair<String, String>>()
     val reenrolled = mutableListOf<String>()
     var disables = 0
+    var recoveryActive: Boolean? = false
+    var onCreateRecovery: suspend (String) -> Outcome<String, SecurityActionFailure> = {
+        Outcome.Success("AAAA-BBBB-CCCC-DDDD-EEEE-FFFF-GGGG-HJKM")
+    }
+    val recoveryPins = mutableListOf<String>()
+
+    override suspend fun recoveryKeyActive(): Boolean? = recoveryActive
+
+    override suspend fun createRecoveryKey(pin: SecretBytes): Outcome<String, SecurityActionFailure> {
+        val digits = pin.use { it.decodeToString() }
+        recoveryPins += digits
+        return onCreateRecovery(digits)
+    }
 
     override suspend fun biometricFacts(): BiometricFacts = facts
 

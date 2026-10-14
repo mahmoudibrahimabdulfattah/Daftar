@@ -5,6 +5,7 @@ package com.mk.daftar.feature.auth
 import com.mk.daftar.core.common.MonotonicTime
 import com.mk.daftar.core.domain.storage.StorageError
 import com.mk.daftar.core.security.BiometricCapability
+import com.mk.daftar.core.security.RecoveryKeyFormat
 import com.mk.daftar.core.security.SecretBytes
 import com.mk.daftar.core.security.SecurityError
 import com.mk.daftar.core.security.SecurityStatus
@@ -95,6 +96,17 @@ private class FakeGateway : AuthGateway {
     override suspend fun clearAutoAttempt() {
         clearCalls++
         autoConsumed = false
+    }
+
+    var recoveryAvailable = true
+    var onRecover: suspend (String, SecretBytes) -> AuthResult = { _, _ -> AuthResult.Opened }
+    val recoveries = mutableListOf<Pair<String, String>>()
+
+    override suspend fun recoveryAvailable(): Boolean = recoveryAvailable
+
+    override suspend fun recover(recoveryKey: String, pin: SecretBytes): AuthResult {
+        recoveries += recoveryKey to pin.use { it.decodeToString() }
+        return onRecover(recoveryKey, pin)
     }
 }
 
@@ -880,5 +892,95 @@ class AuthViewModelTest {
         advanceUntilIdle()
         assertEquals(1, gateway.clearCalls)
         assertFalse(gateway.autoConsumed)
+    }
+
+    /** A recovery key with a valid checksum, built the way the vault formats one. */
+    private val validKey: String = RecoveryKeyFormat.format(ByteArray(RecoveryKeyFormat.SECRET_BYTES) { 5 })
+
+    private fun TestScope.lockedForRecovery(gateway: FakeGateway): AuthViewModel {
+        gateway.status = SecurityStatus.Locked(null)
+        val (vm, _) = rig(gateway)
+        advanceUntilIdle()
+        vm.onIntent(AuthIntent.ShowRecovery)
+        advanceUntilIdle()
+        return vm
+    }
+
+    @Test
+    fun aRecoveryKeyAndANewPinOpenTheVault() = runTest(dispatcher) {
+        val gateway = FakeGateway()
+        val vm = lockedForRecovery(gateway)
+        assertTrue(vm.state.value.recoveryOffered)
+
+        vm.onIntent(AuthIntent.UseRecoveryKey)
+        assertEquals(AuthPhase.RecoveryKey, vm.state.value.phase)
+        vm.onIntent(AuthIntent.RecoveryKeyChanged(validKey.lowercase()))
+        assertTrue(vm.state.value.recoveryKeyReady)
+        vm.onIntent(AuthIntent.SubmitRecoveryKey)
+        assertEquals(AuthPhase.Create, vm.state.value.phase)
+        assertTrue(vm.state.value.recovering)
+
+        vm.type("975310")
+        vm.onIntent(AuthIntent.Submit)
+        vm.type("975310")
+        vm.onIntent(AuthIntent.Submit)
+        advanceUntilIdle()
+
+        assertEquals(listOf(validKey.lowercase() to "975310"), gateway.recoveries)
+        assertEquals(0, gateway.createCalls, "a recovery never creates a new vault")
+        assertFalse(vm.state.value.recovering)
+    }
+
+    @Test
+    fun anIncompleteKeyCannotContinue() = runTest(dispatcher) {
+        val gateway = FakeGateway()
+        val vm = lockedForRecovery(gateway)
+        vm.onIntent(AuthIntent.UseRecoveryKey)
+        vm.onIntent(AuthIntent.RecoveryKeyChanged(validKey.dropLast(2)))
+        assertFalse(vm.state.value.recoveryKeyReady)
+        vm.onIntent(AuthIntent.SubmitRecoveryKey)
+        assertEquals(AuthPhase.RecoveryKey, vm.state.value.phase)
+    }
+
+    @Test
+    fun aRejectedKeyReturnsToTheKeyEntryWithItsError() = runTest(dispatcher) {
+        val gateway = FakeGateway()
+        gateway.onRecover = { _, _ -> AuthResult.Security(SecurityError.RecoveryKeyRejected) }
+        val vm = lockedForRecovery(gateway)
+        vm.onIntent(AuthIntent.UseRecoveryKey)
+        vm.onIntent(AuthIntent.RecoveryKeyChanged(validKey))
+        vm.onIntent(AuthIntent.SubmitRecoveryKey)
+        vm.type("975310")
+        vm.onIntent(AuthIntent.Submit)
+        vm.type("975310")
+        vm.onIntent(AuthIntent.Submit)
+        advanceUntilIdle()
+
+        assertEquals(AuthPhase.RecoveryKey, vm.state.value.phase)
+        assertEquals(AuthError.RecoveryKeyRejected, vm.state.value.error)
+        assertFalse(vm.state.value.recovering)
+    }
+
+    @Test
+    fun withoutARecoveryKeyTheScreenOffersOnlyBackups() = runTest(dispatcher) {
+        val gateway = FakeGateway()
+        gateway.recoveryAvailable = false
+        val vm = lockedForRecovery(gateway)
+        assertFalse(vm.state.value.recoveryOffered)
+    }
+
+    @Test
+    fun aStatusRecheckDropsARecoveryInProgress() = runTest(dispatcher) {
+        val gateway = FakeGateway()
+        val vm = lockedForRecovery(gateway)
+        vm.onIntent(AuthIntent.UseRecoveryKey)
+        vm.onIntent(AuthIntent.RecoveryKeyChanged(validKey))
+        vm.onIntent(AuthIntent.SubmitRecoveryKey)
+        vm.onIntent(AuthIntent.Recheck)
+        advanceUntilIdle()
+
+        assertEquals(AuthPhase.Unlock, vm.state.value.phase)
+        assertFalse(vm.state.value.recovering)
+        assertFalse(vm.state.value.biometricAutoPending, "returning from recovery never prompts by itself")
     }
 }

@@ -17,6 +17,7 @@ import androidx.compose.material3.ModalBottomSheet
 import androidx.compose.material3.Text
 import androidx.compose.material3.pulltorefresh.PullToRefreshBox
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
@@ -102,6 +103,8 @@ import com.mk.daftar.feature.home.resources.home_month_9
 import com.mk.daftar.feature.home.resources.home_quote_caption
 import com.mk.daftar.feature.home.resources.home_quote_details
 import com.mk.daftar.feature.home.resources.home_quote_refreshing
+import com.mk.daftar.feature.home.resources.home_recovery_action
+import com.mk.daftar.feature.home.resources.home_recovery_suggestion
 import com.mk.daftar.feature.home.resources.home_refresh
 import com.mk.daftar.feature.home.resources.home_refresh_failed
 import com.mk.daftar.feature.home.resources.home_show_values
@@ -151,6 +154,8 @@ fun HomeScreen(modifier: Modifier = Modifier) {
     val viewModel: HomeViewModel = koinViewModel()
     val state by viewModel.state.collectAsStateWithLifecycle()
     val navigator = LocalNavigator.current
+    // Each return to Home reads again, so a recovery key created in Settings removes the suggestion.
+    LaunchedEffect(Unit) { viewModel.onIntent(HomeIntent.CheckRecoveryKey) }
     CollectEffects(viewModel.effects) { effect ->
         when (effect) {
             is HomeEffect.Open -> navigator.goTo(effect.route)
@@ -281,6 +286,9 @@ private fun ReadyBody(
     }
     // An empty vault has nothing to give zakat on yet, so the yearly reminder waits for the first record.
     if (state.firstRun is FirstRunGuideState.HasRecords) ZakatSection(due = state.zakatDue, onIntent = onIntent)
+    if (state.firstRun is FirstRunGuideState.HasRecords && state.recoveryKeyMissing) {
+        RecoveryKeySuggestion(onIntent = onIntent)
+    }
     QuoteSection(
         quotes = figures.quotes,
         refreshing = state.refreshing,
@@ -293,6 +301,18 @@ private fun ReadyBody(
         DaftarNotePanel(tone = DaftarNoteTone.Context) {
             Text(stringResource(Res.string.home_hidden_note))
         }
+    }
+}
+
+/** A quiet suggestion, once the vault holds records, to create the recovery key that protects them. */
+@Composable
+private fun RecoveryKeySuggestion(onIntent: (HomeIntent) -> Unit) {
+    Spacer(Modifier.height(DaftarSpacing.md))
+    DaftarNotePanel(tone = DaftarNoteTone.Context) {
+        Text(stringResource(Res.string.home_recovery_suggestion))
+    }
+    DaftarTextButton(onClick = { onIntent(HomeIntent.OpenRecoveryKey) }) {
+        Text(stringResource(Res.string.home_recovery_action))
     }
 }
 

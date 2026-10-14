@@ -48,6 +48,16 @@ interface AuthGateway {
 
     /** Clears the consumed flag after a successful unlock, so the next lock episode is eligible again. */
     suspend fun clearAutoAttempt()
+
+    /** Whether this vault has a recovery key, so the forgotten-PIN screen can offer it. Reads no secret. */
+    suspend fun recoveryAvailable(): Boolean = false
+
+    /**
+     * Opens the vault with the recovery key the owner wrote down, and replaces the forgotten PIN with [pin]. A key that is
+     * not this vault's reports [SecurityError.RecoveryKeyRejected] and changes nothing.
+     */
+    suspend fun recover(recoveryKey: String, pin: SecretBytes): AuthResult =
+        AuthResult.Security(SecurityError.RecoveryNotSetUp)
 }
 
 /** The outcome of one create or unlock, in terms the feature owns. */

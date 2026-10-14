@@ -37,6 +37,7 @@ internal class FakeGenerationStorage {
     val backoff = FakeBackoffStore()
     val keys = FakeBiometricKeyStore()
     val slots = FakeBiometricSlotStore()
+    val recovery = FakeRecordStore()
     var erasures = 0
 
     val storage: PlatformVaultStorage = PlatformVaultStorage(
@@ -45,11 +46,13 @@ internal class FakeGenerationStorage {
         backoff = backoff,
         biometricKeys = keys,
         biometricSlots = slots,
+        recoverySlot = recovery,
         eraseSecurity = {
             erasures++
             records.record = null
             backoff.record = null
             slots.slot = null
+            recovery.record = null
             protector.keyPresent = false
             Outcome.Success(Unit)
         },

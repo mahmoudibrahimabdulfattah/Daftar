@@ -32,6 +32,8 @@ data class HomeUiState(
     val zakatDue: List<ZakatDueYear> = emptyList(),
     /** The first-run guide for this vault: shown, dismissed, or hidden because the vault holds records. */
     val firstRun: FirstRunGuideState = FirstRunGuideState.Unknown,
+    /** The vault has records but no recovery key, so Home suggests creating one. */
+    val recoveryKeyMissing: Boolean = false,
 ) : UiState
 
 /** A year awaiting confirmation: its Hijri key and the Gregorian year of its Ramadan. Never an amount. */
@@ -41,6 +43,12 @@ sealed interface HomeIntent : UiIntent {
     data object ToggleValues : HomeIntent
 
     data object Refresh : HomeIntent
+
+    /** Home became visible: read again whether a recovery key exists. */
+    data object CheckRecoveryKey : HomeIntent
+
+    /** The recovery suggestion's action: Settings, where the key is created. */
+    data object OpenRecoveryKey : HomeIntent
 
     data class OpenCategory(val category: HomeCategory) : HomeIntent
 

@@ -66,4 +66,17 @@
     <string name="p25_pin_biometric_unavailable">البصمة غير متاحة الآن. استخدم رمز دفتر.</string>
     <string name="p25_pin_biometric_locked">البصمة متوقفة مؤقتًا. استخدم رمز دفتر.</string>
     <string name="p25_pin_biometric_disabled">افتح دفتر بالرمز، ثم فعّل البصمة من الإعدادات.</string>
+    <string name="auth_recovery_use_key">استخدام مفتاح الاسترداد</string>
+    <string name="auth_recovery_key_heading">أدخل مفتاح الاسترداد</string>
+    <string name="auth_recovery_key_body">اكتب المفتاح المكوّن من ⁦32⁩ حرفًا ورقمًا كما حفظته. لا تهم الشُرَط ولا حالة الحروف.</string>
+    <string name="auth_recovery_key_label">مفتاح الاسترداد</string>
+    <string name="auth_recovery_key_incomplete">المفتاح غير مكتمل أو به حرف غير صحيح.</string>
+    <string name="auth_recovery_key_rejected">هذا ليس مفتاح الاسترداد لهذا الدفتر. لم يتغيّر شيء.</string>
+    <string name="auth_recovery_continue">متابعة</string>
+    <string name="auth_recovery_new_heading">رمز جديد لدفترك</string>
+    <string name="auth_recovery_confirm_heading">أكّد الرمز الجديد</string>
+    <string name="auth_recovery_new_body">مفتاح الاسترداد يفتح دفترك، وتبقى بياناتك كما هي.</string>
+    <string name="auth_busy_recovering">جارٍ استرداد دفترك…</string>
+    <string name="auth_recovery_key_offer_heading">استرد دفترك</string>
+    <string name="auth_recovery_key_offer_body">استخدم مفتاح الاسترداد الذي كتبته لتختار رمزًا جديدًا، وتبقى بياناتك كما هي.</string>
 </resources>

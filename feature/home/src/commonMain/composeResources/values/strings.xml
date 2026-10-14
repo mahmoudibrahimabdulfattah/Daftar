@@ -74,4 +74,6 @@
     <string name="p25_empty_body">Add an asset when you’re ready.</string>
     <string name="p25_empty_action">Add an asset</string>
     <string name="p25_price_waiting">Waiting for prices</string>
+    <string name="home_recovery_suggestion">Protect your notebook from a forgotten PIN with a recovery key.</string>
+    <string name="home_recovery_action">Create a recovery key</string>
 </resources>

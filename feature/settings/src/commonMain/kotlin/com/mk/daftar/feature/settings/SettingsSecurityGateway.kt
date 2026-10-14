@@ -25,4 +25,14 @@ interface SettingsSecurityGateway {
 
     /** Removes the biometric slot. Always available: no prompt and no PIN. */
     suspend fun disableBiometrics(): Outcome<Unit, SecurityActionFailure>
+
+    /** Whether this vault has a recovery key. Null when it cannot be read. */
+    suspend fun recoveryKeyActive(): Boolean? = null
+
+    /**
+     * Verifies [pin], then creates a new recovery key and returns it for display, once. A previous key stops working.
+     * Wrong PINs count toward the same penalty as unlock.
+     */
+    suspend fun createRecoveryKey(pin: SecretBytes): Outcome<String, SecurityActionFailure> =
+        Outcome.Failure(SecurityActionFailure.Failed)
 }

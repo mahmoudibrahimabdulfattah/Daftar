@@ -1,13 +1,16 @@
 package com.mk.daftar.di
 
 import com.mk.daftar.core.common.MonotonicTime
+import com.mk.daftar.core.common.Outcome
 import com.mk.daftar.core.common.SystemMonotonicTime
 import com.mk.daftar.core.data.session.VaultAuthenticator
 import com.mk.daftar.core.datastore.DaftarPreferencesDataSource
 import com.mk.daftar.core.domain.refresh.PriceRefreshController
 import com.mk.daftar.core.domain.repository.UserPreferencesRepository
+import com.mk.daftar.core.domain.security.RecoveryKeyStatus
 import com.mk.daftar.core.domain.session.VaultSession
 import com.mk.daftar.core.security.BiometricPrompter
+import com.mk.daftar.core.security.RecoveryState
 import com.mk.daftar.core.security.VaultSecurity
 import com.mk.daftar.core.ui.presentation.ValuesVisibility
 import com.mk.daftar.core.ui.presentation.ValuesVisibilityStore
@@ -34,6 +37,15 @@ import org.koin.dsl.module
  */
 val platformServicesModule: Module = module {
     single<MonotonicTime> { SystemMonotonicTime }
+    single<RecoveryKeyStatus> {
+        val security = get<VaultSecurity>()
+        RecoveryKeyStatus {
+            when (val state = security.recoveryState()) {
+                is Outcome.Failure -> null
+                is Outcome.Success -> state.data == RecoveryState.Active
+            }
+        }
+    }
     single<AuthGateway> {
         VaultAuthGateway(
             security = get<VaultSecurity>(),
