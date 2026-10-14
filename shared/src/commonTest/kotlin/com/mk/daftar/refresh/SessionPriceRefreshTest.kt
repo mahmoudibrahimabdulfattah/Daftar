@@ -21,6 +21,9 @@ import com.mk.daftar.core.model.QuoteKey
 import kotlin.test.Test
 import kotlin.test.assertEquals
 import kotlin.test.assertIs
+import kotlin.time.Duration
+import kotlin.time.Duration.Companion.milliseconds
+import kotlin.time.Duration.Companion.seconds
 import kotlinx.coroutines.CompletableDeferred
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.SupervisorJob
@@ -30,6 +33,7 @@ import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.flowOf
 import kotlinx.coroutines.test.StandardTestDispatcher
 import kotlinx.coroutines.test.TestScope
+import kotlinx.coroutines.test.advanceTimeBy
 import kotlinx.coroutines.test.advanceUntilIdle
 import kotlinx.coroutines.test.runCurrent
 import kotlinx.coroutines.test.runTest
@@ -80,7 +84,7 @@ private fun partly(): RefreshReport = RefreshReport(
 
 class SessionPriceRefreshTest {
 
-    private class Rig(scope: TestScope) {
+    private class Rig(scope: TestScope, retryDelays: List<Duration> = emptyList()) {
         val dispatcher = StandardTestDispatcher(scope.testScheduler)
         val session = ScriptedSession()
         val prices = ScriptedPrices()
@@ -88,6 +92,8 @@ class SessionPriceRefreshTest {
             session = session,
             refreshPrices = RefreshPricesUseCase(prices),
             scope = CoroutineScope(SupervisorJob() + dispatcher),
+            retryDelays = retryDelays,
+            jitter = { 0.0 },
         )
 
         init {
@@ -101,7 +107,7 @@ class SessionPriceRefreshTest {
         rig.session.current.value = VaultSessionState.Open(1)
         runCurrent()
         assertEquals(1, rig.prices.calls)
-        assertEquals(PriceRefreshStatus.Refreshing(1), rig.refresh.status.value)
+        assertEquals(PriceRefreshStatus.Refreshing(1, visible = false), rig.refresh.status.value, "automatic is quiet")
 
         // Re-emitting the same generation, and tab changes or collectors, never start another refresh.
         rig.session.current.value = VaultSessionState.Open(1)
@@ -119,6 +125,11 @@ class SessionPriceRefreshTest {
         rig.refresh.refresh()
         runCurrent()
         assertEquals(1, rig.prices.calls, "coalesced taps never queue duplicate fetches")
+        assertEquals(
+            PriceRefreshStatus.Refreshing(1, visible = true),
+            rig.refresh.status.value,
+            "joining shows progress",
+        )
 
         rig.prices.answers.single().complete(Outcome.Success(allAccepted()))
         advanceUntilIdle()
@@ -159,7 +170,7 @@ class SessionPriceRefreshTest {
         rig.session.current.value = VaultSessionState.Open(2)
         runCurrent()
         assertEquals(2, rig.prices.calls)
-        assertEquals(PriceRefreshStatus.Refreshing(2), rig.refresh.status.value)
+        assertEquals(PriceRefreshStatus.Refreshing(2, visible = false), rig.refresh.status.value)
     }
 
     @Test
@@ -179,5 +190,90 @@ class SessionPriceRefreshTest {
         runCurrent()
         assertEquals(0, rig.prices.calls)
         assertIs<PriceRefreshStatus.Idle>(rig.refresh.status.value)
+    }
+
+    @Test
+    fun anUnreachableProviderIsRetriedQuietlyAndOnlyTheFinalResultIsReported() = runTest {
+        val rig = Rig(this, retryDelays = listOf(5.seconds, 15.seconds))
+        rig.session.current.value = VaultSessionState.Open(1)
+        runCurrent()
+        rig.prices.answers[0].complete(Outcome.Success(partly()))
+        runCurrent()
+        assertEquals(
+            PriceRefreshStatus.Refreshing(1, visible = false),
+            rig.refresh.status.value,
+            "no failure shown yet",
+        )
+
+        advanceTimeBy(5.seconds + 1.milliseconds)
+        assertEquals(2, rig.prices.calls)
+        rig.prices.answers[1].complete(Outcome.Success(partly()))
+        advanceTimeBy(15.seconds + 1.milliseconds)
+        assertEquals(3, rig.prices.calls)
+        rig.prices.answers[2].complete(Outcome.Success(partly()))
+        advanceUntilIdle()
+
+        assertEquals(3, rig.prices.calls, "retries stop after the schedule")
+        assertEquals(
+            PriceRefreshStatus.Finished(1, RefreshOutcome.PartiallyFailed, setOf(RefreshRejection.Unreachable)),
+            rig.refresh.status.value,
+        )
+    }
+
+    @Test
+    fun aRetryThatSucceedsReportsSuccess() = runTest {
+        val rig = Rig(this, retryDelays = listOf(5.seconds))
+        rig.session.current.value = VaultSessionState.Open(1)
+        runCurrent()
+        rig.prices.answers[0].complete(Outcome.Success(partly()))
+        advanceTimeBy(5.seconds + 1.milliseconds)
+        rig.prices.answers[1].complete(Outcome.Success(allAccepted()))
+        advanceUntilIdle()
+        assertEquals(PriceRefreshStatus.Finished(1, RefreshOutcome.Succeeded), rig.refresh.status.value)
+    }
+
+    @Test
+    fun aRateLimitOrStorageFailureIsNotRetried() = runTest {
+        val rig = Rig(this, retryDelays = listOf(5.seconds))
+        rig.session.current.value = VaultSessionState.Open(1)
+        runCurrent()
+        rig.prices.answers[0].complete(Outcome.Failure(StorageError.DiskFull))
+        advanceUntilIdle()
+        assertEquals(1, rig.prices.calls)
+        assertEquals(PriceRefreshStatus.Finished(1, RefreshOutcome.Failed), rig.refresh.status.value)
+    }
+
+    @Test
+    fun anExplicitRequestDuringAQuietWaitRunsNowAndReportsAtOnce() = runTest {
+        val rig = Rig(this, retryDelays = listOf(60.seconds))
+        rig.session.current.value = VaultSessionState.Open(1)
+        runCurrent()
+        rig.prices.answers[0].complete(Outcome.Success(partly()))
+        runCurrent()
+
+        rig.refresh.refresh()
+        runCurrent()
+        assertEquals(2, rig.prices.calls, "the owner does not wait for the retry timer")
+        assertEquals(PriceRefreshStatus.Refreshing(1, visible = true), rig.refresh.status.value)
+        rig.prices.answers[1].complete(Outcome.Success(partly()))
+        runCurrent()
+        assertEquals(
+            PriceRefreshStatus.Finished(1, RefreshOutcome.PartiallyFailed, setOf(RefreshRejection.Unreachable)),
+            rig.refresh.status.value,
+            "the owner's failure is reported at once",
+        )
+    }
+
+    @Test
+    fun lockStopsPendingRetries() = runTest {
+        val rig = Rig(this, retryDelays = listOf(5.seconds))
+        rig.session.current.value = VaultSessionState.Open(1)
+        runCurrent()
+        rig.prices.answers[0].complete(Outcome.Success(partly()))
+        runCurrent()
+        rig.session.current.value = VaultSessionState.Locked
+        advanceUntilIdle()
+        assertEquals(1, rig.prices.calls)
+        assertEquals(PriceRefreshStatus.Idle, rig.refresh.status.value)
     }
 }

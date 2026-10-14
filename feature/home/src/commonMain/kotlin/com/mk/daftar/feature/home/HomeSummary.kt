@@ -2,6 +2,7 @@ package com.mk.daftar.feature.home
 
 import com.mk.daftar.core.domain.refresh.PriceRefreshStatus
 import com.mk.daftar.core.domain.refresh.RefreshOutcome
+import com.mk.daftar.core.domain.refresh.showsProgress
 import com.mk.daftar.core.domain.storage.VaultRead
 import com.mk.daftar.core.domain.valuation.AssetCategory
 import com.mk.daftar.core.domain.valuation.CategoryValuation
@@ -174,7 +175,7 @@ fun homeStateOf(
     return HomeUiState(
         load = HomeLoad.Ready(summarizeHome(v.value, q.value, b.value)),
         valuesHidden = valuesHidden,
-        refreshing = refresh is PriceRefreshStatus.Refreshing && refresh.generation == generation,
+        refreshing = refresh.showsProgress && refresh.generation == generation,
         refreshFailed = refresh is PriceRefreshStatus.Finished &&
             refresh.generation == generation &&
             refresh.outcome != RefreshOutcome.Succeeded,
