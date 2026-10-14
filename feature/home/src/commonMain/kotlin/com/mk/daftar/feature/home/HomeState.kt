@@ -2,6 +2,7 @@ package com.mk.daftar.feature.home
 
 import androidx.navigation3.runtime.NavKey
 import com.mk.daftar.core.domain.storage.StorageError
+import com.mk.daftar.core.domain.usecase.FirstRunGuideState
 import com.mk.daftar.core.ui.mvi.UiEffect
 import com.mk.daftar.core.ui.mvi.UiIntent
 import com.mk.daftar.core.ui.mvi.UiState
@@ -25,8 +26,12 @@ data class HomeUiState(
     val valuesHidden: Boolean = false,
     val refreshing: Boolean = false,
     val refreshFailed: Boolean = false,
+    /** A refresh (quiet or not) is still running, so missing prices are awaited rather than reported. */
+    val waitingForPrices: Boolean = false,
     /** The declared years awaiting confirmation, oldest first. Empty when none is due or tracking is not read. */
     val zakatDue: List<ZakatDueYear> = emptyList(),
+    /** The first-run guide for this vault: shown, dismissed, or hidden because the vault holds records. */
+    val firstRun: FirstRunGuideState = FirstRunGuideState.Unknown,
 ) : UiState
 
 /** A year awaiting confirmation: its Hijri key and the Gregorian year of its Ramadan. Never an amount. */
@@ -49,7 +54,16 @@ sealed interface HomeIntent : UiIntent {
 
     /** The reminder's action: one due year, or the yearly status when several are due. */
     data object OpenZakatReview : HomeIntent
+
+    /** One of the guide's entry points. The bank and cash entry is chosen from a small sheet first. */
+    data class OpenFirstRunEntry(val entry: FirstRunEntry) : HomeIntent
+
+    /** "Hide guide": the owner dismisses the guide for this vault. It stays dismissed after a restart. */
+    data object DismissFirstRunGuide : HomeIntent
 }
+
+/** The guide's entry points, each opening an existing add flow. */
+enum class FirstRunEntry { GOLD, BANK, CASH, INVESTMENT }
 
 sealed interface HomeEffect : UiEffect {
     /** Navigate to a typed route. The screen performs it through the navigator. */

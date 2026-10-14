@@ -35,9 +35,6 @@
     <string name="home_stamp">%1$d %2$s, %3$s</string>
     <string name="home_hidden_note">Values, weights and notes are hidden. Tap the eye to reveal.</string>
     <string name="home_attribution">Rates By Exchange Rate API</string>
-    <string name="home_empty_title">Your first entry</string>
-    <string name="home_empty_message">Add something you own to see its value here. No total is shown before your first asset.</string>
-    <string name="home_empty_action">Add your first asset</string>
     <string name="home_failed">Your records could not be read. Nothing was changed.</string>
     <string name="home_month_1">Jan</string>
     <string name="home_month_2">Feb</string>
@@ -62,4 +59,19 @@
     <string name="home_usd_basis_bank">USD: Banque Misr · transfer buy</string>
     <string name="home_usd_basis_estimate">USD: mid-market estimate</string>
     <string name="home_usd_basis_manual">USD: manual rate</string>
+    <string name="p25_guide_title">Start with what you have</string>
+    <string name="p25_guide_body">Add your first asset. Add the rest whenever you like.</string>
+    <string name="p25_guide_gold_title">Add your gold</string>
+    <string name="p25_guide_gold_body">Choose the karat and enter the weight.</string>
+    <string name="p25_guide_money_title">Your bank accounts and cash</string>
+    <string name="p25_guide_money_body">Record an account, cash or a wallet.</string>
+    <string name="p25_guide_investment_title">Add your investments</string>
+    <string name="p25_guide_investment_body">Enter your account’s current value.</string>
+    <string name="p25_guide_dismiss">Hide guide</string>
+    <string name="p25_guide_bank_action">Add bank account</string>
+    <string name="p25_guide_cash_action">Add cash or wallet</string>
+    <string name="p25_empty_title">Your notebook is ready</string>
+    <string name="p25_empty_body">Add an asset when you’re ready.</string>
+    <string name="p25_empty_action">Add an asset</string>
+    <string name="p25_price_waiting">Waiting for prices</string>
 </resources>

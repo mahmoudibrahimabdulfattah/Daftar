@@ -86,4 +86,5 @@
     <string name="gold_confirm_keep">متابعة التحرير</string>
     <string name="gold_confirm_discard_action">تجاهل التغييرات</string>
     <string name="gold_unit_egp">ج.م</string>
+    <string name="p25_gold_hint">العيار هو درجة نقاء الذهب؛ سجّل وزنه بالجرام دون الأحجار.</string>
 </resources>

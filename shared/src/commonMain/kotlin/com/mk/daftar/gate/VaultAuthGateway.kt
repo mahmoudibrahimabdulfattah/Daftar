@@ -27,10 +27,11 @@ internal class VaultAuthGateway(
 ) : AuthGateway {
     override suspend fun status(): SecurityStatus = security.status()
 
-    override suspend fun create(pin: SecretBytes): AuthResult = authenticator.create(pin).toAuthResult()
+    override suspend fun create(pin: SecretBytes): AuthResult =
+        authenticator.create(pin).toAuthResult().also { resetFirstRunGuideIfOpened(it) }
 
     override suspend fun createWithBiometrics(pin: SecretBytes): AuthResult =
-        authenticator.createWithBiometrics(pin, prompter).toAuthResult()
+        authenticator.createWithBiometrics(pin, prompter).toAuthResult().also { resetFirstRunGuideIfOpened(it) }
 
     override suspend fun unlock(pin: SecretBytes): AuthResult = authenticator.unlock(pin).toAuthResult()
 
@@ -47,6 +48,11 @@ internal class VaultAuthGateway(
 
     override suspend fun clearAutoAttempt() {
         preferences.setAutoBiometricConsumed(false)
+    }
+
+    /** A newly created vault has never shown its first-run guide, so the dismissed flag of an earlier vault is cleared. */
+    private suspend fun resetFirstRunGuideIfOpened(result: AuthResult) {
+        if (result == AuthResult.Opened) preferences.setFirstRunGuideDone(false)
     }
 }
 

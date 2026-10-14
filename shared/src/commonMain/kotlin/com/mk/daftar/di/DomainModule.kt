@@ -4,6 +4,7 @@ import com.mk.daftar.core.domain.repository.JournalRepository
 import com.mk.daftar.core.domain.repository.NoteRepository
 import com.mk.daftar.core.domain.repository.ZakatRepository
 import com.mk.daftar.core.domain.usecase.AddZakatYearUseCase
+import com.mk.daftar.core.domain.usecase.CompleteFirstRunGuideUseCase
 import com.mk.daftar.core.domain.usecase.ConvertCashToInvestmentUseCase
 import com.mk.daftar.core.domain.usecase.CreateBankAccountUseCase
 import com.mk.daftar.core.domain.usecase.CreateBankUseCase
@@ -28,6 +29,7 @@ import com.mk.daftar.core.domain.usecase.ObserveBankUseCase
 import com.mk.daftar.core.domain.usecase.ObserveBanksUseCase
 import com.mk.daftar.core.domain.usecase.ObserveCashBalanceUseCase
 import com.mk.daftar.core.domain.usecase.ObserveCashBalancesUseCase
+import com.mk.daftar.core.domain.usecase.ObserveFirstRunGuideUseCase
 import com.mk.daftar.core.domain.usecase.ObserveGoldHoldingUseCase
 import com.mk.daftar.core.domain.usecase.ObserveGoldHoldingsUseCase
 import com.mk.daftar.core.domain.usecase.ObserveInvestmentUseCase
@@ -109,6 +111,8 @@ val domainModule = module {
     factoryOf(::ObserveSelectedQuotesUseCase)
     factoryOf(::ObserveQuoteSnapshotUseCase)
     factoryOf(::ObservePortfolioValuationUseCase)
+    factoryOf(::ObserveFirstRunGuideUseCase)
+    factoryOf(::CompleteFirstRunGuideUseCase)
     factoryOf(::ObserveZakatEstimateUseCase)
     factoryOf(::ObserveZakatTrackingUseCase)
     factoryOf(::ObserveZakatDayUseCase)

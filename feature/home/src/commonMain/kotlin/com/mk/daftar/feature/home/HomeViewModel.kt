@@ -5,16 +5,23 @@ import androidx.navigation3.runtime.NavKey
 import com.mk.daftar.core.domain.refresh.PriceRefreshController
 import com.mk.daftar.core.domain.repository.ZakatTrackingState
 import com.mk.daftar.core.domain.storage.VaultRead
+import com.mk.daftar.core.domain.usecase.CompleteFirstRunGuideUseCase
+import com.mk.daftar.core.domain.usecase.FirstRunGuideState
 import com.mk.daftar.core.domain.usecase.ObserveBanksUseCase
+import com.mk.daftar.core.domain.usecase.ObserveFirstRunGuideUseCase
 import com.mk.daftar.core.domain.usecase.ObservePortfolioValuationUseCase
 import com.mk.daftar.core.domain.usecase.ObserveSelectedQuotesUseCase
 import com.mk.daftar.core.domain.usecase.ObserveZakatDayUseCase
 import com.mk.daftar.core.domain.usecase.ObserveZakatTrackingUseCase
 import com.mk.daftar.core.domain.zakat.ZakatYearRules
 import com.mk.daftar.core.navigation.AssetsRoute
+import com.mk.daftar.core.navigation.BankAddRoute
 import com.mk.daftar.core.navigation.BanksRoute
+import com.mk.daftar.core.navigation.CashAddRoute
 import com.mk.daftar.core.navigation.CashRoute
+import com.mk.daftar.core.navigation.GoldAddRoute
 import com.mk.daftar.core.navigation.GoldRoute
+import com.mk.daftar.core.navigation.InvestmentAddRoute
 import com.mk.daftar.core.navigation.InvestmentsRoute
 import com.mk.daftar.core.navigation.PricesRoute
 import com.mk.daftar.core.navigation.ZakatCalculatorRoute
@@ -40,6 +47,8 @@ class HomeViewModel(
     observeDay: ObserveZakatDayUseCase,
     private val visibility: ValuesVisibility,
     private val refresh: PriceRefreshController,
+    observeFirstRun: ObserveFirstRunGuideUseCase,
+    private val completeFirstRun: CompleteFirstRunGuideUseCase,
 ) : MviViewModel<HomeUiState, HomeIntent, HomeEffect>(HomeUiState()) {
 
     init {
@@ -52,11 +61,18 @@ class HomeViewModel(
                 refresh.status,
             ) { valuation, quotes, bankCount, visible, status ->
                 homeStateOf(valuation, quotes, bankCount, valuesHidden = !visible, refresh = status)
-            }.collect { next -> reduce { next.copy(zakatDue = zakatDue) } }
+            }.collect { next -> reduce { next.copy(zakatDue = zakatDue, firstRun = firstRun) } }
         }
         viewModelScope.launch {
             combine(observeTracking(), observeDay()) { tracking, day -> dueOf(tracking, day) }
                 .collect { due -> reduce { copy(zakatDue = due) } }
+        }
+        viewModelScope.launch {
+            observeFirstRun().collect { guide ->
+                reduce { copy(firstRun = guide) }
+                // The first record completes the guide, so a later emptying of the vault does not bring it back.
+                if (guide is FirstRunGuideState.HasRecords && !guide.doneRecorded) completeFirstRun()
+            }
         }
     }
 
@@ -74,12 +90,23 @@ class HomeViewModel(
 
             HomeIntent.OpenZakatCalculator -> emitEffect(HomeEffect.Open(ZakatCalculatorRoute))
 
+            is HomeIntent.OpenFirstRunEntry -> emitEffect(HomeEffect.Open(intent.entry.route()))
+
+            HomeIntent.DismissFirstRunGuide -> viewModelScope.launch { completeFirstRun() }
+
             HomeIntent.OpenZakatReview -> {
                 val due = currentState.zakatDue
                 val route: NavKey = if (due.size == 1) ZakatYearRoute(due.single().hijriYear) else ZakatHistoryRoute
                 if (due.isNotEmpty()) emitEffect(HomeEffect.Open(route))
             }
         }
+    }
+
+    private fun FirstRunEntry.route(): NavKey = when (this) {
+        FirstRunEntry.GOLD -> GoldAddRoute
+        FirstRunEntry.BANK -> BankAddRoute
+        FirstRunEntry.CASH -> CashAddRoute
+        FirstRunEntry.INVESTMENT -> InvestmentAddRoute
     }
 
     private fun HomeCategory.route(): NavKey = when (this) {

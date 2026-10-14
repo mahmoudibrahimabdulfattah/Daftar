@@ -8,14 +8,19 @@ import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
+import androidx.compose.foundation.layout.heightIn
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.verticalScroll
 import androidx.compose.material3.ExperimentalMaterial3Api
+import androidx.compose.material3.ModalBottomSheet
 import androidx.compose.material3.Text
 import androidx.compose.material3.pulltorefresh.PullToRefreshBox
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.getValue
+import androidx.compose.runtime.mutableStateOf
+import androidx.compose.runtime.remember
+import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
@@ -42,9 +47,12 @@ import com.mk.daftar.core.designsystem.component.DaftarStatusTone
 import com.mk.daftar.core.designsystem.component.DaftarTextButton
 import com.mk.daftar.core.designsystem.component.DaftarTileTone
 import com.mk.daftar.core.designsystem.component.DaftarTopBar
+import com.mk.daftar.core.designsystem.component.OutlineButton
+import com.mk.daftar.core.designsystem.component.PrimaryButton
 import com.mk.daftar.core.designsystem.icon.DaftarIcons
 import com.mk.daftar.core.designsystem.theme.DaftarSpacing
 import com.mk.daftar.core.designsystem.theme.DaftarTheme
+import com.mk.daftar.core.domain.usecase.FirstRunGuideState
 import com.mk.daftar.core.domain.valuation.AssetCategory
 import com.mk.daftar.core.model.FxBasis
 import com.mk.daftar.core.model.QuoteKey
@@ -69,9 +77,6 @@ import com.mk.daftar.feature.home.resources.home_available_subtotal
 import com.mk.daftar.feature.home.resources.home_banks
 import com.mk.daftar.feature.home.resources.home_brand
 import com.mk.daftar.feature.home.resources.home_cash
-import com.mk.daftar.feature.home.resources.home_empty_action
-import com.mk.daftar.feature.home.resources.home_empty_message
-import com.mk.daftar.feature.home.resources.home_empty_title
 import com.mk.daftar.feature.home.resources.home_failed
 import com.mk.daftar.feature.home.resources.home_gold
 import com.mk.daftar.feature.home.resources.home_greeting
@@ -114,6 +119,21 @@ import com.mk.daftar.feature.home.resources.home_usd_basis_estimate
 import com.mk.daftar.feature.home.resources.home_usd_basis_manual
 import com.mk.daftar.feature.home.resources.home_zakat_prepare
 import com.mk.daftar.feature.home.resources.home_zakat_review
+import com.mk.daftar.feature.home.resources.p25_empty_action
+import com.mk.daftar.feature.home.resources.p25_empty_body
+import com.mk.daftar.feature.home.resources.p25_empty_title
+import com.mk.daftar.feature.home.resources.p25_guide_bank_action
+import com.mk.daftar.feature.home.resources.p25_guide_body
+import com.mk.daftar.feature.home.resources.p25_guide_cash_action
+import com.mk.daftar.feature.home.resources.p25_guide_dismiss
+import com.mk.daftar.feature.home.resources.p25_guide_gold_body
+import com.mk.daftar.feature.home.resources.p25_guide_gold_title
+import com.mk.daftar.feature.home.resources.p25_guide_investment_body
+import com.mk.daftar.feature.home.resources.p25_guide_investment_title
+import com.mk.daftar.feature.home.resources.p25_guide_money_body
+import com.mk.daftar.feature.home.resources.p25_guide_money_title
+import com.mk.daftar.feature.home.resources.p25_guide_title
+import com.mk.daftar.feature.home.resources.p25_price_waiting
 import com.mk.daftar.feature.home.resources.zakat_due_count
 import com.mk.daftar.feature.home.resources.zakat_reminder
 import com.mk.daftar.feature.home.resources.zakat_year_label
@@ -152,6 +172,7 @@ fun HomeContent(state: HomeUiState, onIntent: (HomeIntent) -> Unit, modifier: Mo
         if (state.valuesHidden) Res.string.home_state_hidden else Res.string.home_state_visible,
     )
     val scroll = rememberScrollState()
+    var moneyChoiceOpen by remember { mutableStateOf(false) }
     RootReselectScroll(TopLevelDestination.HOME) { scroll.animateScrollTo(0) }
     ShellScreen(modifier = modifier) {
         Column(modifier = Modifier.fillMaxSize()) {
@@ -193,10 +214,25 @@ fun HomeContent(state: HomeUiState, onIntent: (HomeIntent) -> Unit, modifier: Mo
                             Text(stringResource(Res.string.home_failed))
                         }
 
-                        is HomeLoad.Ready -> ReadyBody(figures = load.figures, state = state, onIntent = onIntent)
+                        is HomeLoad.Ready -> ReadyBody(
+                            figures = load.figures,
+                            state = state,
+                            onIntent = onIntent,
+                            onMoneyChoice = { moneyChoiceOpen = true },
+                        )
                     }
                 }
             }
+        }
+    }
+    if (moneyChoiceOpen) {
+        ModalBottomSheet(onDismissRequest = { moneyChoiceOpen = false }) {
+            MoneyChoice(
+                onChoose = { entry ->
+                    moneyChoiceOpen = false
+                    onIntent(HomeIntent.OpenFirstRunEntry(entry))
+                },
+            )
         }
     }
 }
@@ -212,20 +248,39 @@ private fun Greeting() {
 }
 
 @Composable
-private fun ReadyBody(figures: HomeFigures, state: HomeUiState, onIntent: (HomeIntent) -> Unit) {
+private fun ReadyBody(
+    figures: HomeFigures,
+    state: HomeUiState,
+    onIntent: (HomeIntent) -> Unit,
+    onMoneyChoice: () -> Unit,
+) {
     if (figures.isEmpty) {
-        DaftarEmptyState(
-            title = stringResource(Res.string.home_empty_title),
-            message = stringResource(Res.string.home_empty_message),
-            actionLabel = stringResource(Res.string.home_empty_action),
-            onAction = { onIntent(HomeIntent.AddFirstAsset) },
-            icon = DaftarIcons.Book,
-        )
+        when (state.firstRun) {
+            FirstRunGuideState.Pending -> FirstRunGuide(onIntent = onIntent, onMoneyChoice = onMoneyChoice)
+
+            // Without records the guide is gone for good: the plain empty state takes its place.
+            FirstRunGuideState.Dismissed, is FirstRunGuideState.HasRecords -> DaftarEmptyState(
+                title = stringResource(Res.string.p25_empty_title),
+                message = stringResource(Res.string.p25_empty_body),
+                actionLabel = stringResource(Res.string.p25_empty_action),
+                onAction = { onIntent(HomeIntent.AddFirstAsset) },
+                icon = DaftarIcons.Book,
+            )
+
+            // Reads that have not settled show nothing, so the guide never flashes over a vault with records.
+            FirstRunGuideState.Unknown -> Unit
+        }
     } else {
-        Total(figures = figures, hidden = state.valuesHidden, refreshing = state.refreshing)
+        Total(
+            figures = figures,
+            hidden = state.valuesHidden,
+            refreshing = state.refreshing,
+            waiting = state.waitingForPrices,
+        )
         Categories(figures = figures, hidden = state.valuesHidden, onIntent = onIntent)
     }
-    ZakatSection(due = state.zakatDue, onIntent = onIntent)
+    // An empty vault has nothing to give zakat on yet, so the yearly reminder waits for the first record.
+    if (state.firstRun is FirstRunGuideState.HasRecords) ZakatSection(due = state.zakatDue, onIntent = onIntent)
     QuoteSection(
         quotes = figures.quotes,
         refreshing = state.refreshing,
@@ -241,8 +296,92 @@ private fun ReadyBody(figures: HomeFigures, state: HomeUiState, onIntent: (HomeI
     }
 }
 
+/**
+ * The first-run guide for an empty vault: one restrained panel with three optional entry points and a visible way to
+ * hide it. Each entry opens an existing add flow; nothing is required and nothing is counted down.
+ */
 @Composable
-private fun Total(figures: HomeFigures, hidden: Boolean, refreshing: Boolean) {
+private fun FirstRunGuide(onIntent: (HomeIntent) -> Unit, onMoneyChoice: () -> Unit) {
+    DaftarNotePanel(modifier = Modifier.fillMaxWidth(), tone = DaftarNoteTone.Context) {
+        Text(
+            text = stringResource(Res.string.p25_guide_title),
+            style = DaftarTheme.typography.sectionHeading,
+        )
+        Spacer(Modifier.height(DaftarSpacing.xs))
+        Text(
+            text = stringResource(Res.string.p25_guide_body),
+            style = DaftarTheme.typography.noteBody,
+        )
+        Spacer(Modifier.height(DaftarSpacing.sm))
+        Column(verticalArrangement = Arrangement.spacedBy(DaftarSpacing.xs)) {
+            DaftarLedgerRow(
+                title = stringResource(Res.string.p25_guide_gold_title),
+                subtitle = stringResource(Res.string.p25_guide_gold_body),
+                icon = DaftarIcons.GoldBar,
+                tone = DaftarTileTone.Gold,
+                onClick = { onIntent(HomeIntent.OpenFirstRunEntry(FirstRunEntry.GOLD)) },
+                modifier = Modifier.fillMaxWidth(),
+            )
+            DaftarLedgerRow(
+                title = stringResource(Res.string.p25_guide_money_title),
+                subtitle = stringResource(Res.string.p25_guide_money_body),
+                icon = DaftarIcons.Wallet,
+                tone = DaftarTileTone.Bank,
+                onClick = onMoneyChoice,
+                modifier = Modifier.fillMaxWidth(),
+            )
+            DaftarLedgerRow(
+                title = stringResource(Res.string.p25_guide_investment_title),
+                subtitle = stringResource(Res.string.p25_guide_investment_body),
+                icon = DaftarIcons.Investments,
+                tone = DaftarTileTone.Investments,
+                onClick = { onIntent(HomeIntent.OpenFirstRunEntry(FirstRunEntry.INVESTMENT)) },
+                modifier = Modifier.fillMaxWidth(),
+            )
+        }
+        DaftarTextButton(
+            onClick = { onIntent(HomeIntent.DismissFirstRunGuide) },
+            modifier = Modifier.fillMaxWidth(),
+        ) {
+            Text(stringResource(Res.string.p25_guide_dismiss))
+        }
+    }
+}
+
+/** The bank-or-cash choice: two actions of at least 48dp, each opening its own add flow. */
+@Composable
+private fun MoneyChoice(onChoose: (FirstRunEntry) -> Unit) {
+    Column(
+        modifier = Modifier
+            .fillMaxWidth()
+            .padding(horizontal = DaftarSpacing.md)
+            .padding(bottom = DaftarSpacing.xl),
+        verticalArrangement = Arrangement.spacedBy(DaftarSpacing.sm),
+    ) {
+        Text(
+            text = stringResource(Res.string.p25_guide_money_title),
+            style = DaftarTheme.typography.sectionHeading,
+            color = DaftarTheme.colors.ink,
+        )
+        PrimaryButton(
+            onClick = { onChoose(FirstRunEntry.BANK) },
+            fullWidth = true,
+            modifier = Modifier.fillMaxWidth().heightIn(min = DaftarSpacing.buttonMinHeight),
+        ) {
+            Text(stringResource(Res.string.p25_guide_bank_action))
+        }
+        OutlineButton(
+            onClick = { onChoose(FirstRunEntry.CASH) },
+            fullWidth = true,
+            modifier = Modifier.fillMaxWidth().heightIn(min = DaftarSpacing.buttonMinHeight),
+        ) {
+            Text(stringResource(Res.string.p25_guide_cash_action))
+        }
+    }
+}
+
+@Composable
+private fun Total(figures: HomeFigures, hidden: Boolean, refreshing: Boolean, waiting: Boolean) {
     val colors = DaftarTheme.colors
     val allocation = figures.allocation
     val segments = allocation?.let { parts ->
@@ -289,7 +428,7 @@ private fun Total(figures: HomeFigures, hidden: Boolean, refreshing: Boolean) {
             null
         },
         footer = if (figures.incomplete) {
-            { IncompleteFooter(figures = figures, hidden = hidden) }
+            { IncompleteFooter(figures = figures, hidden = hidden, waiting = waiting) }
         } else {
             {
                 Text(
@@ -303,12 +442,13 @@ private fun Total(figures: HomeFigures, hidden: Boolean, refreshing: Boolean) {
 }
 
 @Composable
-private fun ColumnScope.IncompleteFooter(figures: HomeFigures, hidden: Boolean) {
+private fun ColumnScope.IncompleteFooter(figures: HomeFigures, hidden: Boolean, waiting: Boolean) {
     val colors = DaftarTheme.colors
+    // While prices are still on their way the total is awaited quietly, not reported as a problem.
     Text(
-        stringResource(Res.string.home_incomplete),
+        stringResource(if (waiting) Res.string.p25_price_waiting else Res.string.home_incomplete),
         style = DaftarTheme.typography.fineText,
-        color = colors.warning,
+        color = if (waiting) colors.muted else colors.warning,
     )
     Row(
         modifier = Modifier.fillMaxWidth(),
@@ -328,9 +468,11 @@ private fun ColumnScope.IncompleteFooter(figures: HomeFigures, hidden: Boolean) 
             style = DaftarTheme.typography.ledgerValue,
         )
     }
-    figures.missingQuotes.forEach { key ->
-        DaftarNotePanel(tone = DaftarNoteTone.Warning) {
-            Text(missingQuoteText(key))
+    if (!waiting) {
+        figures.missingQuotes.forEach { key ->
+            DaftarNotePanel(tone = DaftarNoteTone.Warning) {
+                Text(missingQuoteText(key))
+            }
         }
     }
 }

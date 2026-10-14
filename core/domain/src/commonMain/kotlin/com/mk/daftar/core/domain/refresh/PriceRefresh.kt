@@ -18,7 +18,11 @@ sealed interface PriceRefreshStatus {
         override val generation: Long? = null
     }
 
-    data class Refreshing(override val generation: Long) : PriceRefreshStatus
+    /**
+     * A refresh of [generation] is running. [visible] is true only for a refresh the owner asked for; automatic
+     * refreshes and their retries run quietly, so no screen shows progress for them.
+     */
+    data class Refreshing(override val generation: Long, val visible: Boolean = true) : PriceRefreshStatus
 
     /**
      * The last refresh of [generation] has finished with [outcome]. Last-success times are never changed by a failure.
@@ -31,6 +35,10 @@ sealed interface PriceRefreshStatus {
         val rejections: Set<RefreshRejection> = emptySet(),
     ) : PriceRefreshStatus
 }
+
+/** Whether a screen should show progress for this status: only for a refresh the owner asked for. */
+val PriceRefreshStatus.showsProgress: Boolean
+    get() = this is PriceRefreshStatus.Refreshing && visible
 
 enum class RefreshOutcome {
     /** Every provider step was accepted. */

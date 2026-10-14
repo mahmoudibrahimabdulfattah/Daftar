@@ -8,6 +8,7 @@ import com.mk.daftar.core.designsystem.component.DaftarIconButton
 import com.mk.daftar.core.designsystem.icon.DaftarIcons
 import com.mk.daftar.core.domain.refresh.PriceRefreshController
 import com.mk.daftar.core.domain.refresh.PriceRefreshStatus
+import com.mk.daftar.core.domain.refresh.showsProgress
 import com.mk.daftar.core.ui.resources.Res
 import com.mk.daftar.core.ui.resources.price_refresh
 import com.mk.daftar.core.ui.resources.price_refreshing
@@ -23,7 +24,7 @@ import org.koin.compose.koinInject
 fun PriceRefreshAction(modifier: Modifier = Modifier) {
     val controller: PriceRefreshController = koinInject()
     val status by controller.status.collectAsStateWithLifecycle()
-    val refreshing = status is PriceRefreshStatus.Refreshing
+    val refreshing = status.showsProgress
     DaftarIconButton(
         onClick = { controller.refresh() },
         icon = DaftarIcons.Refresh,

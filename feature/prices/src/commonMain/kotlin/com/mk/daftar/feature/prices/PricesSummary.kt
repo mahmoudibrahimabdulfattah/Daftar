@@ -2,6 +2,7 @@ package com.mk.daftar.feature.prices
 
 import com.mk.daftar.core.domain.refresh.PriceRefreshStatus
 import com.mk.daftar.core.domain.refresh.RefreshOutcome
+import com.mk.daftar.core.domain.refresh.showsProgress
 import com.mk.daftar.core.domain.repository.QuoteSnapshot
 import com.mk.daftar.core.domain.repository.RefreshRejection
 import com.mk.daftar.core.domain.storage.Stored
@@ -87,7 +88,7 @@ fun pricesStateOf(
     return PricesUiState(
         load = PricesLoad.Ready(board),
         valuesHidden = valuesHidden,
-        refreshing = refresh is PriceRefreshStatus.Refreshing && refresh.generation == generation,
+        refreshing = refresh.showsProgress && refresh.generation == generation,
         notice = finished?.takeIf { it.generation == generation }?.let { refreshNoticeOf(it.outcome, it.rejections) },
     )
 }

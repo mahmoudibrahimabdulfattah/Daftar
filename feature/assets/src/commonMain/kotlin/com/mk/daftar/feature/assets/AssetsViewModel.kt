@@ -4,6 +4,7 @@ import androidx.lifecycle.viewModelScope
 import androidx.navigation3.runtime.NavKey
 import com.mk.daftar.core.domain.refresh.PriceRefreshController
 import com.mk.daftar.core.domain.refresh.PriceRefreshStatus
+import com.mk.daftar.core.domain.refresh.showsProgress
 import com.mk.daftar.core.domain.storage.StorageError
 import com.mk.daftar.core.domain.usecase.ObserveBanksUseCase
 import com.mk.daftar.core.domain.usecase.ObservePortfolioValuationUseCase
@@ -69,7 +70,7 @@ class AssetsOverviewViewModel(
                 AssetsUiState(
                     load = assetsLoadOf(valuation, bankCount),
                     valuesHidden = !visible,
-                    refreshing = status is PriceRefreshStatus.Refreshing,
+                    refreshing = status.showsProgress,
                 )
             }.collect { next -> reduce { next } }
         }
