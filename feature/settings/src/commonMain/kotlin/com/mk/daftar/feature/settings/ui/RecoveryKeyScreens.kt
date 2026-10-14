@@ -29,6 +29,7 @@ import com.mk.daftar.core.designsystem.component.DaftarMark
 import com.mk.daftar.core.designsystem.component.DaftarNoteTone
 import com.mk.daftar.core.designsystem.component.DaftarTextButton
 import com.mk.daftar.core.designsystem.component.DaftarTextField
+import com.mk.daftar.core.designsystem.component.OutlineButton
 import com.mk.daftar.core.designsystem.component.PrimaryButton
 import com.mk.daftar.core.designsystem.icon.DaftarIcons
 import com.mk.daftar.core.designsystem.theme.DaftarSpacing
@@ -46,6 +47,8 @@ import com.mk.daftar.feature.settings.resources.rk_check_heading
 import com.mk.daftar.feature.settings.resources.rk_check_label
 import com.mk.daftar.feature.settings.resources.rk_check_mismatch
 import com.mk.daftar.feature.settings.resources.rk_continue
+import com.mk.daftar.feature.settings.resources.rk_copied
+import com.mk.daftar.feature.settings.resources.rk_copy
 import com.mk.daftar.feature.settings.resources.rk_create
 import com.mk.daftar.feature.settings.resources.rk_create_new
 import com.mk.daftar.feature.settings.resources.rk_done
@@ -208,6 +211,19 @@ private fun ShowStep(key: String, onIntent: (RecoveryKeyIntent) -> Unit) {
     Step {
         Heading(stringResource(Res.string.rk_show_heading), stringResource(Res.string.rk_show_body))
         KeyGroups(key)
+        val copy = rememberSensitiveCopy()
+        var copied by remember(key) { mutableStateOf(false) }
+        OutlineButton(
+            onClick = {
+                copy(key)
+                copied = true
+            },
+            fullWidth = true,
+            modifier = Modifier.fillMaxWidth(),
+        ) {
+            Text(stringResource(Res.string.rk_copy))
+        }
+        if (copied) SettingsNote(message = stringResource(Res.string.rk_copied))
         PrimaryButton(
             onClick = { onIntent(RecoveryKeyIntent.Saved) },
             fullWidth = true,

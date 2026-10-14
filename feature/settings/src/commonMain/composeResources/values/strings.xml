@@ -129,4 +129,6 @@
     <string name="settings_recovery_body">To recover your notebook if you forget your PIN.</string>
     <string name="settings_recovery_on">Set up</string>
     <string name="settings_recovery_off">Not set up</string>
+    <string name="rk_copy">Copy the key</string>
+    <string name="rk_copied">Copied. Paste it where you keep it safe; it is cleared from the clipboard in a minute.</string>
 </resources>

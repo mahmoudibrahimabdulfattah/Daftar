@@ -60,6 +60,8 @@ mapping (`androidApp/build/outputs/mapping/release`), not a package-wide keep.
   persistent banner. The developer entries (design catalog, shell preview) exist only in debug builds.
 - `FLAG_SECURE` on every Android window. Lock on background and on foreground inactivity; cover the app in recents.
 - No balances, PINs or notes in logs, notifications, the clipboard, semantics or screenshots of released surfaces.
+  The one exception is the recovery key, copied only on the owner's tap: marked sensitive, device-only, cleared after
+  60 seconds.
 - Keychain items are device-only. The database and staged backups are excluded from iCloud and Android backup,
   and transfer is disabled. Staged export files live in a no-backup area and are deleted after use.
 - Cleartext traffic is prohibited. The only merged permissions are `INTERNET` and `USE_BIOMETRIC`.

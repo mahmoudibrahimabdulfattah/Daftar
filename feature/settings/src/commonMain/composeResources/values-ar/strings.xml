@@ -132,4 +132,6 @@
     <string name="settings_recovery_body">لاسترداد دفترك إذا نسيت الرمز.</string>
     <string name="settings_recovery_on">مُعدّ</string>
     <string name="settings_recovery_off">غير مُعدّ</string>
+    <string name="rk_copy">نسخ المفتاح</string>
+    <string name="rk_copied">تم النسخ. الصقه حيث تحفظه بأمان؛ سيُمسح من الحافظة بعد دقيقة.</string>
 </resources>
