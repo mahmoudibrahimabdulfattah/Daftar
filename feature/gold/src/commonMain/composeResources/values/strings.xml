@@ -86,4 +86,5 @@
     <string name="gold_confirm_keep">Keep editing</string>
     <string name="gold_confirm_discard_action">Discard changes</string>
     <string name="gold_unit_egp">EGP</string>
+    <string name="p25_gold_hint">Karat is gold purity; enter its weight in grams without stones.</string>
 </resources>

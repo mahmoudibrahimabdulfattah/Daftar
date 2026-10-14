@@ -7,6 +7,7 @@ import com.mk.daftar.core.data.ids.IdGenerator
 import com.mk.daftar.core.data.ids.UuidV4Generator
 import com.mk.daftar.core.data.repository.BankRecordRepository
 import com.mk.daftar.core.data.repository.CashRecordRepository
+import com.mk.daftar.core.data.repository.FirstRunGuideRecordRepository
 import com.mk.daftar.core.data.repository.GoldRecordRepository
 import com.mk.daftar.core.data.repository.InvestmentRecordRepository
 import com.mk.daftar.core.data.repository.JournalRecordRepository
@@ -23,6 +24,7 @@ import com.mk.daftar.core.data.session.VaultAuthenticator
 import com.mk.daftar.core.data.session.activeGeneration
 import com.mk.daftar.core.domain.repository.BankRepository
 import com.mk.daftar.core.domain.repository.CashRepository
+import com.mk.daftar.core.domain.repository.FirstRunGuideRepository
 import com.mk.daftar.core.domain.repository.GoldRepository
 import com.mk.daftar.core.domain.repository.InvestmentDraftIds
 import com.mk.daftar.core.domain.repository.InvestmentRepository
@@ -81,6 +83,7 @@ val dataModule: Module = module {
         )
     }
     single<UserPreferencesRepository> { UserPreferencesRecordRepository(get()) }
+    single<FirstRunGuideRepository> { FirstRunGuideRecordRepository(get()) }
     single<BackupSnapshotSource> { VaultBackupSnapshotReader(get<DaftarVaultSession>().host, get()) }
     single<PostCommitInstaller> { RestorePreferencesInstaller(get()) }
     single<RestoreEngine> {

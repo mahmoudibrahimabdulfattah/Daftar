@@ -35,9 +35,6 @@
     <string name="home_stamp">%1$d %2$s، %3$s</string>
     <string name="home_hidden_note">القيم والأوزان والملاحظات مخفية. اضغط العين لإظهارها.</string>
     <string name="home_attribution">Rates By Exchange Rate API</string>
-    <string name="home_empty_title">أول سطر في دفتر</string>
-    <string name="home_empty_message">أضف ما تملكه لتظهر قيمته هنا. لا يوجد إجمالي قبل إضافة أصل.</string>
-    <string name="home_empty_action">إضافة أول أصل</string>
     <string name="home_failed">تعذّر قراءة سجلاتك. لم يتغيّر شيء.</string>
     <string name="home_month_1">يناير</string>
     <string name="home_month_2">فبراير</string>
@@ -65,4 +62,18 @@
     <string name="home_usd_basis_bank">الدولار: بنك مصر · شراء التحويلات</string>
     <string name="home_usd_basis_estimate">الدولار: تقدير متوسط السوق</string>
     <string name="home_usd_basis_manual">الدولار: سعر يدوي</string>
+    <string name="p25_guide_title">ابدأ بما لديك</string>
+    <string name="p25_guide_body">أضف أول أصل، وأكمل الباقي وقتما تحب.</string>
+    <string name="p25_guide_gold_title">أضف ذهبك</string>
+    <string name="p25_guide_gold_body">اختر العيار وسجّل الوزن.</string>
+    <string name="p25_guide_money_title">حساباتك البنكية ونقدك</string>
+    <string name="p25_guide_money_body">سجّل حسابًا أو نقدًا أو محفظة.</string>
+    <string name="p25_guide_investment_title">أضف استثماراتك</string>
+    <string name="p25_guide_investment_body">سجّل القيمة الحالية لحسابك.</string>
+    <string name="p25_guide_dismiss">إخفاء الدليل</string>
+    <string name="p25_guide_bank_action">إضافة حساب بنكي</string>
+    <string name="p25_guide_cash_action">إضافة نقد أو محفظة</string>
+    <string name="p25_empty_title">دفترك جاهز</string>
+    <string name="p25_empty_body">أضف أصلًا عندما تكون مستعدًا.</string>
+    <string name="p25_empty_action">إضافة أصل</string>
 </resources>

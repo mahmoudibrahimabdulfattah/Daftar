@@ -95,6 +95,7 @@ import com.mk.daftar.feature.gold.resources.gold_save_changes
 import com.mk.daftar.feature.gold.resources.gold_weight
 import com.mk.daftar.feature.gold.resources.gold_weight_helper
 import com.mk.daftar.feature.gold.resources.gold_weight_invalid
+import com.mk.daftar.feature.gold.resources.p25_gold_hint
 import org.jetbrains.compose.resources.stringResource
 import org.koin.compose.viewmodel.koinViewModel
 import org.koin.core.parameter.parametersOf
@@ -301,6 +302,13 @@ private fun GoldEditorForm(state: GoldEditorUiState, editable: Boolean, onIntent
             color = colors.ink,
             modifier = Modifier.fillMaxWidth().semantics { heading() },
         )
+        if (state.goldHint) {
+            Text(
+                text = stringResource(Res.string.p25_gold_hint),
+                style = typography.supportingBody,
+                color = colors.muted,
+            )
+        }
         Text(text = stringResource(Res.string.gold_intro), style = typography.fineText, color = colors.muted)
         Text(text = stringResource(Res.string.gold_karat_field), style = typography.fineText, color = colors.muted)
         val karats = GoldKarat.entries

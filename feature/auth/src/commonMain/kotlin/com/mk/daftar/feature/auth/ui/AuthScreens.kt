@@ -4,12 +4,14 @@ import androidx.compose.foundation.background
 import androidx.compose.foundation.focusable
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
+import androidx.compose.foundation.layout.BoxWithConstraints
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.ColumnScope
 import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
+import androidx.compose.foundation.layout.heightIn
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.layout.widthIn
@@ -22,8 +24,10 @@ import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
+import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.rememberUpdatedState
+import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.focus.FocusRequester
@@ -36,9 +40,18 @@ import androidx.compose.ui.input.key.key
 import androidx.compose.ui.input.key.onPreviewKeyEvent
 import androidx.compose.ui.input.key.type
 import androidx.compose.ui.input.key.utf16CodePoint
+import androidx.compose.ui.layout.Layout
+import androidx.compose.ui.platform.LocalDensity
+import androidx.compose.ui.semantics.LiveRegionMode
+import androidx.compose.ui.semantics.contentDescription
 import androidx.compose.ui.semantics.heading
+import androidx.compose.ui.semantics.liveRegion
 import androidx.compose.ui.semantics.semantics
+import androidx.compose.ui.text.TextStyle
+import androidx.compose.ui.text.rememberTextMeasurer
 import androidx.compose.ui.text.style.TextAlign
+import androidx.compose.ui.unit.Constraints
+import androidx.compose.ui.unit.Dp
 import androidx.compose.ui.unit.dp
 import androidx.lifecycle.Lifecycle
 import androidx.lifecycle.compose.LocalLifecycleOwner
@@ -67,14 +80,13 @@ import com.mk.daftar.feature.auth.AuthPhase
 import com.mk.daftar.feature.auth.AuthUiState
 import com.mk.daftar.feature.auth.AuthUnavailableReason
 import com.mk.daftar.feature.auth.BiometricOffer
+import com.mk.daftar.feature.auth.PinMessage
+import com.mk.daftar.feature.auth.pinMessageFor
 import com.mk.daftar.feature.auth.resources.Res
-import com.mk.daftar.feature.auth.resources.auth_backoff_seconds
 import com.mk.daftar.feature.auth.resources.auth_biometric_body
 import com.mk.daftar.feature.auth.resources.auth_biometric_enable
 import com.mk.daftar.feature.auth.resources.auth_biometric_heading
 import com.mk.daftar.feature.auth.resources.auth_biometric_later
-import com.mk.daftar.feature.auth.resources.auth_biometric_locked_out
-import com.mk.daftar.feature.auth.resources.auth_biometric_not_enabled
 import com.mk.daftar.feature.auth.resources.auth_biometric_not_enrolled
 import com.mk.daftar.feature.auth.resources.auth_biometric_privacy
 import com.mk.daftar.feature.auth.resources.auth_biometric_unavailable
@@ -94,9 +106,6 @@ import com.mk.daftar.feature.auth.resources.auth_field_label
 import com.mk.daftar.feature.auth.resources.auth_field_state
 import com.mk.daftar.feature.auth.resources.auth_forgot_pin
 import com.mk.daftar.feature.auth.resources.auth_incorrect_pin
-import com.mk.daftar.feature.auth.resources.auth_keypad_paused
-import com.mk.daftar.feature.auth.resources.auth_mismatch_error
-import com.mk.daftar.feature.auth.resources.auth_mismatch_heading
 import com.mk.daftar.feature.auth.resources.auth_open_failed
 import com.mk.daftar.feature.auth.resources.auth_recovery_backup_warning
 import com.mk.daftar.feature.auth.resources.auth_recovery_body
@@ -119,13 +128,23 @@ import com.mk.daftar.feature.auth.resources.auth_unavailable_transient
 import com.mk.daftar.feature.auth.resources.auth_unlock_action
 import com.mk.daftar.feature.auth.resources.auth_unlock_body
 import com.mk.daftar.feature.auth.resources.auth_unlock_heading
+import com.mk.daftar.feature.auth.resources.p25_pin_backoff
+import com.mk.daftar.feature.auth.resources.p25_pin_biometric_disabled
+import com.mk.daftar.feature.auth.resources.p25_pin_biometric_locked
+import com.mk.daftar.feature.auth.resources.p25_pin_biometric_unavailable
+import com.mk.daftar.feature.auth.resources.p25_pin_duration_seconds
+import com.mk.daftar.feature.auth.resources.p25_pin_mismatch
+import com.mk.daftar.feature.auth.resources.p25_pin_ready
+import kotlinx.coroutines.delay
+import org.jetbrains.compose.resources.StringResource
 import org.jetbrains.compose.resources.pluralStringResource
 import org.jetbrains.compose.resources.stringResource
 
 /**
  * The auth screens below the route. Stateless: they draw [state] and report [onIntent], so a screenshot or a preview
- * can render any state with fake data. Layout is one centered column of at most 400dp, scrollable on short windows and
- * at large text sizes. The host owns the system insets; the keypad stays left-to-right inside the right-to-left column.
+ * can render any state with fake data. Create, confirm and unlock share [PinScreen]: one geometry whose lanes are sized
+ * for every message of the flow, so a state change never moves the PIN field, the keypad or the primary action.
+ * The host owns the system insets; the keypad stays left-to-right inside the right-to-left column.
  */
 @Composable
 fun AuthContent(
@@ -157,38 +176,37 @@ fun AuthContent(
                 intent != null
             },
     ) {
-        when (state.phase) {
-            AuthPhase.Biometric -> AuthTopBar(
-                title = stringResource(Res.string.auth_biometric_heading),
-                onBack = { onIntent(AuthIntent.Back) },
-            )
+        if (state.phase.usesPinLayout) {
+            PinScreen(state = state, onIntent = onIntent, modifier = Modifier.weight(1f))
+        } else {
+            when (state.phase) {
+                AuthPhase.Biometric -> AuthTopBar(
+                    title = stringResource(Res.string.auth_biometric_heading),
+                    onBack = { onIntent(AuthIntent.Back) },
+                )
 
-            AuthPhase.Confirm -> AuthTopBar(
-                title = stringResource(Res.string.auth_confirm_heading),
-                onBack = { onIntent(AuthIntent.Back) },
-            )
+                AuthPhase.Recovery -> AuthTopBar(
+                    title = stringResource(Res.string.auth_forgot_pin),
+                    onBack = { onIntent(AuthIntent.LeaveRecovery) },
+                )
 
-            AuthPhase.Recovery -> AuthTopBar(
-                title = stringResource(Res.string.auth_forgot_pin),
-                onBack = { onIntent(AuthIntent.LeaveRecovery) },
-            )
-
-            else -> Unit
-        }
-        Column(
-            modifier = Modifier
-                .weight(1f)
-                .fillMaxWidth()
-                .verticalScroll(rememberScrollState())
-                .padding(horizontal = DaftarSpacing.md, vertical = DaftarSpacing.md),
-            horizontalAlignment = Alignment.CenterHorizontally,
-        ) {
+                else -> Unit
+            }
             Column(
-                modifier = Modifier.widthIn(max = MAX_CONTENT_WIDTH).fillMaxWidth(),
+                modifier = Modifier
+                    .weight(1f)
+                    .fillMaxWidth()
+                    .verticalScroll(rememberScrollState())
+                    .padding(horizontal = DaftarSpacing.md, vertical = DaftarSpacing.md),
                 horizontalAlignment = Alignment.CenterHorizontally,
-                verticalArrangement = Arrangement.spacedBy(DaftarSpacing.sm),
             ) {
-                AuthPhaseContent(state = state, onIntent = onIntent, cloudRestoreOffered = cloudRestoreOffered)
+                Column(
+                    modifier = Modifier.widthIn(max = MAX_CONTENT_WIDTH).fillMaxWidth(),
+                    horizontalAlignment = Alignment.CenterHorizontally,
+                    verticalArrangement = Arrangement.spacedBy(DaftarSpacing.sm),
+                ) {
+                    AuthPhaseContent(state = state, onIntent = onIntent, cloudRestoreOffered = cloudRestoreOffered)
+                }
             }
         }
     }
@@ -198,12 +216,15 @@ fun AuthContent(
 private fun AuthPhaseContent(state: AuthUiState, onIntent: (AuthIntent) -> Unit, cloudRestoreOffered: Boolean) {
     when (val phase = state.phase) {
         AuthPhase.Checking -> CheckingBody()
-        AuthPhase.Create -> CreateBody(state, onIntent)
-        AuthPhase.Confirm -> ConfirmBody(state, onIntent)
+
         AuthPhase.Biometric -> BiometricBody(state, onIntent)
-        AuthPhase.Unlock -> UnlockBody(state, onIntent)
+
         AuthPhase.Recovery -> RecoveryBody(state, onIntent, cloudRestoreOffered)
+
         is AuthPhase.Unavailable -> UnavailableBody(phase.reason, state, onIntent)
+
+        // Create, confirm and unlock are drawn by PinScreen.
+        AuthPhase.Create, AuthPhase.Confirm, AuthPhase.Unlock -> Unit
     }
 }
 
@@ -241,58 +262,6 @@ private fun CheckingBody() {
             style = DaftarTheme.typography.supportingBody,
             color = DaftarTheme.colors.muted,
         )
-    }
-}
-
-@Composable
-private fun CreateBody(state: AuthUiState, onIntent: (AuthIntent) -> Unit) {
-    PhaseLayout {
-        StepLabel(stringResource(Res.string.auth_step_1))
-        PinIntro(
-            heading = stringResource(Res.string.auth_create_heading),
-            explanation = stringResource(Res.string.auth_create_body),
-        )
-        PinInput(state = state, invalid = false)
-        PinKeypad(state = state, onIntent = onIntent)
-        PrimaryAction(
-            state = state,
-            label = stringResource(Res.string.auth_create_action),
-            busyLabel = null,
-            onIntent = onIntent,
-        )
-        Footnote(stringResource(Res.string.auth_security_footnote))
-    }
-}
-
-@Composable
-private fun ConfirmBody(state: AuthUiState, onIntent: (AuthIntent) -> Unit) {
-    PhaseLayout {
-        val mismatch = state.error == AuthError.PinMismatch
-        StepLabel(stringResource(Res.string.auth_step_2))
-        PinIntro(
-            heading = stringResource(
-                if (mismatch) Res.string.auth_mismatch_heading else Res.string.auth_confirm_heading,
-            ),
-            explanation = if (mismatch) null else stringResource(Res.string.auth_confirm_body),
-        )
-        PinInput(state = state, invalid = mismatch)
-        if (mismatch) {
-            ErrorNote(icon = DaftarIcons.Alert, message = stringResource(Res.string.auth_mismatch_error))
-        }
-        PinKeypad(state = state, onIntent = onIntent)
-        PrimaryAction(
-            state = state,
-            label = stringResource(Res.string.auth_confirm_action),
-            busyLabel = null,
-            onIntent = onIntent,
-        )
-        DaftarTextButton(
-            onClick = { onIntent(AuthIntent.RestartCreation) },
-            enabled = state.busy == null,
-            modifier = Modifier.fillMaxWidth(),
-        ) {
-            Text(stringResource(Res.string.auth_restart_creation))
-        }
     }
 }
 
@@ -372,66 +341,6 @@ private fun BiometricBody(state: AuthUiState, onIntent: (AuthIntent) -> Unit) {
             textAlign = TextAlign.Center,
             modifier = Modifier.fillMaxWidth(),
         )
-    }
-}
-
-@Composable
-private fun UnlockBody(state: AuthUiState, onIntent: (AuthIntent) -> Unit) {
-    PhaseLayout {
-        PinIntro(
-            heading = stringResource(Res.string.auth_unlock_heading),
-            explanation = stringResource(Res.string.auth_unlock_body),
-        )
-        PinInput(state = state, invalid = state.retrySeconds == null && state.error == AuthError.IncorrectPin)
-        UnlockNote(state)
-        BiometricNotice(state)
-        PinKeypad(state = state, onIntent = onIntent)
-        if (state.retrySeconds != null) {
-            Text(
-                text = stringResource(Res.string.auth_keypad_paused),
-                style = DaftarTheme.typography.fineText,
-                color = DaftarTheme.colors.muted,
-                textAlign = TextAlign.Center,
-                modifier = Modifier.fillMaxWidth(),
-            )
-        }
-        PrimaryAction(
-            state = state,
-            label = stringResource(Res.string.auth_unlock_action),
-            busyLabel = if (state.busy == AuthBusy.Unlocking) stringResource(Res.string.auth_busy_unlocking) else null,
-            onIntent = onIntent,
-        )
-        DaftarTextButton(
-            onClick = { onIntent(AuthIntent.ShowRecovery) },
-            enabled = state.busy == null,
-            modifier = Modifier.fillMaxWidth(),
-        ) {
-            Text(stringResource(Res.string.auth_forgot_pin))
-        }
-    }
-}
-
-/** The unlock screen's message: the penalty countdown while it runs, otherwise the last typed failure. */
-@Composable
-private fun UnlockNote(state: AuthUiState) {
-    val seconds = state.retrySeconds
-    when {
-        seconds != null -> ErrorNote(
-            icon = DaftarIcons.Clock,
-            message = pluralStringResource(Res.plurals.auth_backoff_seconds, seconds, seconds),
-        )
-
-        state.error == AuthError.IncorrectPin -> ErrorNote(
-            icon = DaftarIcons.Alert,
-            message = stringResource(Res.string.auth_incorrect_pin),
-        )
-
-        state.error == AuthError.OpenFailed -> ErrorNote(
-            icon = DaftarIcons.Alert,
-            message = stringResource(Res.string.auth_open_failed),
-        )
-
-        else -> Unit
     }
 }
 
@@ -536,31 +445,205 @@ private fun StepLabel(text: String) {
     )
 }
 
+/**
+ * The PIN screen for create, confirm and unlock. A fixed top-bar lane, then one scroll container for everything below
+ * it. The intro sits at the top and the input block at the bottom, with the space between them left empty, so the
+ * PIN field, keypad and primary action keep the same place in every state of the flow.
+ */
 @Composable
-private fun PinIntro(heading: String, explanation: String?) {
+private fun PinScreen(state: AuthUiState, onIntent: (AuthIntent) -> Unit, modifier: Modifier = Modifier) {
+    Column(modifier = modifier.fillMaxWidth()) {
+        Box(
+            modifier = Modifier.fillMaxWidth().height(DaftarSpacing.topBarMinHeight),
+            contentAlignment = Alignment.Center,
+        ) {
+            if (state.phase == AuthPhase.Confirm) {
+                DaftarTopBar(
+                    title = "",
+                    onBack = { onIntent(AuthIntent.Back) },
+                    backLabel = stringResource(DesignRes.string.btn_back),
+                )
+            }
+        }
+        BoxWithConstraints(modifier = Modifier.weight(1f).fillMaxWidth()) {
+            val padding = DaftarSpacing.md
+            val contentWidth = minOf(MAX_CONTENT_WIDTH, maxWidth - padding * 2)
+            val lanes = rememberPinLanes(contentWidth)
+            val minimumBody = (maxHeight - padding * 2).coerceAtLeast(0.dp)
+            Column(
+                modifier = Modifier
+                    .fillMaxSize()
+                    .verticalScroll(rememberScrollState())
+                    .padding(horizontal = padding, vertical = padding),
+                horizontalAlignment = Alignment.CenterHorizontally,
+            ) {
+                BottomAnchoredBody(
+                    minHeight = minimumBody,
+                    top = { PinIntro(state = state, lanes = lanes) },
+                    bottom = { PinInputBlock(state = state, lanes = lanes, onIntent = onIntent) },
+                    modifier = Modifier.widthIn(max = MAX_CONTENT_WIDTH).fillMaxWidth(),
+                )
+            }
+        }
+    }
+}
+
+/**
+ * Places [top] at the start and [bottom] at the end of a body at least [minHeight] tall. Both keep their own height, so
+ * the space between them is the flexible region. A shorter body is its natural height and scrolls with its parent.
+ */
+@Composable
+private fun BottomAnchoredBody(
+    minHeight: Dp,
+    top: @Composable () -> Unit,
+    bottom: @Composable () -> Unit,
+    modifier: Modifier = Modifier,
+) {
+    Layout(content = {
+        top()
+        bottom()
+    }, modifier = modifier) { measurables, constraints ->
+        val width = constraints.maxWidth
+        val topPlaceable = measurables[0].measure(Constraints(minWidth = width, maxWidth = width))
+        val bottomPlaceable = measurables[1].measure(Constraints(minWidth = width, maxWidth = width))
+        val height = maxOf(minHeight.roundToPx(), topPlaceable.height + bottomPlaceable.height)
+        layout(width, height) {
+            topPlaceable.place(0, 0)
+            bottomPlaceable.place(0, height - bottomPlaceable.height)
+        }
+    }
+}
+
+/** The lane heights of the PIN flow, measured for every copy variant at the current width, locale and font scale. */
+private data class PinLanes(val step: Dp, val heading: Dp, val message: Dp, val footer: Dp)
+
+@Composable
+private fun rememberPinLanes(width: Dp): PinLanes {
+    val typography = DaftarTheme.typography
+    val measurer = rememberTextMeasurer()
+    val density = LocalDensity.current
+    val steps = listOf(stringResource(Res.string.auth_step_1), stringResource(Res.string.auth_step_2))
+    val headings = listOf(
+        stringResource(Res.string.auth_create_heading),
+        stringResource(Res.string.auth_confirm_heading),
+        stringResource(Res.string.auth_unlock_heading),
+    )
+    // The longest countdown the penalty schedule can show, and a few-form plural, so every backoff variant fits.
+    val longest =
+        pluralStringResource(Res.plurals.p25_pin_duration_seconds, LONGEST_BACKOFF_SECONDS, LONGEST_BACKOFF_SECONDS)
+    val fewForm = pluralStringResource(Res.plurals.p25_pin_duration_seconds, FEW_FORM_SECONDS, FEW_FORM_SECONDS)
+    val messages = listOf(
+        stringResource(Res.string.auth_create_body),
+        stringResource(Res.string.auth_confirm_body),
+        stringResource(Res.string.auth_unlock_body),
+        stringResource(Res.string.p25_pin_mismatch),
+        stringResource(Res.string.auth_incorrect_pin),
+        stringResource(Res.string.auth_open_failed),
+        stringResource(Res.string.auth_busy_creating),
+        stringResource(Res.string.auth_busy_unlocking),
+        stringResource(Res.string.p25_pin_biometric_unavailable),
+        stringResource(Res.string.p25_pin_biometric_locked),
+        stringResource(Res.string.p25_pin_biometric_disabled),
+        stringResource(Res.string.p25_pin_backoff, longest),
+        stringResource(Res.string.p25_pin_backoff, fewForm),
+    )
+    val footers = listOf(stringResource(Res.string.auth_security_footnote))
+    return remember(steps, headings, messages, footers, width, density, typography) {
+        with(density) {
+            val widthPx = width.roundToPx()
+            val messageWidthPx = (width - MESSAGE_PADDING * 2 - MESSAGE_ICON_ALLOWANCE).roundToPx().coerceAtLeast(1)
+            fun heightOf(texts: List<String>, style: TextStyle, maxWidthPx: Int): Dp = texts.maxOf { text ->
+                measurer.measure(
+                    text = text,
+                    style = style,
+                    constraints = Constraints(maxWidth = maxWidthPx),
+                ).size.height.toDp()
+            }
+            PinLanes(
+                step = heightOf(steps, typography.fieldLabel, widthPx).coerceAtLeast(STEP_LANE_MIN),
+                heading = heightOf(headings, typography.screenHeading, widthPx).coerceAtLeast(HEADING_LANE_MIN),
+                message = (
+                    maxOf(
+                        heightOf(messages, typography.noteBody, messageWidthPx),
+                        heightOf(messages, typography.supportingBody, messageWidthPx),
+                    ) + MESSAGE_PADDING * 2
+                    ).coerceAtLeast(MESSAGE_LANE_MIN),
+                footer = (heightOf(footers, typography.fineText, widthPx) + DaftarSpacing.xs)
+                    .coerceAtLeast(FOOTER_LANE_MIN),
+            )
+        }
+    }
+}
+
+@Composable
+private fun PinIntro(state: AuthUiState, lanes: PinLanes) {
+    val heading = when (state.phase) {
+        AuthPhase.Create -> stringResource(Res.string.auth_create_heading)
+        AuthPhase.Confirm -> stringResource(Res.string.auth_confirm_heading)
+        else -> stringResource(Res.string.auth_unlock_heading)
+    }
+    // Unlock reserves the step line without speaking it.
+    val step = when (state.phase) {
+        AuthPhase.Create -> stringResource(Res.string.auth_step_1)
+        AuthPhase.Confirm -> stringResource(Res.string.auth_step_2)
+        else -> null
+    }
     Column(
         modifier = Modifier.fillMaxWidth(),
         horizontalAlignment = Alignment.CenterHorizontally,
-        verticalArrangement = Arrangement.spacedBy(DaftarSpacing.sm),
+        verticalArrangement = Arrangement.spacedBy(DaftarSpacing.xs),
     ) {
-        val colors = DaftarTheme.colors
         DaftarMark(Modifier.size(PIN_MARK_SIZE), contentDescription = null)
-        Text(
-            text = heading,
-            style = DaftarTheme.typography.screenHeading,
-            color = colors.ink,
-            textAlign = TextAlign.Center,
-            modifier = Modifier.fillMaxWidth().semantics { heading() },
-        )
-        if (explanation != null) {
+        Box(
+            modifier = Modifier.fillMaxWidth().height(lanes.step),
+            contentAlignment = Alignment.Center,
+        ) {
+            if (step != null) {
+                Text(
+                    text = step,
+                    style = DaftarTheme.typography.fieldLabel,
+                    color = DaftarTheme.colors.muted,
+                    textAlign = TextAlign.Center,
+                )
+            }
+        }
+        Box(
+            modifier = Modifier.fillMaxWidth().height(lanes.heading),
+            contentAlignment = Alignment.Center,
+        ) {
             Text(
-                text = explanation,
-                style = DaftarTheme.typography.supportingBody,
-                color = colors.muted,
+                text = heading,
+                style = DaftarTheme.typography.screenHeading,
+                color = DaftarTheme.colors.ink,
                 textAlign = TextAlign.Center,
-                modifier = Modifier.fillMaxWidth(),
+                modifier = Modifier.fillMaxWidth().semantics { heading() },
             )
         }
+    }
+}
+
+@Composable
+private fun PinInputBlock(state: AuthUiState, lanes: PinLanes, onIntent: (AuthIntent) -> Unit) {
+    val label = when (state.phase) {
+        AuthPhase.Create -> stringResource(Res.string.auth_create_action)
+        AuthPhase.Confirm -> stringResource(Res.string.auth_confirm_action)
+        else -> stringResource(Res.string.auth_unlock_action)
+    }
+    val invalid = state.error == AuthError.PinMismatch ||
+        (state.error == AuthError.IncorrectPin && state.retrySeconds == null)
+    Column(
+        modifier = Modifier.fillMaxWidth(),
+        horizontalAlignment = Alignment.CenterHorizontally,
+    ) {
+        PinInput(state = state, invalid = invalid)
+        Spacer(Modifier.height(DaftarSpacing.xs))
+        PinMessageLane(state = state, height = lanes.message)
+        Spacer(Modifier.height(DaftarSpacing.sm))
+        PinKeypad(state = state, onIntent = onIntent, modifier = Modifier.heightIn(min = PIN_KEYPAD_MIN_HEIGHT))
+        Spacer(Modifier.height(DaftarSpacing.sm))
+        PrimaryAction(state = state, label = label, onIntent = onIntent)
+        Spacer(Modifier.height(DaftarSpacing.xs))
+        PinFooterLane(state = state, height = lanes.footer, onIntent = onIntent)
     }
 }
 
@@ -570,7 +653,7 @@ private fun PinInput(state: AuthUiState, invalid: Boolean) {
     Column(
         modifier = Modifier.fillMaxWidth(),
         horizontalAlignment = Alignment.CenterHorizontally,
-        verticalArrangement = Arrangement.spacedBy(DaftarSpacing.sm),
+        verticalArrangement = Arrangement.spacedBy(DaftarSpacing.xs),
     ) {
         val label = stringResource(Res.string.auth_field_label)
         val count = pluralStringResource(Res.plurals.auth_entered_digits, state.enteredCount, state.enteredCount)
@@ -590,8 +673,122 @@ private fun PinInput(state: AuthUiState, invalid: Boolean) {
     }
 }
 
+/**
+ * The one message of the PIN flow. It sits in a lane of fixed height, so an error, a countdown or a notice never moves
+ * the controls below it. A backoff is polite only while it first appears; the countdown then stays silent.
+ */
 @Composable
-private fun PinKeypad(state: AuthUiState, onIntent: (AuthIntent) -> Unit) {
+private fun PinMessageLane(state: AuthUiState, height: Dp) {
+    val message = pinMessageFor(state)
+    val inBackoff = message is PinMessage.Backoff
+    val announcingBackoff = remember(inBackoff) { mutableStateOf(inBackoff) }
+    LaunchedEffect(inBackoff) {
+        if (inBackoff) {
+            delay(BACKOFF_ANNOUNCE_MS)
+            announcingBackoff.value = false
+        }
+    }
+    val live = message is PinMessage.Notice || (inBackoff && announcingBackoff.value)
+    Box(
+        modifier = Modifier
+            .fillMaxWidth()
+            .height(height)
+            .then(if (live) Modifier.semantics { liveRegion = LiveRegionMode.Polite } else Modifier),
+        contentAlignment = Alignment.Center,
+    ) {
+        when (message) {
+            null -> Unit
+
+            is PinMessage.Backoff -> ErrorNote(
+                icon = DaftarIcons.Clock,
+                message = pinMessageText(message),
+            )
+
+            is PinMessage.Failure -> ErrorNote(
+                icon = DaftarIcons.Alert,
+                message = pinMessageText(message),
+            )
+
+            is PinMessage.Notice -> DaftarNotePanel(modifier = Modifier.fillMaxWidth(), tone = DaftarNoteTone.Context) {
+                Text(pinMessageText(message), style = DaftarTheme.typography.noteBody)
+            }
+
+            is PinMessage.Busy -> Text(
+                text = pinMessageText(message),
+                style = DaftarTheme.typography.supportingBody,
+                color = DaftarTheme.colors.muted,
+                textAlign = TextAlign.Center,
+                modifier = Modifier.fillMaxWidth(),
+            )
+
+            is PinMessage.Explanation -> Text(
+                text = pinMessageText(message),
+                style = DaftarTheme.typography.supportingBody,
+                color = DaftarTheme.colors.muted,
+                textAlign = TextAlign.Center,
+                modifier = Modifier.fillMaxWidth(),
+            )
+        }
+        BackoffReadyAnnouncement(inBackoff = inBackoff)
+    }
+}
+
+@Composable
+private fun pinMessageText(message: PinMessage): String = when (message) {
+    is PinMessage.Backoff -> stringResource(
+        Res.string.p25_pin_backoff,
+        pluralStringResource(Res.plurals.p25_pin_duration_seconds, message.seconds, message.seconds),
+    )
+
+    is PinMessage.Failure -> stringResource(message.error.messageResource())
+
+    is PinMessage.Busy -> stringResource(
+        if (message.busy == AuthBusy.Creating) Res.string.auth_busy_creating else Res.string.auth_busy_unlocking,
+    )
+
+    is PinMessage.Notice -> stringResource(message.notice.messageResource())
+
+    is PinMessage.Explanation -> stringResource(
+        when (message.phase) {
+            AuthPhase.Create -> Res.string.auth_create_body
+            AuthPhase.Confirm -> Res.string.auth_confirm_body
+            else -> Res.string.auth_unlock_body
+        },
+    )
+}
+
+/**
+ * Announces the end of a backoff once. It is a zero-size live node that exists for a moment after the penalty ends, so
+ * the countdown itself never speaks.
+ */
+@Composable
+private fun BackoffReadyAnnouncement(inBackoff: Boolean) {
+    val ready = stringResource(Res.string.p25_pin_ready)
+    var sawBackoff by remember { mutableStateOf(false) }
+    var completed by remember { mutableStateOf(false) }
+    LaunchedEffect(inBackoff) {
+        if (inBackoff) {
+            sawBackoff = true
+            completed = false
+        } else if (sawBackoff) {
+            sawBackoff = false
+            completed = true
+            delay(READY_ANNOUNCE_MS)
+            completed = false
+        }
+    }
+    if (completed) {
+        Box(
+            Modifier.size(1.dp).semantics {
+                liveRegion = LiveRegionMode.Polite
+                contentDescription = ready
+            },
+        )
+    }
+}
+
+@Composable
+private fun PinKeypad(state: AuthUiState, onIntent: (AuthIntent) -> Unit, modifier: Modifier = Modifier) {
     // The biometric key exists only on the lock screen, and only when the vault says biometrics are ready.
     val biometric = state.biometricReady && state.phase == AuthPhase.Unlock
     DaftarKeypad(
@@ -599,37 +796,53 @@ private fun PinKeypad(state: AuthUiState, onIntent: (AuthIntent) -> Unit) {
         onErase = { onIntent(AuthIntent.Erase) },
         eraseLabel = stringResource(Res.string.auth_erase_digit),
         enabled = state.inputEnabled,
-        modifier = Modifier.fillMaxWidth(),
+        modifier = modifier.fillMaxWidth(),
         biometricLabel = if (biometric) stringResource(DesignRes.string.pin_biometric) else "",
         onBiometric = if (biometric) ({ onIntent(AuthIntent.BiometricUnlock) }) else null,
     )
 }
 
-/** The biometric notice on the lock screen. Informative only: it never blocks the PIN path. */
 @Composable
-private fun BiometricNotice(state: AuthUiState) {
-    val message = when (state.notice) {
-        AuthNotice.BiometricsUnavailable -> stringResource(Res.string.auth_biometric_unavailable)
-        AuthNotice.BiometricsLockedOut -> stringResource(Res.string.auth_biometric_locked_out)
-        AuthNotice.BiometricsNotEnabled -> stringResource(Res.string.auth_biometric_not_enabled)
-        null -> return
-    }
-    DaftarNotePanel(modifier = Modifier.fillMaxWidth(), tone = DaftarNoteTone.Context) {
-        Text(message, style = DaftarTheme.typography.noteBody)
-    }
-}
-
-@Composable
-private fun PrimaryAction(state: AuthUiState, label: String, busyLabel: String?, onIntent: (AuthIntent) -> Unit) {
-    val busy = state.busy != null
+private fun PrimaryAction(state: AuthUiState, label: String, onIntent: (AuthIntent) -> Unit) {
     PrimaryButton(
         onClick = { onIntent(AuthIntent.Submit) },
         enabled = state.submitEnabled,
-        loading = busy,
+        loading = state.busy != null,
         fullWidth = true,
         modifier = Modifier.fillMaxWidth(),
     ) {
-        Text(busyLabel?.takeIf { busy } ?: label)
+        Text(label)
+    }
+}
+
+/** The footer of the PIN flow: the security footnote, the restart action, or the recovery action. */
+@Composable
+private fun PinFooterLane(state: AuthUiState, height: Dp, onIntent: (AuthIntent) -> Unit) {
+    Box(
+        modifier = Modifier.fillMaxWidth().height(height),
+        contentAlignment = Alignment.Center,
+    ) {
+        when (state.phase) {
+            AuthPhase.Create -> Footnote(stringResource(Res.string.auth_security_footnote))
+
+            AuthPhase.Confirm -> DaftarTextButton(
+                onClick = { onIntent(AuthIntent.RestartCreation) },
+                enabled = state.busy == null,
+                modifier = Modifier.fillMaxWidth(),
+            ) {
+                Text(stringResource(Res.string.auth_restart_creation))
+            }
+
+            AuthPhase.Unlock -> DaftarTextButton(
+                onClick = { onIntent(AuthIntent.ShowRecovery) },
+                enabled = state.busy == null,
+                modifier = Modifier.fillMaxWidth(),
+            ) {
+                Text(stringResource(Res.string.auth_forgot_pin))
+            }
+
+            else -> Unit
+        }
     }
 }
 
@@ -662,6 +875,22 @@ private fun ErrorNote(icon: ImageVector, message: String) {
     }
 }
 
+private fun AuthError.messageResource(): StringResource = when (this) {
+    AuthError.PinMismatch -> Res.string.p25_pin_mismatch
+    AuthError.IncorrectPin -> Res.string.auth_incorrect_pin
+    AuthError.OpenFailed -> Res.string.auth_open_failed
+}
+
+private fun AuthNotice.messageResource(): StringResource = when (this) {
+    AuthNotice.BiometricsUnavailable -> Res.string.p25_pin_biometric_unavailable
+    AuthNotice.BiometricsLockedOut -> Res.string.p25_pin_biometric_locked
+    AuthNotice.BiometricsNotEnabled -> Res.string.p25_pin_biometric_disabled
+}
+
+/** The phases drawn by [PinScreen]. The others keep their own layout. */
+private val AuthPhase.usesPinLayout: Boolean
+    get() = this == AuthPhase.Create || this == AuthPhase.Confirm || this == AuthPhase.Unlock
+
 /** Hardware keys: digits in any script, Backspace to erase, Enter to submit. Key-down only. */
 private fun KeyEvent.toIntent(): AuthIntent? {
     if (type != KeyEventType.KeyDown) return null
@@ -683,3 +912,14 @@ private fun KeyEvent.toIntent(): AuthIntent? {
 
 private val MAX_CONTENT_WIDTH = 400.dp
 private val PIN_MARK_SIZE = 44.dp
+private val PIN_KEYPAD_MIN_HEIGHT = 256.dp
+private val STEP_LANE_MIN = 20.dp
+private val HEADING_LANE_MIN = 84.dp
+private val MESSAGE_LANE_MIN = 80.dp
+private val MESSAGE_PADDING = 12.dp
+private val MESSAGE_ICON_ALLOWANCE = 32.dp
+private val FOOTER_LANE_MIN = 56.dp
+private const val LONGEST_BACKOFF_SECONDS = 900
+private const val FEW_FORM_SECONDS = 3
+private const val BACKOFF_ANNOUNCE_MS = 1_000L
+private const val READY_ANNOUNCE_MS = 2_000L

@@ -4,14 +4,12 @@
     <string name="auth_step_2">Step 2 of 3</string>
     <string name="auth_step_3">Step 3 of 3</string>
     <string name="auth_create_heading">A PIN for your notebook</string>
-    <string name="auth_create_body">Choose 6 or more digits, different from your phone PIN.</string>
+    <string name="auth_create_body">Choose 6–16 digits, different from your phone PIN.</string>
     <string name="auth_create_action">Continue</string>
-    <string name="auth_security_footnote">Your PIN protects your encrypted data. It cannot be recovered if forgotten.</string>
+    <string name="auth_security_footnote">Your PIN cannot be recovered if forgotten.</string>
     <string name="auth_confirm_heading">Confirm your PIN</string>
     <string name="auth_confirm_body">Enter the same PIN again.</string>
     <string name="auth_confirm_action">Confirm</string>
-    <string name="auth_mismatch_heading">Try confirming again</string>
-    <string name="auth_mismatch_error">The PINs do not match. Re-enter the PIN you chose.</string>
     <string name="auth_restart_creation">Choose another PIN</string>
     <string name="auth_unlock_heading">Open Daftar</string>
     <string name="auth_unlock_body">Enter your Daftar PIN to continue.</string>
@@ -20,10 +18,9 @@
     <string name="auth_field_state">%1$s, %2$s</string>
     <string name="auth_forgot_pin">Forgot PIN?</string>
     <string name="auth_incorrect_pin">Incorrect PIN. Try again.</string>
-    <string name="auth_keypad_paused">Keypad temporarily disabled</string>
-    <string name="auth_open_failed">Daftar could not open now. Try again.</string>
-    <string name="auth_busy_creating">Creating Daftar…</string>
-    <string name="auth_busy_unlocking">Unlocking…</string>
+    <string name="auth_open_failed">Could not open Daftar. Try again.</string>
+    <string name="auth_busy_creating">Creating your notebook…</string>
+    <string name="auth_busy_unlocking">Opening Daftar…</string>
     <string name="auth_biometric_heading">Open with a touch</string>
     <string name="auth_biometric_body">Use your device biometrics to open Daftar quickly. Your Daftar PIN remains available.</string>
     <string name="auth_biometric_enable">Enable biometrics</string>
@@ -31,8 +28,6 @@
     <string name="auth_biometric_privacy">Your biometric data is never sent to Daftar.</string>
     <string name="auth_biometric_unavailable">Biometrics are unavailable now, or device enrollment changed. You can open your data with your PIN.</string>
     <string name="auth_biometric_not_enrolled">Continue with PIN and enable biometrics later.</string>
-    <string name="auth_biometric_locked_out">Biometrics are locked for now. Use your PIN.</string>
-    <string name="auth_biometric_not_enabled">Biometrics were not enabled. Continue with your PIN.</string>
     <string name="auth_busy_enrolling">Enabling biometrics…</string>
     <string name="auth_recovery_heading">Your PIN cannot be recovered</string>
     <string name="auth_recovery_body">If biometrics are enabled, you can open Daftar with them. Changing your PIN requires the current PIN.</string>
@@ -53,9 +48,15 @@
         <item quantity="one">%1$d digit entered</item>
         <item quantity="other">%1$d digits entered</item>
     </plurals>
-    <plurals name="auth_backoff_seconds">
-        <item quantity="one">Incorrect PIN. Try again in ⁦%1$d⁩ second.</item>
-        <item quantity="other">Incorrect PIN. Try again in ⁦%1$d⁩ seconds.</item>
-    </plurals>
     <string name="auth_restore_cloud">Restore from cloud backup</string>
+    <string name="p25_pin_mismatch">PINs do not match. Enter the PIN again.</string>
+    <string name="p25_pin_backoff">Wait %1$s before trying again.</string>
+    <plurals name="p25_pin_duration_seconds">
+        <item quantity="one">1 second</item>
+        <item quantity="other">%1$d seconds</item>
+    </plurals>
+    <string name="p25_pin_ready">You can try again now.</string>
+    <string name="p25_pin_biometric_unavailable">Biometrics are unavailable. Use your Daftar PIN.</string>
+    <string name="p25_pin_biometric_locked">Biometrics are temporarily locked. Use your Daftar PIN.</string>
+    <string name="p25_pin_biometric_disabled">Unlock with your PIN, then enable biometrics in Settings.</string>
 </resources>

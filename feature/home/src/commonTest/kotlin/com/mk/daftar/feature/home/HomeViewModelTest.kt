@@ -7,12 +7,19 @@ import com.mk.daftar.core.domain.repository.ZakatTrackingState
 import com.mk.daftar.core.domain.session.VaultSession
 import com.mk.daftar.core.domain.session.VaultSessionState
 import com.mk.daftar.core.domain.storage.VaultRead
+import com.mk.daftar.core.domain.usecase.CompleteFirstRunGuideUseCase
+import com.mk.daftar.core.domain.usecase.FirstRunGuideState
 import com.mk.daftar.core.domain.usecase.ObserveBanksUseCase
+import com.mk.daftar.core.domain.usecase.ObserveFirstRunGuideUseCase
 import com.mk.daftar.core.domain.usecase.ObservePortfolioValuationUseCase
 import com.mk.daftar.core.domain.usecase.ObserveSelectedQuotesUseCase
 import com.mk.daftar.core.domain.usecase.ObserveZakatTrackingUseCase
 import com.mk.daftar.core.model.ZakatYear
+import com.mk.daftar.core.navigation.BankAddRoute
+import com.mk.daftar.core.navigation.CashAddRoute
+import com.mk.daftar.core.navigation.GoldAddRoute
 import com.mk.daftar.core.navigation.GoldRoute
+import com.mk.daftar.core.navigation.InvestmentAddRoute
 import com.mk.daftar.core.navigation.TopLevelDestination
 import com.mk.daftar.core.navigation.ZakatCalculatorRoute
 import com.mk.daftar.core.navigation.ZakatHistoryRoute
@@ -66,13 +73,20 @@ class HomeViewModelTest {
         Dispatchers.resetMain()
     }
 
-    private class Rig(val portfolio: FakePortfolio, val visibility: ValuesVisibility, val model: HomeViewModel)
+    private class Rig(
+        val portfolio: FakePortfolio,
+        val visibility: ValuesVisibility,
+        val model: HomeViewModel,
+        val guide: FakeFirstRunGuide,
+    )
 
     private fun rig(
         tracking: VaultRead<ZakatTrackingState> = VaultRead.Ready(1, ZakatTrackingState(null, emptyList())),
     ): Rig {
         val portfolio = FakePortfolio()
         val visibility = ValuesVisibility()
+        val guide = FakeFirstRunGuide()
+        val journal = FakeJournal()
         val model = HomeViewModel(
             observePortfolio = ObservePortfolioValuationUseCase(
                 session = portfolio.session as VaultSession,
@@ -89,8 +103,30 @@ class HomeViewModelTest {
             observeDay = fixedZakatDay(LocalDate(2026, 10, 13)),
             visibility = visibility,
             refresh = portfolio.refresh,
+            observeFirstRun = ObserveFirstRunGuideUseCase(
+                session = portfolio.session,
+                gold = portfolio.gold,
+                banks = portfolio.banks,
+                cash = portfolio.cash,
+                investments = NoInvestments(portfolio.cash.observeAll()),
+                journal = journal,
+                zakatYears = FakeZakatTracking(tracking),
+                guide = guide,
+            ),
+            completeFirstRun = CompleteFirstRunGuideUseCase(guide),
         )
-        return Rig(portfolio, visibility, model)
+        return Rig(portfolio, visibility, model, guide)
+    }
+
+    /** An open vault with no record of any kind. */
+    private fun Rig.openEmptyVault() {
+        portfolio.gold.data.value = VaultRead.Ready(1, emptyList())
+        portfolio.banks.banks.value = VaultRead.Ready(1, emptyList())
+        portfolio.banks.accounts.value = VaultRead.Ready(1, emptyList())
+        portfolio.cash.data.value = VaultRead.Ready(1, emptyList())
+        portfolio.prices.quotes.value = VaultRead.Ready(1, readySnapshot())
+        portfolio.session.set(VaultSessionState.Open(1))
+        settle()
     }
 
     @Test
@@ -224,5 +260,100 @@ class HomeViewModelTest {
         settle()
 
         assertTrue(rig.model.state.value.zakatDue.isEmpty())
+    }
+
+    @Test
+    fun anEmptyVaultThatNeverDismissedTheGuideShowsIt() {
+        val rig = rig()
+        rig.openEmptyVault()
+
+        assertEquals(FirstRunGuideState.Pending, rig.model.state.value.firstRun)
+        assertEquals(0, rig.guide.marks, "an empty vault is not completed by being shown")
+    }
+
+    @Test
+    fun theGuideStaysHiddenWhileReadsAreUnsettled() {
+        val rig = rig()
+        rig.portfolio.session.set(VaultSessionState.Open(1))
+        settle()
+
+        assertEquals(FirstRunGuideState.Unknown, rig.model.state.value.firstRun)
+    }
+
+    @Test
+    fun aDismissedEmptyVaultShowsThePlainEmptyStateInstead() {
+        val rig = rig()
+        rig.guide.done.value = true
+        rig.openEmptyVault()
+
+        assertEquals(FirstRunGuideState.Dismissed, rig.model.state.value.firstRun)
+    }
+
+    @Test
+    fun anyRecordHidesTheGuideAndCompletesItOnce() {
+        val rig = rig()
+        rig.portfolio.load(1)
+        rig.portfolio.session.set(VaultSessionState.Open(1))
+        settle()
+
+        assertEquals(FirstRunGuideState.HasRecords(doneRecorded = true), rig.model.state.value.firstRun)
+        assertEquals(1, rig.guide.marks)
+    }
+
+    @Test
+    fun aRecordThatAlreadyCompletedTheGuideWritesNothingMore() {
+        val rig = rig()
+        rig.guide.done.value = true
+        rig.portfolio.load(1)
+        rig.portfolio.session.set(VaultSessionState.Open(1))
+        settle()
+
+        assertEquals(FirstRunGuideState.HasRecords(doneRecorded = true), rig.model.state.value.firstRun)
+        assertEquals(0, rig.guide.marks)
+    }
+
+    @Test
+    fun emptyingTheVaultAfterRecordsDoesNotBringTheGuideBack() {
+        val rig = rig()
+        rig.portfolio.load(1)
+        rig.portfolio.session.set(VaultSessionState.Open(1))
+        settle()
+        rig.openEmptyVault()
+
+        assertEquals(FirstRunGuideState.Dismissed, rig.model.state.value.firstRun)
+    }
+
+    @Test
+    fun hidingTheGuideMarksItDoneForThisVault() {
+        val rig = rig()
+        rig.openEmptyVault()
+        rig.model.onIntent(HomeIntent.DismissFirstRunGuide)
+        settle()
+
+        assertEquals(1, rig.guide.marks)
+        assertEquals(FirstRunGuideState.Dismissed, rig.model.state.value.firstRun)
+    }
+
+    @Test
+    fun eachGuideEntryOpensItsExistingAddFlow() {
+        val rig = rig()
+        rig.openEmptyVault()
+
+        assertEquals(
+            listOf<HomeEffect>(HomeEffect.Open(GoldAddRoute)),
+            rig.effectOf(HomeIntent.OpenFirstRunEntry(FirstRunEntry.GOLD)),
+        )
+        assertEquals(
+            listOf<HomeEffect>(HomeEffect.Open(BankAddRoute)),
+            rig.effectOf(HomeIntent.OpenFirstRunEntry(FirstRunEntry.BANK)),
+        )
+        assertEquals(
+            listOf<HomeEffect>(HomeEffect.Open(CashAddRoute)),
+            rig.effectOf(HomeIntent.OpenFirstRunEntry(FirstRunEntry.CASH)),
+        )
+        assertEquals(
+            listOf<HomeEffect>(HomeEffect.Open(InvestmentAddRoute)),
+            rig.effectOf(HomeIntent.OpenFirstRunEntry(FirstRunEntry.INVESTMENT)),
+        )
     }
 }

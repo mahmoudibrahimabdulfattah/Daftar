@@ -83,6 +83,20 @@ class DaftarPreferencesDataSource internal constructor(
 
     suspend fun setValuesHidden(hidden: Boolean): Outcome<Unit, StorageError> = write { it[VALUES_HIDDEN] = hidden }
 
+    /** Whether the first-run guide was dismissed or completed for this vault. Null when the store cannot be read. */
+    fun observeFirstRunGuideDone(): Flow<Boolean?> = dataStore.data
+        .map<Preferences, Boolean?> { prefs -> prefs[FIRST_RUN_GUIDE_DONE] ?: false }
+        .catch { error ->
+            if (error is IOException || error is okio.IOException) {
+                emit(null)
+            } else {
+                throw error
+            }
+        }
+
+    suspend fun setFirstRunGuideDone(done: Boolean): Outcome<Unit, StorageError> =
+        write { it[FIRST_RUN_GUIDE_DONE] = done }
+
     private suspend fun write(change: (MutablePreferences) -> Unit): Outcome<Unit, StorageError> = try {
         dataStore.updateData { prefs -> prefs.toMutablePreferences().also(change).toPreferences() }
         Outcome.Success(Unit)
@@ -100,6 +114,7 @@ private val INACTIVITY_TIMEOUT = intPreferencesKey("inactivity_timeout_seconds")
 private val BIOMETRIC_ENABLED = booleanPreferencesKey("biometric_enabled")
 private val AUTO_BIOMETRIC_CONSUMED = booleanPreferencesKey("biometric_auto_attempt_consumed")
 private val VALUES_HIDDEN = booleanPreferencesKey("values_hidden")
+private val FIRST_RUN_GUIDE_DONE = booleanPreferencesKey("first_run_guide_done")
 
 /** Maps stored values to domain settings. Unknown or out-of-range values fall back to the defaults. */
 internal fun Preferences.toUserPreferences(): UserPreferences {
