@@ -1084,6 +1084,27 @@ private fun PinSection() {
             eraseLabel = stringResource(Res.string.pin_erase),
             enabled = false,
         )
+        // The keypad in dark theme beside the current one, enabled and disabled, so digit contrast is checked in both.
+        DaftarTheme(darkTheme = true, arabic = LocalLayoutDirection.current == LayoutDirection.Rtl) {
+            Column(
+                modifier = Modifier.background(BoardDark).padding(DaftarSpacing.sm),
+                verticalArrangement = Arrangement.spacedBy(DaftarSpacing.sm),
+            ) {
+                DaftarKeypad(
+                    onDigit = {},
+                    onErase = {},
+                    eraseLabel = stringResource(Res.string.pin_erase),
+                    biometricLabel = stringResource(Res.string.pin_biometric),
+                    onBiometric = {},
+                )
+                DaftarKeypad(
+                    onDigit = {},
+                    onErase = {},
+                    eraseLabel = stringResource(Res.string.pin_erase),
+                    enabled = false,
+                )
+            }
+        }
         DaftarNotePanel(tone = DaftarNoteTone.Error, icon = DaftarIcons.Clock) {
             Text(
                 stringResource(Res.string.pin_backoff_title),
