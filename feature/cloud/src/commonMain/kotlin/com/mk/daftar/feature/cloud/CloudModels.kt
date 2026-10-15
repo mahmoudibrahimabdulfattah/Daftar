@@ -6,6 +6,7 @@ import com.mk.daftar.core.domain.cloud.CloudBackupVersion
 import com.mk.daftar.core.domain.cloud.CloudDownload
 import com.mk.daftar.core.domain.cloud.CloudError
 import com.mk.daftar.core.domain.cloud.CloudProvider
+import com.mk.daftar.core.domain.cloud.CloudSignInHandoff
 import com.mk.daftar.core.ui.mvi.UiEffect
 import com.mk.daftar.core.ui.mvi.UiIntent
 import com.mk.daftar.core.ui.mvi.UiState
@@ -47,6 +48,10 @@ data class CloudUiState(
     val mode: CloudMode,
     val availability: CloudAvailability,
     val provider: CloudProvider,
+    /** How sign-in reaches the provider. [CloudSignInHandoff.BROWSER] shows a cancellable waiting state. */
+    val signInHandoff: CloudSignInHandoff = CloudSignInHandoff.IN_APP,
+    /** The signed-in account's email, where the platform shows it (desktop). Never stored. */
+    val accountEmail: String? = null,
     val view: CloudView = CloudView.Loading,
     val versions: List<CloudBackupVersion> = emptyList(),
     val accountState: CloudAccountState = CloudAccountState.ACTIVE,
@@ -62,12 +67,19 @@ data class CloudUiState(
 
     val canRestore: Boolean
         get() = mode == CloudMode.RECOVERY
+
+    /** True while the system browser has the sign-in and the app waits for it to return. */
+    val waitingForBrowser: Boolean
+        get() = busy == CloudBusy.SIGNING_IN && signInHandoff == CloudSignInHandoff.BROWSER
 }
 
 sealed interface CloudIntent : UiIntent {
     data object Refresh : CloudIntent
 
     data object SignIn : CloudIntent
+
+    /** Stops a sign-in that is waiting for the browser. Nothing is reported as an error. */
+    data object CancelSignIn : CloudIntent
 
     data object SignOut : CloudIntent
 

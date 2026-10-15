@@ -6,11 +6,20 @@ import kotlinx.coroutines.flow.Flow
 // The optional cloud backup contracts. Features depend only on these types: they never see a Firebase object, a
 // document path or a raw SDK message. Only ciphertext ever crosses this boundary.
 
-/** The sign-in provider of this platform. Cloud backups are Android-only, so this is Google; accounts are never linked. */
+/** The sign-in provider of this platform: Google on Android and desktop. Accounts are never linked. */
 enum class CloudProvider { GOOGLE, APPLE }
 
-/** An authenticated account. The UID is the only identity used; no email or display name is stored or shown. */
-data class CloudAccount(val uid: String, val provider: CloudProvider)
+/**
+ * An authenticated account. The UID is the only identity used. [email] is set only where the platform shows which
+ * account is signed in (desktop, where sign-in happens in the browser); it is never stored.
+ */
+data class CloudAccount(val uid: String, val provider: CloudProvider, val email: String? = null)
+
+/**
+ * How this platform signs in. [IN_APP] is a system sheet over the app (Android). [BROWSER] hands off to the system
+ * browser and waits, cancellably, for it to return (desktop).
+ */
+enum class CloudSignInHandoff { IN_APP, BROWSER }
 
 /** Whether cloud backups can run in this build. Missing Firebase configuration is [Unavailable], never a crash. */
 enum class CloudAvailability { AVAILABLE, UNAVAILABLE }
@@ -28,6 +37,15 @@ sealed interface CloudAuthOutcome {
 
     /** The provider needs a fresh sign-in before the account can be deleted. */
     data object ReauthRequired : CloudAuthOutcome
+
+    /** Browser hand-off only: the browser did not come back in time. */
+    data object TimedOut : CloudAuthOutcome
+
+    /** Browser hand-off only: no browser could be opened. */
+    data object BrowserUnavailable : CloudAuthOutcome
+
+    /** Browser hand-off only: the owner declined the consent page. */
+    data object Declined : CloudAuthOutcome
 }
 
 /** The account control state. [DELETING] blocks uploads and is never reversed. */
@@ -113,6 +131,15 @@ enum class CloudError {
 
     /** Anything else. Nothing about the failure is shown beyond this value. */
     FAILED,
+
+    /** Browser hand-off only: the sign-in attempt expired before the browser returned. */
+    TIMED_OUT,
+
+    /** Browser hand-off only: the system browser could not be opened. */
+    BROWSER_UNAVAILABLE,
+
+    /** Browser hand-off only: the owner declined the consent page. */
+    DECLINED,
 }
 
 /** Signs the platform account in and out. Implemented per platform; the repository is the only caller. */
@@ -121,6 +148,10 @@ interface CloudAccountGateway {
 
     /** The provider this platform offers. */
     val provider: CloudProvider
+
+    /** How sign-in reaches the provider on this platform. */
+    val signInHandoff: CloudSignInHandoff
+        get() = CloudSignInHandoff.IN_APP
 
     /** The signed-in account, or null. Emits on every change. */
     val account: Flow<CloudAccount?>
@@ -146,6 +177,8 @@ interface CloudAccountGateway {
 interface CloudBackupRepository {
     val availability: CloudAvailability
     val provider: CloudProvider
+    val signInHandoff: CloudSignInHandoff
+        get() = CloudSignInHandoff.IN_APP
     val account: Flow<CloudAccount?>
 
     suspend fun signIn(): Outcome<CloudAccount, CloudError>

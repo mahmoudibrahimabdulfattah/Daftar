@@ -9,6 +9,9 @@ kotlin {
             implementation(project.dependencies.platform(libs.koin.bom))
             implementation(libs.koin.core)
         }
+        getByName("desktopMain").dependencies {
+            implementation(libs.kotlinx.serialization.json)
+        }
         androidMain.dependencies {
             implementation(project.dependencies.platform(libs.firebase.bom))
             implementation(libs.firebase.auth)

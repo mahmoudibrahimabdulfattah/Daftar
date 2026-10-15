@@ -23,6 +23,7 @@ iosApp/build/
 # Firebase config is local or CI-generated, never committed.
 androidApp/google-services.json
 iosApp/iosApp/GoogleService-Info.plist
+desktopApp/firebase-desktop.properties
 
 # Firebase emulator and tooling output.
 docs/firebase/tests/node_modules/

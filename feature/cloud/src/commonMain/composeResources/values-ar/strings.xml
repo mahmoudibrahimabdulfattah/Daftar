@@ -37,4 +37,12 @@
     <string name="cloud_cancel">إلغاء</string>
     <string name="cloud_dismiss">إغلاق</string>
     <string name="cloud_back">رجوع</string>
+    <string name="desktop_cloud_browser_intro">سنفتح متصفحك لتسجيل الدخول باستخدام ⁦Google⁩. لا يطّلع دفتر على كلمة مرور حسابك.</string>
+    <string name="desktop_cloud_wait_title">أكمل تسجيل الدخول في المتصفح</string>
+    <string name="desktop_cloud_wait_body">عُد إلى دفتر بعد الموافقة. يمكنك الإلغاء هنا. تنتهي المحاولة بعد ⁦3⁩ دقائق.</string>
+    <string name="desktop_cloud_timeout">انتهت مهلة تسجيل الدخول. حاول مرة أخرى.</string>
+    <string name="desktop_cloud_browser_failed">تعذّر فتح المتصفح. تأكّد من تعيين متصفح افتراضي، ثم حاول مرة أخرى.</string>
+    <string name="desktop_cloud_retry">حاول مرة أخرى</string>
+    <string name="desktop_cloud_declined">لم يكتمل تسجيل الدخول. يمكنك المحاولة مرة أخرى.</string>
+    <string name="desktop_cloud_account">حساب ⁦Google⁩</string>
 </resources>

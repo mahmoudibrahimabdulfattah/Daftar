@@ -10,6 +10,7 @@ import com.mk.daftar.core.domain.cloud.CloudDownload
 import com.mk.daftar.core.domain.cloud.CloudError
 import com.mk.daftar.core.domain.cloud.CloudListing
 import com.mk.daftar.core.domain.cloud.CloudProvider
+import com.mk.daftar.core.domain.cloud.CloudSignInHandoff
 import com.mk.daftar.core.domain.cloud.CloudUploadPhase
 import kotlinx.coroutines.CompletableDeferred
 import kotlinx.coroutines.flow.Flow
@@ -22,6 +23,7 @@ class FakeCloudRepository(
 ) : CloudBackupRepository {
     val accountState = MutableStateFlow(if (signedIn) CloudAccount("uid-1", CloudProvider.APPLE) else null)
     override val provider: CloudProvider = CloudProvider.APPLE
+    override var signInHandoff: CloudSignInHandoff = CloudSignInHandoff.IN_APP
     override val account: Flow<CloudAccount?> get() = accountState
 
     var listing: Outcome<CloudListing, CloudError> = Outcome.Success(emptyListing())

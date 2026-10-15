@@ -13,6 +13,8 @@ import androidx.compose.ui.unit.dp
 import androidx.compose.ui.window.Window
 import androidx.compose.ui.window.application
 import com.mk.daftar.App
+import com.mk.daftar.core.account.desktop.DesktopCloudConfiguration
+import com.mk.daftar.core.account.di.desktopCloudConfigurationModule
 import com.mk.daftar.core.common.desktop.DesktopAppDirectories
 import com.mk.daftar.core.common.desktop.DesktopOs
 import com.mk.daftar.core.security.DesktopSecurityConfiguration
@@ -25,6 +27,8 @@ import com.mk.daftar.platform.DesktopWindowHost
 import java.awt.Dimension
 import java.util.Locale
 import org.koin.core.context.GlobalContext
+import org.koin.core.module.Module
+import org.koin.dsl.module
 
 /**
  * The desktop entry point. The private directory and the key policy are fixed before dependency injection starts,
@@ -42,6 +46,7 @@ fun main() {
                     DesktopSecurityConfiguration.RequireHardware
                 },
             ),
+            desktopCloudModules(),
             desktopBuildConfigurationModule(
                 DesktopBuildConfiguration(
                     versionName = DesktopBuildFlavor.VERSION,
@@ -86,6 +91,16 @@ fun main() {
             )
         }
     }
+}
+
+/** The cloud configuration compiled into this build, when it has one. */
+private fun desktopCloudModules(): Module {
+    val apiKey = DesktopBuildFlavor.CLOUD_API_KEY
+    val projectId = DesktopBuildFlavor.CLOUD_PROJECT_ID
+    val clientId = DesktopBuildFlavor.CLOUD_OAUTH_CLIENT_ID
+    val clientSecret = DesktopBuildFlavor.CLOUD_OAUTH_CLIENT_SECRET
+    if (apiKey == null || projectId == null || clientId == null || clientSecret == null) return module { }
+    return desktopCloudConfigurationModule(DesktopCloudConfiguration(apiKey, projectId, clientId, clientSecret))
 }
 
 /** The smallest client area the layouts are designed for (design phase 28). */

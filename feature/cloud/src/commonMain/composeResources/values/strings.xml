@@ -37,4 +37,12 @@
     <string name="cloud_cancel">Cancel</string>
     <string name="cloud_dismiss">Dismiss</string>
     <string name="cloud_back">Back</string>
+    <string name="desktop_cloud_browser_intro">We’ll open your browser to sign in with Google. Daftar never sees your Google password.</string>
+    <string name="desktop_cloud_wait_title">Finish signing in in your browser</string>
+    <string name="desktop_cloud_wait_body">Return to Daftar after approving. You can cancel here. This attempt expires after 3 minutes.</string>
+    <string name="desktop_cloud_timeout">Sign-in timed out. Try again.</string>
+    <string name="desktop_cloud_browser_failed">Couldn’t open your browser. Check that a default browser is set, then try again.</string>
+    <string name="desktop_cloud_retry">Try again</string>
+    <string name="desktop_cloud_declined">Sign-in wasn’t completed. You can try again.</string>
+    <string name="desktop_cloud_account">Google account</string>
 </resources>
