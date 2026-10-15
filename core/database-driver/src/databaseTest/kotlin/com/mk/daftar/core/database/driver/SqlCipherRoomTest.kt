@@ -95,7 +95,7 @@ class SqlCipherRoomTest {
     fun cipherVersionIsNonEmptyAndTempStoreIsMemory() = inDatabaseDirectory { path ->
         val connection = createSqlCipherDriver(keyOf(correctKey)).open(path)
         try {
-            assertTrue(connection.scalarText("PRAGMA cipher_version").isNotEmpty())
+            assertTrue(connection.scalarText(CIPHER_ENGINE_QUERY).isNotEmpty())
             assertEquals(2L, connection.scalarLong("PRAGMA temp_store"))
         } finally {
             connection.close()
@@ -131,7 +131,7 @@ class SqlCipherRoomTest {
         }
         try {
             connections.forEach { connection ->
-                assertTrue(connection.scalarText("PRAGMA cipher_version").isNotEmpty())
+                assertTrue(connection.scalarText(CIPHER_ENGINE_QUERY).isNotEmpty())
                 assertEquals(1L, connection.scalarLong("SELECT count(*) FROM secret_notes"))
             }
         } finally {

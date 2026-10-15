@@ -48,10 +48,10 @@ class SqlCipherDriverTest {
             if (sql == "SELECT count(*) FROM sqlite_master" && engine.masterReadFails) {
                 throw IllegalStateException(engine.masterReadMessage)
             }
-            return sql == "PRAGMA cipher_version" || sql.startsWith("SELECT count")
+            return sql == CIPHER_ENGINE_QUERY || sql.startsWith("SELECT count")
         }
 
-        override fun getText(index: Int): String = if (sql == "PRAGMA cipher_version") engine.cipherVersion else ""
+        override fun getText(index: Int): String = if (sql == CIPHER_ENGINE_QUERY) engine.cipherVersion else ""
         override fun getLong(index: Int): Long = 0
         override fun getDouble(index: Int): Double = 0.0
         override fun getBlob(index: Int): ByteArray = ByteArray(0)
@@ -85,7 +85,7 @@ class SqlCipherDriverTest {
         assertEquals(
             listOf(
                 "KEY x'" + key.joinToString("") { hexOf(it) } + "'",
-                "PRAGMA cipher_version",
+                CIPHER_ENGINE_QUERY,
                 "SELECT count(*) FROM sqlite_master",
                 "PRAGMA temp_store = MEMORY",
             ),

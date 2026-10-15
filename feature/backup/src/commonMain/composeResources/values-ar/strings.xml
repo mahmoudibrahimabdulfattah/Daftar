@@ -16,6 +16,7 @@
     <string name="backup_submit">إنشاء واختيار مكان الحفظ</string>
     <string name="backup_picker_note_android">سيظهر منتقي ملفات Android لاختيار مكان الحفظ. لا نطلب صلاحية الوصول إلى كل ملفاتك.</string>
     <string name="backup_picker_note_ios">سيفتح منتقي الملفات في iOS لاختيار مكان الحفظ. لا نطلب صلاحية الوصول إلى كل ملفاتك.</string>
+    <string name="backup_picker_note_desktop">ستختار مكان الحفظ من نافذة الحفظ في النظام. لا يقرأ «دفتر» ولا يكتب إلا الملف الذي تختاره.</string>
     <string name="backup_busy_heading">جارٍ تجهيز النسخة</string>
     <string name="backup_busy_message">تُشفَّر البيانات قبل اختيار مكان الحفظ. لا يُكتب أي ملف مؤقت غير مشفّر.</string>
     <string name="backup_writing_heading">جارٍ حفظ النسخة</string>

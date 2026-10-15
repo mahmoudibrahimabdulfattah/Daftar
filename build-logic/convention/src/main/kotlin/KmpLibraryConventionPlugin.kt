@@ -10,7 +10,7 @@ import org.gradle.kotlin.dsl.configure
 import org.gradle.kotlin.dsl.dependencies
 import org.jetbrains.kotlin.gradle.dsl.KotlinMultiplatformExtension
 
-/** A Kotlin Multiplatform library for Android and iOS (device + Apple Silicon simulator). */
+/** A Kotlin Multiplatform library for Android, iOS (device + Apple Silicon simulator) and desktop (JVM: macOS, Windows). */
 class KmpLibraryConventionPlugin : Plugin<Project> {
     override fun apply(target: Project) = with(target) {
         pluginManager.apply("org.jetbrains.kotlin.multiplatform")
@@ -34,6 +34,9 @@ class KmpLibraryConventionPlugin : Plugin<Project> {
 
             iosArm64()
             iosSimulatorArm64()
+            jvm("desktop") {
+                compilerOptions { jvmTarget.set(DaftarConfig.JVM_TARGET) }
+            }
 
             sourceSets.getByName("commonMain").dependencies {
                 implementation(libs.library("kotlinx-coroutines-core"))
