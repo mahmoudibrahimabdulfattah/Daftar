@@ -28,9 +28,11 @@ import kotlinx.serialization.json.putJsonObject
 
 /**
  * The desktop Firestore transport: the REST API with the signed-in user's ID token, under the same security rules as
- * Android. One transaction reads the control document and, while the account is active, the three slots, then runs the
- * body on those reads and commits its writes atomically. An aborted commit is retried with fresh reads, as the SDK
- * does. Nothing is cached beyond one attempt.
+ * Android. Like the Firebase SDKs, a transaction is optimistic: it reads the control document and, while the account is
+ * active, the three slots; runs the body on those reads; and commits its writes atomically, each guarded by a
+ * precondition that the document is unchanged since it was read (its update time, or that it still does not exist).
+ * A failed precondition means another device wrote in between, and the attempt is retried with fresh reads. Server-side
+ * transactions (`beginTransaction`) are not used: they need IAM permissions an end user's token does not carry.
  */
 internal class RestFirestoreCloudStore(
     private val session: FirestoreCredentials?,
@@ -48,42 +50,21 @@ internal class RestFirestoreCloudStore(
                 throw CloudStoreException(CloudStoreFailure.OFFLINE)
             } ?: throw CloudStoreException(CloudStoreFailure.DENIED)
             val api = Api(base, token)
-            val transaction = api.call(
-                ":beginTransaction",
-                buildJsonObject {
-                    putJsonObject("options") { putJsonObject("readWrite") {} }
-                },
-                committing = false,
-            ).plain("transaction")
-            val reads = try {
-                read(api, transaction, root)
-            } catch (failure: Exception) {
-                api.rollback(transaction)
-                throw failure
-            }
-            val writes = mutableListOf<JsonObject>()
-            val result = try {
-                body(RestCloudTransaction(reads, root, writes))
-            } catch (failure: Exception) {
-                api.rollback(transaction)
-                throw failure
-            }
-            val committed = api.commit(transaction, writes)
-            if (committed) return result
+            val reads = read(api, root)
+            val writes = mutableListOf<PendingWrite>()
+            val result = body(RestCloudTransaction(reads, root, writes))
+            // A read-only body (a listing) has nothing to commit.
+            if (writes.isEmpty() || api.commit(writes.map { it.guarded(reads) })) return result
         }
         throw CloudStoreException(CloudStoreFailure.UNKNOWN_OUTCOME)
     }
 
     /** Reads the control document, and the slots only while the account is active, as the rules allow. */
-    private suspend fun read(api: Api, transaction: String, root: String): Reads {
-        val control = api.get(listOf(root), transaction)[root]
-        val slots = if (control?.fields?.text("state") == "active") {
-            val names = (0 until SLOTS).map { "$root/$BACKUPS/$it" }
-            api.get(names, transaction).let { found -> names.map { found[it] } }
-        } else {
-            null
-        }
-        return Reads(control, slots)
+    private suspend fun read(api: Api, root: String): Reads {
+        val control = api.get(listOf(root))
+        val state = control[root]?.fields?.text("state")
+        val slots = if (state == "active") api.get((0 until SLOTS).map { "$root/$BACKUPS/$it" }) else emptyMap()
+        return Reads(root, control + slots, slotsRead = state == "active")
     }
 
     private inner class Api(private val base: String, private val token: String) {
@@ -101,6 +82,9 @@ internal class RestFirestoreCloudStore(
                 200 -> Json.parseToJsonElement(response.body)
 
                 409 -> throw Aborted
+
+                // A failed write precondition: another device changed a document after it was read.
+                400 if committing && response.body.contains("FAILED_PRECONDITION") -> throw Aborted
 
                 401, 403 -> throw CloudStoreException(CloudStoreFailure.DENIED)
 
@@ -122,45 +106,29 @@ internal class RestFirestoreCloudStore(
             }
         }
 
-        suspend fun get(names: List<String>, transaction: String): Map<String, Document> {
+        /** Reads [names]. Every name is in the answer: a [Document] when it exists, null when it does not. */
+        suspend fun get(names: List<String>): Map<String, Document?> {
             val answer = call(
                 ":batchGet",
-                buildJsonObject {
-                    putJsonArray("documents") { names.forEach { add(JsonPrimitive(it)) } }
-                    put("transaction", transaction)
-                },
+                buildJsonObject { putJsonArray("documents") { names.forEach { add(JsonPrimitive(it)) } } },
                 committing = false,
             )
-            return answer.jsonArray.mapNotNull { entry ->
-                val found = entry.jsonObject["found"]?.jsonObject ?: return@mapNotNull null
-                val name = found.plain("name")
-                name to Document(found["fields"]?.jsonObject ?: JsonObject(emptyMap()))
+            val found = answer.jsonArray.mapNotNull { entry ->
+                val document = entry.jsonObject["found"]?.jsonObject ?: return@mapNotNull null
+                document.plain("name") to Document(
+                    fields = document["fields"]?.jsonObject ?: JsonObject(emptyMap()),
+                    updateTime = document.plain("updateTime"),
+                )
             }.toMap()
+            return names.associateWith { found[it] }
         }
 
-        /** Commits [writes]. False when Firestore aborted the transaction, which the caller retries. */
-        suspend fun commit(transaction: String, writes: List<JsonObject>): Boolean = try {
-            call(
-                ":commit",
-                buildJsonObject {
-                    put("writes", JsonArray(writes))
-                    put("transaction", transaction)
-                },
-                committing = true,
-            )
+        /** Commits [writes] atomically. False when a precondition failed, which the caller retries. */
+        suspend fun commit(writes: List<JsonObject>): Boolean = try {
+            call(":commit", buildJsonObject { put("writes", JsonArray(writes)) }, committing = true)
             true
         } catch (aborted: Aborted) {
             false
-        }
-
-        suspend fun rollback(transaction: String) {
-            try {
-                call(":rollback", buildJsonObject { put("transaction", transaction) }, committing = false)
-            } catch (failure: CancellationException) {
-                throw failure
-            } catch (ignored: Exception) {
-                // An unreleased transaction expires on its own; the original failure is the one reported.
-            }
         }
     }
 
@@ -213,15 +181,38 @@ internal class HttpFirestoreTransport : FirestoreTransport {
         }
 }
 
-private class Document(val fields: JsonObject)
+private class Document(val fields: JsonObject, val updateTime: String)
 
-private class Reads(val control: Document?, val slots: List<Document?>?)
+/**
+ * What one attempt read: every requested name, with null for a document that does not exist. [slotsRead] is false when
+ * the account was not active, so the rules would have refused slot reads.
+ */
+private class Reads(val root: String, val documents: Map<String, Document?>, val slotsRead: Boolean) {
+    val control: Document? get() = documents[root]
+
+    fun slot(index: Int): Document? = documents["$root/backups/$index"]
+}
+
+/** A write and the document it targets. Its precondition comes from what the attempt read about that document. */
+private class PendingWrite(val name: String, val write: JsonObject) {
+    fun guarded(reads: Reads): JsonObject {
+        if (!reads.documents.containsKey(name)) return write
+        val seen = reads.documents[name]
+        return JsonObject(
+            write + (
+                "currentDocument" to buildJsonObject {
+                    if (seen == null) put("exists", false) else put("updateTime", seen.updateTime)
+                }
+                ),
+        )
+    }
+}
 
 /** The body's view of one attempt: reads from the prefetched documents, writes collected for the commit. */
 private class RestCloudTransaction(
     private val reads: Reads,
     private val root: String,
-    private val writes: MutableList<JsonObject>,
+    private val writes: MutableList<PendingWrite>,
 ) : CloudTransaction {
     override fun readControl(): ControlRecord? {
         val fields = reads.control?.fields ?: return null
@@ -230,8 +221,8 @@ private class RestCloudTransaction(
 
     override fun readSlot(slot: Int): SlotRecord? {
         // The rules refuse slot reads unless the account is active, exactly as the SDK would report.
-        val slots = reads.slots ?: throw CloudStoreException(CloudStoreFailure.DENIED)
-        val fields = slots.getOrNull(slot)?.fields ?: return null
+        if (!reads.slotsRead) throw CloudStoreException(CloudStoreFailure.DENIED)
+        val fields = reads.slot(slot)?.fields ?: return null
         return SlotRecord(
             backupId = fields.text("backupId").orEmpty(),
             formatVersion = fields.long("formatVersion") ?: -1L,
@@ -270,27 +261,31 @@ private class RestCloudTransaction(
     }
 
     override fun deleteSlot(slot: Int) {
-        writes += buildJsonObject { put("delete", "$root/backups/$slot") }
+        val name = "$root/backups/$slot"
+        writes += PendingWrite(name, buildJsonObject { put("delete", name) })
     }
 
     /** A full replace of [name] with [fields], with [serverTime] stamped by the server at commit. */
-    private fun set(name: String, fields: JsonObject, serverTime: String): JsonObject = buildJsonObject {
-        putJsonObject("update") {
-            put("name", name)
-            put("fields", fields)
-        }
-        put(
-            "updateTransforms",
-            buildJsonArray {
-                add(
-                    buildJsonObject {
-                        put("fieldPath", serverTime)
-                        put("setToServerValue", "REQUEST_TIME")
-                    },
-                )
-            },
-        )
-    }
+    private fun set(name: String, fields: JsonObject, serverTime: String): PendingWrite = PendingWrite(
+        name,
+        buildJsonObject {
+            putJsonObject("update") {
+                put("name", name)
+                put("fields", fields)
+            }
+            put(
+                "updateTransforms",
+                buildJsonArray {
+                    add(
+                        buildJsonObject {
+                            put("fieldPath", serverTime)
+                            put("setToServerValue", "REQUEST_TIME")
+                        },
+                    )
+                },
+            )
+        },
+    )
 
     private fun integer(value: Number) = buildJsonObject { put("integerValue", value.toString()) }
 

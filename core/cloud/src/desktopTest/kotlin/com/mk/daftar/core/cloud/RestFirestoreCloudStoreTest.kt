@@ -95,11 +95,14 @@ class RestFirestoreCloudStoreTest {
     private fun <T> Outcome<T, CloudError>.data(): T? = (this as? Outcome.Success)?.data
 }
 
-/** An in-memory Firestore that speaks the four REST calls the store makes, with optimistic transactions. */
+/**
+ * An in-memory Firestore that answers like the real REST API for an end user: `beginTransaction` is refused (it needs
+ * IAM permissions), reads return each document's update time, and commits enforce write preconditions.
+ */
 private class FakeFirestore : FirestoreTransport {
     private val documents = mutableMapOf<String, JsonObject>()
-    private var version = 0L
-    private val transactions = mutableMapOf<String, Long>()
+    private val updateTimes = mutableMapOf<String, String>()
+    private var clock = 0L
     var abortNextCommits = 0
     var offline = false
     var deniedReads = 0
@@ -123,11 +126,7 @@ private class FakeFirestore : FirestoreTransport {
         if (offline) throw IOException("offline")
         val request = Json.parseToJsonElement(json).jsonObject
         return when (url.substringAfterLast(':')) {
-            "beginTransaction" -> {
-                val id = "tx${transactions.size + 1}"
-                transactions[id] = version
-                ok(buildJsonObject { put("transaction", id) })
-            }
+            "beginTransaction", "rollback" -> FirestoreResponse(403, PERMISSION_DENIED)
 
             "batchGet" -> {
                 val names = request["documents"]!!.jsonArray.map { it.jsonPrimitive.content }
@@ -148,6 +147,7 @@ private class FakeFirestore : FirestoreTransport {
                                         buildJsonObject {
                                             put("name", name)
                                             put("fields", fields)
+                                            put("updateTime", updateTimes.getValue(name))
                                         },
                                     )
                                 }
@@ -158,17 +158,17 @@ private class FakeFirestore : FirestoreTransport {
             }
 
             "commit" -> {
-                val transaction = request["transaction"]!!.jsonPrimitive.content
-                if (abortNextCommits > 0 || transactions[transaction] != version) {
-                    abortNextCommits = (abortNextCommits - 1).coerceAtLeast(0)
-                    return FirestoreResponse(409, "{}")
+                if (request.containsKey("transaction")) return FirestoreResponse(400, "{}")
+                val writes = request["writes"]!!.jsonArray.map { it.jsonObject }
+                if (abortNextCommits > 0) {
+                    // Another device commits first: every document the attempt read now has a newer update time.
+                    abortNextCommits -= 1
+                    updateTimes.keys.forEach { updateTimes[it] = next() }
                 }
-                request["writes"]!!.jsonArray.forEach { write -> apply(write.jsonObject) }
-                version += 1
+                if (writes.any { !preconditionHolds(it) }) return FirestoreResponse(400, FAILED_PRECONDITION)
+                writes.forEach { apply(it) }
                 ok(buildJsonObject { })
             }
-
-            "rollback" -> ok(buildJsonObject { })
 
             else -> FirestoreResponse(404, "{}")
         }
@@ -179,9 +179,20 @@ private class FakeFirestore : FirestoreTransport {
         return control["state"]?.jsonObject?.get("stringValue")?.jsonPrimitive?.content == "active"
     }
 
+    private fun next(): String = Instant.ofEpochSecond(1_800_000_000L + ++clock).toString()
+
+    private fun preconditionHolds(write: JsonObject): Boolean {
+        val precondition = write["currentDocument"]?.jsonObject ?: return true
+        val name = write["delete"]?.jsonPrimitive?.content
+            ?: write["update"]!!.jsonObject["name"]!!.jsonPrimitive.content
+        precondition["exists"]?.let { return (documents[name] != null) == it.jsonPrimitive.content.toBoolean() }
+        return updateTimes[name] == precondition["updateTime"]?.jsonPrimitive?.content
+    }
+
     private fun apply(write: JsonObject) {
         write["delete"]?.let {
             documents.remove(it.jsonPrimitive.content)
+            updateTimes.remove(it.jsonPrimitive.content)
             return
         }
         val update = write["update"]!!.jsonObject
@@ -192,7 +203,13 @@ private class FakeFirestore : FirestoreTransport {
             fields[path] = buildJsonObject { put("timestampValue", Instant.now().toString()) }
         }
         documents[name] = JsonObject(fields)
+        updateTimes[name] = next()
     }
 
     private fun ok(body: Any) = FirestoreResponse(200, body.toString())
+
+    private companion object {
+        const val PERMISSION_DENIED = "{\"error\":{\"code\":403,\"status\":\"PERMISSION_DENIED\"}}"
+        const val FAILED_PRECONDITION = "{\"error\":{\"code\":400,\"status\":\"FAILED_PRECONDITION\"}}"
+    }
 }
