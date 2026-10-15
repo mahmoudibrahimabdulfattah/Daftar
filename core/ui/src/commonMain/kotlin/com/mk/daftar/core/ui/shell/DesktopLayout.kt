@@ -1,0 +1,56 @@
+package com.mk.daftar.core.ui.shell
+
+import androidx.compose.foundation.layout.fillMaxWidth
+import androidx.compose.foundation.layout.widthIn
+import androidx.compose.foundation.layout.wrapContentWidth
+import androidx.compose.runtime.Composable
+import androidx.compose.runtime.staticCompositionLocalOf
+import androidx.compose.ui.Alignment
+import androidx.compose.ui.Modifier
+import androidx.compose.ui.platform.LocalDensity
+import androidx.compose.ui.platform.LocalWindowInfo
+import androidx.compose.ui.unit.Dp
+import androidx.compose.ui.unit.dp
+
+/**
+ * True only in the desktop app (design phase 28). Phones and tablets never set it, so every desktop arrangement below is
+ * a no-op there and their layouts stay exactly as they were.
+ */
+val LocalDesktopLayout = staticCompositionLocalOf { false }
+
+/** Desktop content widths (design phase 28), measured without the rail and the outer gutters. */
+object DesktopWidths {
+    /** Lists and single-column pages: Home, Assets, Gold, Cash, Banks, Investments, Journal, Notes, Zakat. */
+    val Page: Dp = 720.dp
+
+    /** Reading pages: Prices, the zakat calculator, Settings. */
+    val Reading: Dp = 640.dp
+
+    /** Forms and editors. */
+    val Editor: Dp = 560.dp
+
+    /** Home's two-column group at the large width. */
+    val HomeGroup: Dp = 1120.dp
+
+    /** Home's supporting column at the large width. */
+    val HomeSupporting: Dp = 360.dp
+
+    /** The large width class, where Home and Assets use two columns. */
+    val Large: Dp = 1200.dp
+}
+
+/**
+ * Caps a desktop page at [cap] and centers it in the space beside the rail. Below the rail breakpoint, and on every
+ * phone or tablet, it changes nothing.
+ */
+@Composable
+fun Modifier.desktopPage(cap: Dp): Modifier =
+    if (LocalDesktopLayout.current && LocalShellNavigation.current == ShellNavigation.RAIL) {
+        this.fillMaxWidth().wrapContentWidth(Alignment.CenterHorizontally).widthIn(max = cap)
+    } else {
+        this
+    }
+
+/** The window's width, including the rail: the width the design's classes are defined on. */
+@Composable
+fun windowWidth(): Dp = with(LocalDensity.current) { LocalWindowInfo.current.containerSize.width.toDp() }

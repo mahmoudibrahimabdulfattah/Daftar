@@ -14,6 +14,7 @@ import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.heightIn
 import androidx.compose.foundation.layout.padding
+import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.foundation.verticalScroll
@@ -24,6 +25,7 @@ import androidx.compose.material3.pulltorefresh.PullToRefreshBox
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
+import androidx.compose.runtime.mutableFloatStateOf
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.setValue
@@ -32,6 +34,9 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.vector.ImageVector
+import androidx.compose.ui.layout.onGloballyPositioned
+import androidx.compose.ui.layout.positionInRoot
+import androidx.compose.ui.platform.LocalDensity
 import androidx.compose.ui.platform.LocalUriHandler
 import androidx.compose.ui.semantics.Role
 import androidx.compose.ui.semantics.contentDescription
@@ -39,6 +44,7 @@ import androidx.compose.ui.semantics.semantics
 import androidx.compose.ui.semantics.stateDescription
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextAlign
+import androidx.compose.ui.unit.Dp
 import androidx.compose.ui.unit.dp
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import com.mk.daftar.core.designsystem.component.DaftarAllocationBar
@@ -78,8 +84,12 @@ import com.mk.daftar.core.ui.presentation.moneyText
 import com.mk.daftar.core.ui.presentation.quoteMarkerText
 import com.mk.daftar.core.ui.presentation.quoteSummaryText
 import com.mk.daftar.core.ui.presentation.quoteUnavailableText
+import com.mk.daftar.core.ui.shell.DesktopWidths
+import com.mk.daftar.core.ui.shell.LocalDesktopLayout
 import com.mk.daftar.core.ui.shell.RootReselectScroll
 import com.mk.daftar.core.ui.shell.ShellScreen
+import com.mk.daftar.core.ui.shell.desktopPage
+import com.mk.daftar.core.ui.shell.windowWidth
 import com.mk.daftar.feature.home.resources.Res
 import com.mk.daftar.feature.home.resources.badge_cached
 import com.mk.daftar.feature.home.resources.badge_clock
@@ -217,8 +227,12 @@ fun HomeContent(state: HomeUiState, onIntent: (HomeIntent) -> Unit, modifier: Mo
                 },
             )
             val content: @Composable () -> Unit = {
+                val desktop = LocalDesktopLayout.current
+                // The window width, before the rail, decides the large class (design phase 28).
+                val twoColumns = desktop && windowWidth() >= DesktopWidths.Large
                 Column(
                     modifier = Modifier
+                        .desktopPage(if (twoColumns) DesktopWidths.HomeGroup else DesktopWidths.Page)
                         .fillMaxSize()
                         .verticalScroll(scroll)
                         .padding(horizontal = DaftarSpacing.md)
@@ -237,6 +251,7 @@ fun HomeContent(state: HomeUiState, onIntent: (HomeIntent) -> Unit, modifier: Mo
                             state = state,
                             onIntent = onIntent,
                             onMoneyChoice = { moneyChoiceOpen = true },
+                            twoColumns = twoColumns,
                         )
                     }
                 }
@@ -282,6 +297,77 @@ private fun ReadyBody(
     state: HomeUiState,
     onIntent: (HomeIntent) -> Unit,
     onMoneyChoice: () -> Unit,
+    twoColumns: Boolean = false,
+) {
+    if (twoColumns) {
+        // Desktop at the large width (design phase 28): the overview in the main column, prices and the zakat
+        // reminder beside it. Both columns scroll together. The prices card starts on the line of the allocation
+        // bar, measured from the line above it so hiding values or awaiting prices never moves the card; an empty
+        // vault has no total, so the card starts with the guide.
+        var rowTop by remember { mutableFloatStateOf(0f) }
+        var anchor by remember { mutableFloatStateOf(Float.NaN) }
+        val density = LocalDensity.current
+        val unitBottom = anchor.takeUnless { it.isNaN() }
+        val anchorTop = if (figures.isEmpty || unitBottom == null) {
+            0.dp
+        } else {
+            with(density) { (unitBottom - rowTop).toDp() } + ALLOCATION_GAP
+        }
+        Row(
+            modifier = Modifier.onGloballyPositioned { rowTop = it.positionInRoot().y },
+            horizontalArrangement = Arrangement.spacedBy(DesktopGutter),
+        ) {
+            Column(modifier = Modifier.weight(1f)) {
+                Overview(
+                    figures = figures,
+                    state = state,
+                    onIntent = onIntent,
+                    onMoneyChoice = onMoneyChoice,
+                    onAnchor = { anchor = it },
+                )
+                if (state.firstRun is FirstRunGuideState.HasRecords && state.recoveryKeyMissing) {
+                    RecoveryKeySuggestion(onIntent = onIntent)
+                }
+                HiddenNote(state)
+            }
+            Column(modifier = Modifier.width(DesktopWidths.HomeSupporting).padding(top = anchorTop)) {
+                QuoteSection(
+                    quotes = figures.quotes,
+                    refreshFailed = state.refreshFailed,
+                    attributionUrl = figures.fxAttributionUrl,
+                    onIntent = onIntent,
+                    topPadding = 0.dp,
+                )
+                if (state.firstRun is FirstRunGuideState.HasRecords) {
+                    ZakatSection(due = state.zakatDue, onIntent = onIntent)
+                }
+            }
+        }
+        return
+    }
+    Overview(figures = figures, state = state, onIntent = onIntent, onMoneyChoice = onMoneyChoice)
+    // An empty vault has nothing to give zakat on yet, so the yearly reminder waits for the first record.
+    if (state.firstRun is FirstRunGuideState.HasRecords) ZakatSection(due = state.zakatDue, onIntent = onIntent)
+    if (state.firstRun is FirstRunGuideState.HasRecords && state.recoveryKeyMissing) {
+        RecoveryKeySuggestion(onIntent = onIntent)
+    }
+    QuoteSection(
+        quotes = figures.quotes,
+        refreshFailed = state.refreshFailed,
+        attributionUrl = figures.fxAttributionUrl,
+        onIntent = onIntent,
+    )
+    HiddenNote(state)
+}
+
+/** The guide or empty state for an empty vault, otherwise the total and the categories. */
+@Composable
+private fun Overview(
+    figures: HomeFigures,
+    state: HomeUiState,
+    onIntent: (HomeIntent) -> Unit,
+    onMoneyChoice: () -> Unit,
+    onAnchor: ((Float) -> Unit)? = null,
 ) {
     if (figures.isEmpty) {
         when (state.firstRun) {
@@ -305,20 +391,14 @@ private fun ReadyBody(
             hidden = state.valuesHidden,
             refreshing = state.refreshing,
             waiting = state.waitingForPrices,
+            onAnchor = onAnchor,
         )
         Categories(figures = figures, hidden = state.valuesHidden, onIntent = onIntent)
     }
-    // An empty vault has nothing to give zakat on yet, so the yearly reminder waits for the first record.
-    if (state.firstRun is FirstRunGuideState.HasRecords) ZakatSection(due = state.zakatDue, onIntent = onIntent)
-    if (state.firstRun is FirstRunGuideState.HasRecords && state.recoveryKeyMissing) {
-        RecoveryKeySuggestion(onIntent = onIntent)
-    }
-    QuoteSection(
-        quotes = figures.quotes,
-        refreshFailed = state.refreshFailed,
-        attributionUrl = figures.fxAttributionUrl,
-        onIntent = onIntent,
-    )
+}
+
+@Composable
+private fun HiddenNote(state: HomeUiState) {
     if (state.valuesHidden) {
         Spacer(Modifier.height(DaftarSpacing.md))
         DaftarNotePanel(tone = DaftarNoteTone.Context) {
@@ -424,7 +504,13 @@ private fun MoneyChoice(onChoose: (FirstRunEntry) -> Unit) {
 }
 
 @Composable
-private fun Total(figures: HomeFigures, hidden: Boolean, refreshing: Boolean, waiting: Boolean) {
+private fun Total(
+    figures: HomeFigures,
+    hidden: Boolean,
+    refreshing: Boolean,
+    waiting: Boolean,
+    onAnchor: ((Float) -> Unit)? = null,
+) {
     val colors = DaftarTheme.colors
     val allocation = figures.allocation
     val segments = allocation?.let { parts ->
@@ -460,6 +546,11 @@ private fun Total(figures: HomeFigures, hidden: Boolean, refreshing: Boolean, wa
                 stringResource(Res.string.home_unit_egp),
                 style = DaftarTheme.typography.fineText,
                 color = colors.muted,
+                modifier = if (onAnchor != null) {
+                    Modifier.onGloballyPositioned { onAnchor(it.positionInRoot().y + it.size.height) }
+                } else {
+                    Modifier
+                },
             )
         },
         masked = hidden,
@@ -622,6 +713,7 @@ private fun QuoteSection(
     refreshFailed: Boolean,
     attributionUrl: String?,
     onIntent: (HomeIntent) -> Unit,
+    topPadding: Dp = DaftarSpacing.lg,
 ) {
     val colors = DaftarTheme.colors
     val typography = DaftarTheme.typography
@@ -641,7 +733,7 @@ private fun QuoteSection(
             },
         )
     }
-    Column(modifier = Modifier.fillMaxWidth().padding(top = DaftarSpacing.lg)) {
+    Column(modifier = Modifier.fillMaxWidth().padding(top = topPadding)) {
         Column(
             modifier = Modifier
                 .fillMaxWidth()
@@ -706,6 +798,9 @@ private fun QuoteSection(
 }
 
 private val QUOTE_CARD_RADIUS = 12.dp
+
+/** The gap [DaftarBalanceSummary] leaves between the unit line and the allocation bar. */
+private val ALLOCATION_GAP = 20.dp
 
 @Composable
 private fun missingQuoteText(key: QuoteKey): String = when (key) {
@@ -796,3 +891,6 @@ private fun ZakatSection(due: List<ZakatDueYear>, onIntent: (HomeIntent) -> Unit
         onClick = { onIntent(HomeIntent.OpenZakatReview) },
     )
 }
+
+/** The gap between Home's columns on a wide desktop window. */
+private val DesktopGutter = 24.dp

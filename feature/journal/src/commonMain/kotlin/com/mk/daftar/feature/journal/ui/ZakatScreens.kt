@@ -51,7 +51,9 @@ import com.mk.daftar.core.navigation.Navigator
 import com.mk.daftar.core.navigation.ZakatYearRoute
 import com.mk.daftar.core.ui.mvi.CollectEffects
 import com.mk.daftar.core.ui.presentation.moneyText
+import com.mk.daftar.core.ui.shell.DesktopWidths
 import com.mk.daftar.core.ui.shell.ShellScreen
+import com.mk.daftar.core.ui.shell.desktopPage
 import com.mk.daftar.feature.journal.JournalAction
 import com.mk.daftar.feature.journal.JournalBusy
 import com.mk.daftar.feature.journal.JournalEffect
@@ -159,6 +161,7 @@ fun ZakatListContent(
     ShellScreen(modifier = modifier) {
         Column(
             modifier = Modifier
+                .desktopPage(DesktopWidths.Page)
                 .fillMaxSize()
                 .verticalScroll(rememberScrollState())
                 .padding(horizontal = DaftarSpacing.md),
@@ -339,6 +342,7 @@ fun ZakatEditorContent(
             )
             Column(
                 modifier = Modifier
+                    .desktopPage(DesktopWidths.Editor)
                     .weight(1f)
                     .fillMaxWidth()
                     .verticalScroll(rememberScrollState())

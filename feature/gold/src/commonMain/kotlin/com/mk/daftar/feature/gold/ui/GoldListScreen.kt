@@ -46,8 +46,10 @@ import com.mk.daftar.core.navigation.LeaveRequest
 import com.mk.daftar.core.navigation.LocalNavigator
 import com.mk.daftar.core.ui.mvi.CollectEffects
 import com.mk.daftar.core.ui.presentation.moneyText
+import com.mk.daftar.core.ui.shell.DesktopWidths
 import com.mk.daftar.core.ui.shell.PriceRefreshAction
 import com.mk.daftar.core.ui.shell.ShellScreen
+import com.mk.daftar.core.ui.shell.desktopPage
 import com.mk.daftar.feature.gold.GoldEffect
 import com.mk.daftar.feature.gold.GoldPhase
 import com.mk.daftar.feature.gold.list.GoldHoldingRow
@@ -124,6 +126,7 @@ fun GoldListContent(
     ShellScreen(modifier = modifier) {
         Column(
             modifier = Modifier
+                .desktopPage(DesktopWidths.Page)
                 .fillMaxSize()
                 .verticalScroll(rememberScrollState())
                 .padding(horizontal = DaftarSpacing.md),

@@ -19,7 +19,7 @@ class SpotlessConventionPlugin : Plugin<Project> {
                     .editorConfigOverride(
                         mapOf(
                             "compose_allowed_composition_locals" to
-                                "LocalDaftarThemeInstance,LocalMirror,LocalNavigator,LocalNavigatorOrNull,LocalShellNavigation,LocalSimultaneousPanes",
+                                "LocalDaftarThemeInstance,LocalMirror,LocalNavigator,LocalNavigatorOrNull,LocalShellNavigation,LocalSimultaneousPanes,LocalDesktopLayout",
                         ),
                     )
             }

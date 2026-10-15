@@ -26,6 +26,8 @@ import androidx.compose.ui.semantics.semantics
 import androidx.compose.ui.text.SpanStyle
 import androidx.compose.ui.text.TextStyle
 import androidx.compose.ui.text.buildAnnotatedString
+import androidx.compose.ui.text.style.TextAlign
+import androidx.compose.ui.text.style.TextDirection
 import androidx.compose.ui.text.withStyle
 import androidx.compose.ui.unit.LayoutDirection
 import androidx.compose.ui.unit.dp
@@ -84,7 +86,7 @@ fun DaftarAmount(
     val maxSize = if (style.fontSize.isSpecified) style.fontSize else 32.sp
     BasicText(
         text = text,
-        style = style.copy(color = color),
+        style = style.copy(color = color).withAmountDirection(LocalLayoutDirection.current),
         maxLines = 1,
         autoSize = TextAutoSize.StepBased(minFontSize = 14.sp, maxFontSize = maxSize),
         modifier = amountModifier,
@@ -169,6 +171,21 @@ fun DaftarAllocationBar(
             }
         }
     }
+}
+
+/**
+ * Applies [amountTextDirection]. A forced LTR paragraph keeps the alignment the layout direction gave it, so a figure
+ * wider than its text still sits at the start in Arabic.
+ */
+private fun TextStyle.withAmountDirection(layoutDirection: LayoutDirection): TextStyle {
+    if (amountTextDirection == TextDirection.Unspecified) return this
+    val rtl = layoutDirection == LayoutDirection.Rtl
+    val align = when (textAlign) {
+        TextAlign.End -> if (rtl) TextAlign.Left else TextAlign.Right
+        TextAlign.Unspecified, TextAlign.Start -> if (rtl) TextAlign.Right else TextAlign.Left
+        else -> textAlign
+    }
+    return copy(textDirection = amountTextDirection, textAlign = align)
 }
 
 private const val LTR_ISOLATE = "⁦"

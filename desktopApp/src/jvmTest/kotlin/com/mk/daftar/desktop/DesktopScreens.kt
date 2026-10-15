@@ -44,7 +44,7 @@ class DesktopScreens {
             Thread.sleep(1500)
             waitForIdle()
             capture("03-biometric-step-1200x800")
-            tap("لاحقًا")
+            if (onAllNodes(hasText("لاحقًا") and hasClickAction()).fetchSemanticsNodes().isNotEmpty()) tap("لاحقًا")
             Thread.sleep(2500)
             waitForIdle()
             capture("03-home-1200x800")
@@ -54,14 +54,12 @@ class DesktopScreens {
                 Thread.sleep(800)
                 waitForIdle()
                 capture("04-home-${width}x$height")
-            }
-        }
-        screen(1200, 800) {
-            for ((label, name) in listOf("الأصول" to "assets", "السجل" to "journal", "الإعدادات" to "settings")) {
-                tap(label)
-                Thread.sleep(500)
-                waitForIdle()
-                capture("05-$name-1200x800")
+                for ((label, name) in listOf("الأصول" to "assets", "السجل" to "journal", "الإعدادات" to "settings")) {
+                    tap(label)
+                    Thread.sleep(500)
+                    waitForIdle()
+                    capture("05-$name-${width}x$height")
+                }
             }
         }
     }
@@ -79,7 +77,7 @@ class DesktopScreens {
 
     private fun screen(width: Int, height: Int, block: DesktopComposeUiTest.() -> Unit) =
         runDesktopComposeUiTest(width, height) {
-            setContent { App(showsDebugBanner = true, developerTools = false) }
+            setContent { App(showsDebugBanner = false, developerTools = false, desktopLayout = true) }
             waitForIdle()
             Thread.sleep(700)
             waitForIdle()

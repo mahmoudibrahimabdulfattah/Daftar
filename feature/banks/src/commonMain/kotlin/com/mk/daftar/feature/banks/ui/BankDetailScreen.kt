@@ -38,9 +38,11 @@ import com.mk.daftar.core.navigation.LeaveRequest
 import com.mk.daftar.core.navigation.LocalNavigator
 import com.mk.daftar.core.ui.mvi.CollectEffects
 import com.mk.daftar.core.ui.presentation.moneyText
+import com.mk.daftar.core.ui.shell.DesktopWidths
 import com.mk.daftar.core.ui.shell.LocalSimultaneousPanes
 import com.mk.daftar.core.ui.shell.PriceRefreshAction
 import com.mk.daftar.core.ui.shell.ShellScreen
+import com.mk.daftar.core.ui.shell.desktopPage
 import com.mk.daftar.feature.banks.AccountRow
 import com.mk.daftar.feature.banks.BankDetailIntent
 import com.mk.daftar.feature.banks.BankDetailUiState
@@ -122,6 +124,7 @@ fun BankDetailContent(
             )
             Column(
                 modifier = Modifier
+                    .desktopPage(DesktopWidths.Page)
                     .weight(1f)
                     .fillMaxWidth()
                     .verticalScroll(rememberScrollState())

@@ -17,6 +17,7 @@ import com.mk.daftar.core.account.desktop.DesktopCloudConfiguration
 import com.mk.daftar.core.account.di.desktopCloudConfigurationModule
 import com.mk.daftar.core.common.desktop.DesktopAppDirectories
 import com.mk.daftar.core.common.desktop.DesktopOs
+import com.mk.daftar.core.designsystem.component.DaftarFocusVisibility
 import com.mk.daftar.core.security.DesktopSecurityConfiguration
 import com.mk.daftar.core.security.desktopSecurityConfigurationModule
 import com.mk.daftar.di.DesktopBuildConfiguration
@@ -24,7 +25,11 @@ import com.mk.daftar.di.desktopBuildConfigurationModule
 import com.mk.daftar.di.initKoin
 import com.mk.daftar.lifecycle.VaultLifecycleCoordinator
 import com.mk.daftar.platform.DesktopWindowHost
+import java.awt.AWTEvent
 import java.awt.Dimension
+import java.awt.Toolkit
+import java.awt.event.AWTEventListener
+import java.awt.event.MouseEvent
 import java.util.Locale
 import org.koin.core.context.GlobalContext
 import org.koin.core.module.Module
@@ -70,6 +75,7 @@ fun main() {
             state = geometry,
             title = if (Locale.getDefault().language == "ar") "دفتر" else "Daftar",
             onPreviewKeyEvent = { event ->
+                if (event.type == KeyEventType.KeyDown && event.key in FOCUS_KEYS) DaftarFocusVisibility.keyboard = true
                 val lockShortcut = event.type == KeyEventType.KeyDown && event.key == Key.L &&
                     if (DesktopOs.current == DesktopOs.MAC) event.isMetaPressed else event.isCtrlPressed
                 if (lockShortcut) vaultLifecycle.lockForInactivity()
@@ -83,15 +89,27 @@ fun main() {
                 val lifecycle = WindowLifecycle.attach(window, vaultLifecycle)
                 onDispose { lifecycle.detach() }
             }
+            DisposableEffect(window) {
+                // A click hides focus rings until the keyboard moves focus again.
+                val pointer = AWTEventListener { event ->
+                    if (event.id == MouseEvent.MOUSE_PRESSED) DaftarFocusVisibility.keyboard = false
+                }
+                Toolkit.getDefaultToolkit().addAWTEventListener(pointer, AWTEvent.MOUSE_EVENT_MASK)
+                onDispose { Toolkit.getDefaultToolkit().removeAWTEventListener(pointer) }
+            }
             val covered by vaultLifecycle.covered.collectAsState()
             App(
                 showsDebugBanner = debug,
                 developerTools = debug,
                 covered = covered,
+                desktopLayout = true,
             )
         }
     }
 }
+
+/** The keys that move focus. */
+private val FOCUS_KEYS = setOf(Key.Tab, Key.DirectionUp, Key.DirectionDown, Key.DirectionLeft, Key.DirectionRight)
 
 /** The cloud configuration compiled into this build, when it has one. */
 private fun desktopCloudModules(): Module {

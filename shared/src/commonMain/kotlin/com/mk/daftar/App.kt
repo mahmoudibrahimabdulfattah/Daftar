@@ -43,6 +43,7 @@ import com.mk.daftar.core.domain.repository.ThemeMode
 import com.mk.daftar.core.domain.repository.UserPreferences
 import com.mk.daftar.core.domain.repository.UserPreferencesRepository
 import com.mk.daftar.core.domain.session.VaultSession
+import com.mk.daftar.core.ui.shell.LocalDesktopLayout
 import com.mk.daftar.gate.VaultGate
 import com.mk.daftar.lifecycle.InactivityMonitor
 import com.mk.daftar.platform.applyAppLanguage
@@ -60,7 +61,7 @@ internal const val DEBUG_BANNER_TEXT: String = "Debug build — software Keystor
 /**
  * Root of the app, shared by the Android activity and the iOS view controller. Theme, language and layout direction
  * come from the non-sensitive preferences, read outside the vault gate. [showsDebugBanner] and [developerTools] come
- * from the build variant. [covered] hides the content with the neutral cover while the vault is obscured or locking,
+ * from the build variant. [desktopLayout] is set only by the desktop app and turns on its wide-window arrangements. [covered] hides the content with the neutral cover while the vault is obscured or locking,
  * and it sits above everything, including the developer screens.
  */
 @Composable
@@ -69,6 +70,7 @@ fun App(
     showsDebugBanner: Boolean = false,
     developerTools: Boolean = false,
     covered: Boolean = false,
+    desktopLayout: Boolean = false,
     onThemeChange: (mode: ThemeMode, dark: Boolean) -> Unit = { _, _ -> },
 ) {
     val inactivity: InactivityMonitor = koinInject()
@@ -88,34 +90,36 @@ fun App(
     LaunchedEffect(mode, dark) { themeChange(mode, dark) }
 
     DaftarTheme(darkTheme = dark, arabic = (preferences?.language ?: AppLanguage.AR) == AppLanguage.AR) {
-        Box(
-            modifier = modifier
-                .fillMaxSize()
-                .background(DaftarTheme.colors.paper)
-                // Deliberate touches and key presses count toward inactivity. Hover and recomposition never do.
-                .pointerInput(inactivity) {
-                    awaitPointerEventScope {
-                        while (true) {
-                            val event = awaitPointerEvent(PointerEventPass.Initial)
-                            if (event.changes.any { it.pressed || it.changedToUp() }) inactivity.recordInteraction()
+        CompositionLocalProvider(LocalDesktopLayout provides desktopLayout) {
+            Box(
+                modifier = modifier
+                    .fillMaxSize()
+                    .background(DaftarTheme.colors.paper)
+                    // Deliberate touches and key presses count toward inactivity. Hover and recomposition never do.
+                    .pointerInput(inactivity) {
+                        awaitPointerEventScope {
+                            while (true) {
+                                val event = awaitPointerEvent(PointerEventPass.Initial)
+                                if (event.changes.any { it.pressed || it.changedToUp() }) inactivity.recordInteraction()
+                            }
                         }
                     }
+                    .onPreviewKeyEvent {
+                        inactivity.recordInteraction()
+                        false
+                    },
+            ) {
+                if (preferences != null) {
+                    PreferredContent(
+                        preferences = preferences,
+                        showsDebugBanner = showsDebugBanner,
+                        developerTools = developerTools,
+                        covered = covered,
+                    )
                 }
-                .onPreviewKeyEvent {
-                    inactivity.recordInteraction()
-                    false
-                },
-        ) {
-            if (preferences != null) {
-                PreferredContent(
-                    preferences = preferences,
-                    showsDebugBanner = showsDebugBanner,
-                    developerTools = developerTools,
-                    covered = covered,
-                )
-            }
-            if (covered) {
-                DaftarPrivacyCover(name = stringResource(Res.string.app_name), modifier = Modifier.fillMaxSize())
+                if (covered) {
+                    DaftarPrivacyCover(name = stringResource(Res.string.app_name), modifier = Modifier.fillMaxSize())
+                }
             }
         }
     }
