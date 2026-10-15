@@ -100,6 +100,9 @@ compose.desktop {
         mainClass = "com.mk.daftar.desktop.MainKt"
         nativeDistributions {
             targetFormats(TargetFormat.Dmg, TargetFormat.Msi)
+            // The bundled runtime is trimmed to these modules (from `suggestRuntimeModules`); coroutines, OkHttp and
+            // JNA need jdk.unsupported (sun.misc.Unsafe).
+            modules("java.instrument", "java.management", "jdk.unsupported")
             packageName = "Daftar"
             packageVersion = desktopVersion
             vendor = "Daftar"
