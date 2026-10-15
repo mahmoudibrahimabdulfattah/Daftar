@@ -4,25 +4,44 @@ import com.mk.daftar.core.common.Outcome
 import java.io.File
 
 /**
- * Chooses the key protection of one generation. A hardware protector (Secure Enclave on macOS, TPM on Windows) is
- * used whenever the platform has one. Without it, a release build refuses with [SecurityError.UnsupportedHardware],
- * and a debug build may fall back to [DebugOnlySoftwareProtector].
+ * Chooses the key protection of one generation. The Secure Enclave is used whenever this Mac has one. Without a
+ * hardware protector a release build refuses with [SecurityError.UnsupportedHardware], and a debug build may fall back
+ * to [DebugOnlySoftwareProtector]. (Windows TPM protection is a later step.)
  */
 internal class DesktopKeys(
     private val generation: VaultGeneration,
     private val directory: File,
     private val permitsSoftwareKeys: Boolean,
 ) {
-    fun protector(purpose: String): PlatformEnvelopeProtector = if (permitsSoftwareKeys) {
-        DebugOnlySoftwareProtector(directory.resolve("${generation.name(purpose)}.debug-key"))
-    } else {
-        UnsupportedHardwareProtector
+    private val touchId: MacTouchIdKeyStore? by lazy {
+        if (MacSecureEnclave.available) MacTouchIdKeyStore(directory, generation.name("touch-id") + ".") else null
     }
 
-    fun biometricKeys(): BiometricKeyStore = UnavailableBiometricKeyStore
+    /**
+     * The protector for [purpose]. A key that already exists keeps sealing what it sealed: an enclave key first, then a
+     * debug software key of an existing debug vault. New keys go to the Secure Enclave whenever this Mac has one.
+     */
+    fun protector(purpose: String): PlatformEnvelopeProtector {
+        val name = generation.name(purpose)
+        val enclaveBlob = directory.resolve("$name.se-key")
+        val softwareKey = directory.resolve("$name.debug-key")
+        return when {
+            enclaveBlob.exists() -> MacSecureEnclaveProtector(enclaveBlob)
+            permitsSoftwareKeys && softwareKey.exists() -> DebugOnlySoftwareProtector(softwareKey)
+            MacSecureEnclave.available -> MacSecureEnclaveProtector(enclaveBlob)
+            permitsSoftwareKeys -> DebugOnlySoftwareProtector(softwareKey)
+            else -> UnsupportedHardwareProtector
+        }
+    }
 
-    /** Removes every key of this generation. Software keys live in the security directory and go with it. */
-    suspend fun eraseAll(): Outcome<Unit, SecurityError> = Outcome.Success(Unit)
+    /** Touch ID on a Mac with a Secure Enclave; otherwise biometric unlock is never offered. */
+    fun biometricKeys(): BiometricKeyStore = touchId ?: UnavailableBiometricKeyStore
+
+    /** Removes every key of this generation. Enclave blobs and software keys live in the security directory. */
+    suspend fun eraseAll(): Outcome<Unit, SecurityError> {
+        touchId?.eraseAll()
+        return Outcome.Success(Unit)
+    }
 }
 
 /** The protector of a release build on a desktop without a supported hardware key. Every operation refuses. */

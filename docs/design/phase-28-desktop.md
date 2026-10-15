@@ -151,6 +151,10 @@ Offer Google sign-in, cloud backups, slots/upload and cloud account management a
 
 Screen capture exclusion, hardware-backed storage and inactivity/minimize/hide locking are release gates. Cover content before hiding/minimizing; resume into the lock surface. Desktop has no mobile recents design. A cover is not a substitute for capture exclusion. If a platform cannot meet an engineering gate, it is not silently represented as supported by this design.
 
+**Decision, 15 October 2026 (supersedes the four macOS Touch ID rows below):** macOS keeps the existing biometric copy
+(«البصمة» / "fingerprint") everywhere. Touch ID is a fingerprint sensor, and one consistent term across onboarding,
+settings, errors and backups beats desktop variants. Windows remains PIN-only with no biometric UI.
+
 These are desktop resources only. Reuse unchanged strings elsewhere. Interpolate product/system names as isolated LTR runs in Arabic; don't translate `Touch ID`, `Windows Hello` or key names.
 
 | Purpose | Arabic | English |

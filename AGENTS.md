@@ -98,8 +98,12 @@ mapping (`androidApp/build/outputs/mapping/release`), not a package-wide keep.
 - Database: SQLite3 Multiple Ciphers in its SQLCipher v4 scheme, bound through JNA and keyed with `sqlite3_key` and the
   raw `x'<hex>'` key from native memory that is zeroed after the call. macOS builds the official amalgamation from
   source into a universal dylib; Windows uses the project's official x64 DLL. Both archives are pinned by SHA-256.
-- Keys: release requires a hardware protector (Secure Enclave on macOS, TPM on Windows) and refuses with
-  `UnsupportedHardware` otherwise. Debug builds may use a software key file and show the debug banner.
+- Keys: release requires a hardware protector and refuses with `UnsupportedHardware` otherwise. macOS uses CryptoKit
+  Secure Enclave P-256 keys through the bundled Swift helper (`core/security/src/desktopNative/macos`, built by
+  `buildDaftarMacHelper`): ECIES (ECDH, HKDF-SHA256, AES-GCM) to the key's public half; only the enclave-bound blob is
+  stored. Touch ID keys use `.biometryCurrentSet`, and enrollment commits only after an authenticated unwrap. Windows
+  TPM protection is not implemented yet, so Windows release builds refuse. Debug builds may use a software key file
+  (kept for a debug vault that already has one) and show the debug banner.
 - Privacy: every window is excluded from screen capture (`NSWindowSharingNone`, `WDA_EXCLUDEFROMCAPTURE`). Minimizing,
   hiding the app, display or system sleep and session deactivation cover and lock; Cmd+L (macOS) or Ctrl+L (Windows)
   locks at once.

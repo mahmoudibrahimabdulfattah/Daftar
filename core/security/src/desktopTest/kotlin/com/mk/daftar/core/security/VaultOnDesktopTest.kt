@@ -36,6 +36,7 @@ class VaultOnDesktopTest {
 
     @Test
     fun createUnlockWrongPinRestartAndEraseWithTheDebugProtector() = runTest {
+        // Debug policy: the enclave on a Mac that has one, the software key elsewhere. Both must behave the same.
         val factory = DesktopVaultStorageFactory(permitsSoftwareKeys = true)
         val generation = freshGeneration()
         val storage = factory.forGeneration(generation)
@@ -77,10 +78,37 @@ class VaultOnDesktopTest {
     }
 
     @Test
-    fun aReleasePolicyRefusesSoftwareKeysAndCreatesNothing() = runTest {
+    fun aReleasePolicyUsesTheEnclaveOrRefuses() = runTest {
         val storage = DesktopVaultStorageFactory(permitsSoftwareKeys = false).forGeneration(freshGeneration())
-        assertEquals(SecurityError.UnsupportedHardware, vault(storage).create(pin("246810")).requireFailure())
-        assertEquals(null, storage.records.read().requireSuccess())
+        try {
+            if (MacSecureEnclave.available) {
+                // Release on a Mac with a Secure Enclave: the vault is sealed by the enclave and reopens.
+                assertIs<MacSecureEnclaveProtector>(storage.protector)
+                vault(storage).create(pin("246810")).requireSuccess()
+                vault(storage).lock()
+                vault(storage).unlock(pin("246810")).requireSuccess()
+            } else {
+                assertEquals(SecurityError.UnsupportedHardware, vault(storage).create(pin("246810")).requireFailure())
+                assertEquals(null, storage.records.read().requireSuccess())
+            }
+        } finally {
+            storage.eraseSecurity().requireSuccess()
+        }
+    }
+
+    @Test
+    fun theEnclaveProtectorRejectsTamperingAndAMissingKey() = runTest {
+        if (!MacSecureEnclave.available) return@runTest
+        val directory = Files.createTempDirectory("daftar-se").toFile()
+        val protector = MacSecureEnclaveProtector(directory.resolve("k.se-key"))
+        protector.prepare().requireSuccess()
+        val sealed = protector.seal(byteArrayOf(4, 5, 6)).requireSuccess()
+        assertContentEquals(byteArrayOf(4, 5, 6), protector.unseal(sealed).requireSuccess())
+        val tampered = sealed.copyOf().also { it[it.size - 1] = (it[it.size - 1].toInt() xor 1).toByte() }
+        assertEquals(SecurityError.CorruptState, protector.unseal(tampered).requireFailure())
+        // A blob is useless once deleted: the vault reports a missing device key, never a fresh one.
+        directory.resolve("k.se-key").delete()
+        assertEquals(SecurityError.DeviceKeyUnavailable, protector.unseal(sealed).requireFailure())
     }
 
     @Test
@@ -89,7 +117,12 @@ class VaultOnDesktopTest {
         try {
             val factory = app.koin.get<PlatformVaultStorageFactory>()
             assertIs<DesktopVaultStorageFactory>(factory)
-            assertSame(UnsupportedHardwareProtector, factory.forGeneration(freshGeneration()).protector)
+            val protector = factory.forGeneration(freshGeneration()).protector
+            if (MacSecureEnclave.available) {
+                assertIs<MacSecureEnclaveProtector>(protector)
+            } else {
+                assertSame(UnsupportedHardwareProtector, protector)
+            }
             assertTrue(app.koin.getOrNull<DesktopSecurityConfiguration>() == null)
         } finally {
             app.close()
