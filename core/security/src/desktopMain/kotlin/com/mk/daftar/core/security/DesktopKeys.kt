@@ -83,6 +83,11 @@ internal class DebugOnlySoftwareProtector(keyFile: File) : PlatformEnvelopeProte
     }
 
     override suspend fun seal(plaintext: ByteArray): Outcome<ByteArray, SecurityError> {
+        // The lock state may be read before anything else has initialized libsodium.
+        when (val ready = Libsodium.ensureReady()) {
+            is Outcome.Failure -> return Outcome.Failure(ready.error)
+            is Outcome.Success -> Unit
+        }
         val key = when (val read = keyStore.read()) {
             is Outcome.Failure -> return Outcome.Failure(read.error)
             is Outcome.Success -> read.data ?: return Outcome.Failure(SecurityError.DeviceKeyUnavailable)
@@ -95,6 +100,10 @@ internal class DebugOnlySoftwareProtector(keyFile: File) : PlatformEnvelopeProte
 
     override suspend fun unseal(sealed: ByteArray): Outcome<ByteArray, SecurityError> {
         if (sealed.size <= NONCE_BYTES) return Outcome.Failure(SecurityError.CorruptState)
+        when (val ready = Libsodium.ensureReady()) {
+            is Outcome.Failure -> return Outcome.Failure(ready.error)
+            is Outcome.Success -> Unit
+        }
         val key = when (val read = keyStore.read()) {
             is Outcome.Failure -> return Outcome.Failure(read.error)
             is Outcome.Success -> read.data ?: return Outcome.Failure(SecurityError.DeviceKeyUnavailable)
