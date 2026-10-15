@@ -4,6 +4,7 @@ import androidx.compose.foundation.background
 import androidx.compose.foundation.border
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Arrangement
+import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.ColumnScope
 import androidx.compose.foundation.layout.Row
@@ -215,11 +216,7 @@ fun HomeContent(state: HomeUiState, onIntent: (HomeIntent) -> Unit, modifier: Mo
                     )
                 },
             )
-            PullToRefreshBox(
-                isRefreshing = state.refreshing,
-                onRefresh = { onIntent(HomeIntent.Refresh) },
-                modifier = Modifier.weight(1f).fillMaxWidth(),
-            ) {
+            val content: @Composable () -> Unit = {
                 Column(
                     modifier = Modifier
                         .fillMaxSize()
@@ -243,6 +240,17 @@ fun HomeContent(state: HomeUiState, onIntent: (HomeIntent) -> Unit, modifier: Mo
                         )
                     }
                 }
+            }
+            if (pullToRefreshAvailable) {
+                PullToRefreshBox(
+                    isRefreshing = state.refreshing,
+                    onRefresh = { onIntent(HomeIntent.Refresh) },
+                    modifier = Modifier.weight(1f).fillMaxWidth(),
+                ) {
+                    content()
+                }
+            } else {
+                Box(modifier = Modifier.weight(1f).fillMaxWidth()) { content() }
             }
         }
     }

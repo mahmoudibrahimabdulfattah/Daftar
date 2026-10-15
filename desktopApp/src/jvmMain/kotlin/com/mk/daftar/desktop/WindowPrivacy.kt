@@ -61,7 +61,9 @@ private object MacWindows {
         for (index in 0 until count) {
             val window = objc.objc_msgSend(windows, objc.sel_registerName("objectAtIndex:"), index) ?: continue
             // AppKit windows must be changed on the main thread. A nil object is the integer 0, NSWindowSharingNone.
-            objc.objc_msgSend(window, onMainThread, setSharingType, null, true)
+            // The call is queued, never awaited: the main thread may itself be waiting on this (AWT) thread, for
+            // example for accessibility, and waiting here would freeze both until AWT's timeout.
+            objc.objc_msgSend(window, onMainThread, setSharingType, null, false)
         }
         return count > 0
     }
