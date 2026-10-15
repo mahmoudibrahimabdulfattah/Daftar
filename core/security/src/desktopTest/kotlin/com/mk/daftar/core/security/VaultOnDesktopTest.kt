@@ -68,6 +68,15 @@ class VaultOnDesktopTest {
     }
 
     @Test
+    fun theDebugProtectorInitializesLibsodiumItself() = runTest {
+        // A cold launch reads the sealed backoff record before any other code touched libsodium.
+        val protector = DebugOnlySoftwareProtector(Files.createTempDirectory("daftar-key").toFile().resolve("k"))
+        protector.prepare().requireSuccess()
+        val sealed = protector.seal(byteArrayOf(1, 2, 3)).requireSuccess()
+        assertContentEquals(byteArrayOf(1, 2, 3), protector.unseal(sealed).requireSuccess())
+    }
+
+    @Test
     fun aReleasePolicyRefusesSoftwareKeysAndCreatesNothing() = runTest {
         val storage = DesktopVaultStorageFactory(permitsSoftwareKeys = false).forGeneration(freshGeneration())
         assertEquals(SecurityError.UnsupportedHardware, vault(storage).create(pin("246810")).requireFailure())
