@@ -47,7 +47,9 @@ import com.mk.daftar.core.ui.mvi.CollectEffects
 import com.mk.daftar.core.ui.presentation.CountNoun
 import com.mk.daftar.core.ui.presentation.countLabel
 import com.mk.daftar.core.ui.presentation.moneyText
+import com.mk.daftar.core.ui.shell.DesktopWidths
 import com.mk.daftar.core.ui.shell.ShellScreen
+import com.mk.daftar.core.ui.shell.desktopPage
 import com.mk.daftar.feature.investments.InvestmentDetailIntent
 import com.mk.daftar.feature.investments.InvestmentDetailUiState
 import com.mk.daftar.feature.investments.InvestmentDetailViewModel
@@ -119,6 +121,7 @@ fun InvestmentsListContent(
     ShellScreen(modifier = modifier) {
         Column(
             modifier = Modifier
+                .desktopPage(DesktopWidths.Page)
                 .fillMaxSize()
                 .verticalScroll(rememberScrollState())
                 .padding(horizontal = DaftarSpacing.md),
@@ -299,6 +302,7 @@ fun InvestmentDetailContent(
             )
             Column(
                 modifier = Modifier
+                    .desktopPage(DesktopWidths.Page)
                     .weight(1f)
                     .fillMaxWidth()
                     .verticalScroll(rememberScrollState())

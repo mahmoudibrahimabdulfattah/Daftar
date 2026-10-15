@@ -46,7 +46,9 @@ import com.mk.daftar.core.model.Currency
 import com.mk.daftar.core.navigation.LeaveRequest
 import com.mk.daftar.core.navigation.LocalNavigator
 import com.mk.daftar.core.ui.mvi.CollectEffects
+import com.mk.daftar.core.ui.shell.DesktopWidths
 import com.mk.daftar.core.ui.shell.ShellScreen
+import com.mk.daftar.core.ui.shell.desktopPage
 import com.mk.daftar.feature.banks.AccountBalanceError
 import com.mk.daftar.feature.banks.AccountBankError
 import com.mk.daftar.feature.banks.AccountEditorIntent
@@ -151,6 +153,7 @@ fun AccountEditorContent(
             )
             Column(
                 modifier = Modifier
+                    .desktopPage(DesktopWidths.Editor)
                     .weight(1f)
                     .fillMaxWidth()
                     .verticalScroll(rememberScrollState())

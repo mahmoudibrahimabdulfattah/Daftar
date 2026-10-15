@@ -43,7 +43,9 @@ import com.mk.daftar.core.designsystem.theme.DaftarTheme
 import com.mk.daftar.core.navigation.LeaveRequest
 import com.mk.daftar.core.navigation.LocalNavigator
 import com.mk.daftar.core.ui.mvi.CollectEffects
+import com.mk.daftar.core.ui.shell.DesktopWidths
 import com.mk.daftar.core.ui.shell.ShellScreen
+import com.mk.daftar.core.ui.shell.desktopPage
 import com.mk.daftar.feature.journal.JournalAction
 import com.mk.daftar.feature.journal.JournalBusy
 import com.mk.daftar.feature.journal.JournalEffect
@@ -133,6 +135,7 @@ fun NotesListContent(
     ShellScreen(modifier = modifier) {
         Column(
             modifier = Modifier
+                .desktopPage(DesktopWidths.Page)
                 .fillMaxSize()
                 .verticalScroll(rememberScrollState())
                 .padding(horizontal = DaftarSpacing.md),
@@ -268,6 +271,7 @@ fun NoteEditorContent(
             )
             Column(
                 modifier = Modifier
+                    .desktopPage(DesktopWidths.Editor)
                     .weight(1f)
                     .fillMaxWidth()
                     .verticalScroll(rememberScrollState())

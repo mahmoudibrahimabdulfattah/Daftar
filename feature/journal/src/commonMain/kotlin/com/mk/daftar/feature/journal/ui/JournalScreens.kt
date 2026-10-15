@@ -26,8 +26,10 @@ import com.mk.daftar.core.designsystem.theme.DaftarTheme
 import com.mk.daftar.core.navigation.LocalNavigator
 import com.mk.daftar.core.navigation.TopLevelDestination
 import com.mk.daftar.core.ui.mvi.CollectEffects
+import com.mk.daftar.core.ui.shell.DesktopWidths
 import com.mk.daftar.core.ui.shell.RootReselectScroll
 import com.mk.daftar.core.ui.shell.ShellScreen
+import com.mk.daftar.core.ui.shell.desktopPage
 import com.mk.daftar.feature.journal.JournalEffect
 import com.mk.daftar.feature.journal.JournalIntent
 import com.mk.daftar.feature.journal.JournalPhase
@@ -74,6 +76,7 @@ fun JournalContent(state: JournalUiState, onIntent: (JournalIntent) -> Unit, mod
     ShellScreen(modifier = modifier) {
         Column(
             modifier = Modifier
+                .desktopPage(DesktopWidths.Page)
                 .fillMaxSize()
                 .verticalScroll(scroll)
                 .padding(horizontal = DaftarSpacing.md),

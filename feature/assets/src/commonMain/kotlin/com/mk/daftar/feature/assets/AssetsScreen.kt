@@ -16,6 +16,7 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.platform.LocalUriHandler
 import androidx.compose.ui.semantics.semantics
 import androidx.compose.ui.semantics.stateDescription
+import androidx.compose.ui.unit.dp
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import com.mk.daftar.core.designsystem.component.DaftarAmount
 import com.mk.daftar.core.designsystem.component.DaftarIconButton
@@ -37,8 +38,12 @@ import com.mk.daftar.core.ui.presentation.CountNoun
 import com.mk.daftar.core.ui.presentation.bankAndAccountLabel
 import com.mk.daftar.core.ui.presentation.countLabel
 import com.mk.daftar.core.ui.presentation.moneyText
+import com.mk.daftar.core.ui.shell.DesktopWidths
+import com.mk.daftar.core.ui.shell.LocalDesktopLayout
 import com.mk.daftar.core.ui.shell.RootReselectScroll
 import com.mk.daftar.core.ui.shell.ShellScreen
+import com.mk.daftar.core.ui.shell.desktopPage
+import com.mk.daftar.core.ui.shell.windowWidth
 import com.mk.daftar.feature.assets.resources.Res
 import com.mk.daftar.feature.assets.resources.assets_banks
 import com.mk.daftar.feature.assets.resources.assets_cash
@@ -108,8 +113,10 @@ fun AssetsContent(state: AssetsUiState, onIntent: (AssetsIntent) -> Unit, modifi
                     )
                 },
             )
+            val twoColumns = LocalDesktopLayout.current && windowWidth() >= DesktopWidths.Large
             Column(
                 modifier = Modifier
+                    .desktopPage(if (twoColumns) DesktopWidths.HomeGroup else DesktopWidths.Page)
                     .weight(1f)
                     .fillMaxWidth()
                     .verticalScroll(scroll)
@@ -129,7 +136,12 @@ fun AssetsContent(state: AssetsUiState, onIntent: (AssetsIntent) -> Unit, modifi
                         Text(stringResource(Res.string.assets_failed))
                     }
 
-                    is AssetsLoad.Ready -> AssetsRows(figures = load.figures, hidden = hidden, onIntent = onIntent)
+                    is AssetsLoad.Ready -> AssetsRows(
+                        figures = load.figures,
+                        hidden = hidden,
+                        onIntent = onIntent,
+                        twoColumns = twoColumns,
+                    )
                 }
                 if (hidden) {
                     DaftarNotePanel(tone = DaftarNoteTone.Context) {
@@ -145,7 +157,12 @@ fun AssetsContent(state: AssetsUiState, onIntent: (AssetsIntent) -> Unit, modifi
 }
 
 @Composable
-private fun AssetsRows(figures: AssetsFigures, hidden: Boolean, onIntent: (AssetsIntent) -> Unit) {
+private fun AssetsRows(
+    figures: AssetsFigures,
+    hidden: Boolean,
+    onIntent: (AssetsIntent) -> Unit,
+    twoColumns: Boolean = false,
+) {
     val masked = stringResource(Res.string.assets_masked_value)
     val noRecords = stringResource(Res.string.assets_no_records)
     val unit = stringResource(Res.string.unit_egp_short)
@@ -154,54 +171,78 @@ private fun AssetsRows(figures: AssetsFigures, hidden: Boolean, onIntent: (Asset
             Text(stringResource(Res.string.assets_incomplete))
         }
     }
-    AssetRow(
-        title = stringResource(Res.string.assets_gold),
-        subtitle = countLabel(figures.gold.count, CountNoun.HOLDINGS),
-        icon = DaftarIcons.GoldBar,
-        tone = DaftarTileTone.Gold,
-        figures = figures.gold,
-        hidden = hidden,
-        masked = masked,
-        noRecords = noRecords,
-        unit = unit,
-        onClick = { onIntent(AssetsIntent.OpenCategory(AssetCategory.GOLD)) },
+    // Gold, banks, investments, cash: the same order everywhere; a wide desktop window lays them out two per row.
+    val rows: List<@Composable (Modifier) -> Unit> = listOf(
+        { rowModifier: Modifier ->
+            AssetRow(
+                title = stringResource(Res.string.assets_gold),
+                subtitle = countLabel(figures.gold.count, CountNoun.HOLDINGS),
+                icon = DaftarIcons.GoldBar,
+                tone = DaftarTileTone.Gold,
+                figures = figures.gold,
+                hidden = hidden,
+                masked = masked,
+                noRecords = noRecords,
+                unit = unit,
+                modifier = rowModifier,
+                onClick = { onIntent(AssetsIntent.OpenCategory(AssetCategory.GOLD)) },
+            )
+        },
+        { rowModifier: Modifier ->
+            AssetRow(
+                title = stringResource(Res.string.assets_banks),
+                subtitle = bankAndAccountLabel(banks = figures.bankCount, accounts = figures.banks.count),
+                icon = DaftarIcons.Bank,
+                tone = DaftarTileTone.Bank,
+                figures = figures.banks,
+                hidden = hidden,
+                masked = masked,
+                noRecords = noRecords,
+                unit = unit,
+                modifier = rowModifier,
+                onClick = { onIntent(AssetsIntent.OpenCategory(AssetCategory.BANKS)) },
+            )
+        },
+        { rowModifier: Modifier ->
+            AssetRow(
+                title = stringResource(Res.string.assets_investments),
+                subtitle = countLabel(figures.investments.count, CountNoun.INVESTMENT_ACCOUNTS),
+                icon = DaftarIcons.Investments,
+                tone = DaftarTileTone.Investments,
+                figures = figures.investments,
+                hidden = hidden,
+                masked = masked,
+                noRecords = noRecords,
+                unit = unit,
+                modifier = rowModifier,
+                onClick = { onIntent(AssetsIntent.OpenCategory(AssetCategory.INVESTMENTS)) },
+            )
+        },
+        { rowModifier: Modifier ->
+            AssetRow(
+                title = stringResource(Res.string.assets_cash),
+                subtitle = countLabel(figures.cash.count, CountNoun.BALANCES),
+                icon = DaftarIcons.Wallet,
+                tone = DaftarTileTone.Cash,
+                figures = figures.cash,
+                hidden = hidden,
+                masked = masked,
+                noRecords = noRecords,
+                unit = unit,
+                modifier = rowModifier,
+                onClick = { onIntent(AssetsIntent.OpenCategory(AssetCategory.CASH)) },
+            )
+        },
     )
-    AssetRow(
-        title = stringResource(Res.string.assets_banks),
-        subtitle = bankAndAccountLabel(banks = figures.bankCount, accounts = figures.banks.count),
-        icon = DaftarIcons.Bank,
-        tone = DaftarTileTone.Bank,
-        figures = figures.banks,
-        hidden = hidden,
-        masked = masked,
-        noRecords = noRecords,
-        unit = unit,
-        onClick = { onIntent(AssetsIntent.OpenCategory(AssetCategory.BANKS)) },
-    )
-    AssetRow(
-        title = stringResource(Res.string.assets_investments),
-        subtitle = countLabel(figures.investments.count, CountNoun.INVESTMENT_ACCOUNTS),
-        icon = DaftarIcons.Investments,
-        tone = DaftarTileTone.Investments,
-        figures = figures.investments,
-        hidden = hidden,
-        masked = masked,
-        noRecords = noRecords,
-        unit = unit,
-        onClick = { onIntent(AssetsIntent.OpenCategory(AssetCategory.INVESTMENTS)) },
-    )
-    AssetRow(
-        title = stringResource(Res.string.assets_cash),
-        subtitle = countLabel(figures.cash.count, CountNoun.BALANCES),
-        icon = DaftarIcons.Wallet,
-        tone = DaftarTileTone.Cash,
-        figures = figures.cash,
-        hidden = hidden,
-        masked = masked,
-        noRecords = noRecords,
-        unit = unit,
-        onClick = { onIntent(AssetsIntent.OpenCategory(AssetCategory.CASH)) },
-    )
+    if (twoColumns) {
+        rows.chunked(2).forEach { pair ->
+            Row(horizontalArrangement = Arrangement.spacedBy(DesktopColumnGap)) {
+                pair.forEach { row -> row(Modifier.weight(1f)) }
+            }
+        }
+    } else {
+        rows.forEach { row -> row(Modifier) }
+    }
     figures.fxAttributionUrl?.let { url ->
         val uriHandler = LocalUriHandler.current
         DaftarTextButton(onClick = { uriHandler.openUri(url) }) {
@@ -222,6 +263,7 @@ private fun AssetRow(
     noRecords: String,
     unit: String,
     onClick: () -> Unit,
+    modifier: Modifier = Modifier,
 ) {
     // A category with no records has no value to show; it is not a zero total.
     val amount = if (figures.count == 0) null else figures.total?.moneyText()
@@ -231,6 +273,7 @@ private fun AssetRow(
         icon = icon,
         tone = tone,
         onClick = onClick,
+        modifier = modifier,
         value = {
             DaftarAmount(
                 amount = amount,
@@ -243,3 +286,6 @@ private fun AssetRow(
         },
     )
 }
+
+/** The gap between the two category columns on a wide desktop window. */
+private val DesktopColumnGap = 24.dp
