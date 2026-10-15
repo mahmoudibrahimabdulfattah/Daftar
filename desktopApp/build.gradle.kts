@@ -101,8 +101,8 @@ compose.desktop {
         nativeDistributions {
             targetFormats(TargetFormat.Dmg, TargetFormat.Msi)
             // The bundled runtime is trimmed to these modules (from `suggestRuntimeModules`); coroutines, OkHttp and
-            // JNA need jdk.unsupported (sun.misc.Unsafe).
-            modules("java.instrument", "java.management", "jdk.unsupported")
+            // JNA need jdk.unsupported (sun.misc.Unsafe); cloud sign-in needs java.net.http and jdk.httpserver.
+            modules("java.instrument", "java.management", "java.net.http", "jdk.httpserver", "jdk.unsupported")
             packageName = "Daftar"
             packageVersion = desktopVersion
             vendor = "Daftar"
