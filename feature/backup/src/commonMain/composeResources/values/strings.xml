@@ -16,6 +16,7 @@
     <string name="backup_submit">Create &amp; choose save location</string>
     <string name="backup_picker_note_android">Android’s file picker chooses the save location. No broad storage permission is requested.</string>
     <string name="backup_picker_note_ios">The iOS document picker chooses the save location. No broad storage permission is requested.</string>
+    <string name="backup_picker_note_desktop">The system save dialog chooses the location. Daftar reads and writes only the file you pick.</string>
     <string name="backup_busy_heading">Preparing the backup</string>
     <string name="backup_busy_message">Your data is encrypted before you choose a location. No unencrypted temporary file is written.</string>
     <string name="backup_writing_heading">Saving the backup</string>

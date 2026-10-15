@@ -31,6 +31,7 @@ dependencyResolutionManagement {
 }
 
 include(":androidApp")
+include(":desktopApp")
 include(":core:account")
 include(":core:backup")
 include(":core:cloud")

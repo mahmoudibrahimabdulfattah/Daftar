@@ -1,6 +1,7 @@
 # Working on Daftar
 
-Daftar (دفتر) is a Kotlin Multiplatform + Compose Multiplatform private wealth notebook for Android and iOS.
+Daftar (دفتر) is a Kotlin Multiplatform + Compose Multiplatform private wealth notebook for Android, iOS and desktop
+(macOS, Windows).
 It tracks gold, bank accounts, cash and zakat records, values them at live Egyptian prices, and keeps everything
 encrypted on the device behind an app-specific PIN. Arabic (RTL) is the primary language; English is fully supported.
 
@@ -10,7 +11,8 @@ encrypted on the device behind an app-specific PIN. Arabic (RTL) is the primary 
   squash-merge into `master`, delete the branch locally and on the remote, pull `master`, then start the next phase.
 - Commits and PRs never mention AI tools or assistants and carry no `Co-authored-by` trailers.
 - Never commit real balances, keystores, `keystore.properties`, signing passwords or Firebase config.
-- Never commit `androidApp/google-services.json` or `iosApp/iosApp/GoogleService-Info.plist`. Firebase config is
+- Never commit `androidApp/google-services.json`, `iosApp/iosApp/GoogleService-Info.plist` or
+  `desktopApp/firebase-desktop.properties`. Firebase config is
   ignored, variant-specific, and installed locally or by CI from a secret. Without it the build succeeds and cloud
   backups are unavailable.
 
@@ -18,6 +20,7 @@ encrypted on the device behind an app-specific PIN. Arabic (RTL) is the primary 
 
 ```bash
 ./gradlew spotlessCheck testAndroidHostTest :androidApp:lintDebug :androidApp:assembleDebug :androidApp:assembleRelease
+./gradlew desktopTest :desktopApp:compileKotlinJvm
 ./gradlew iosSimulatorArm64Test :shared:linkDebugFrameworkIosSimulatorArm64
 xcodebuild -project iosApp/iosApp.xcodeproj -scheme iosApp \
   -destination 'platform=iOS Simulator,name=iPhone 18 Pro' -derivedDataPath build/xcode build
@@ -27,17 +30,22 @@ Device tests (`connectedAndroidDeviceTest`, `:androidApp:connectedDebugAndroidTe
 and are required for security, Room and lifecycle changes. Run the app on the Android emulator (debug package
 `com.mk.daftar.debug`) and, for UI work, on the iOS simulator "iPhone 18 Pro".
 
+Desktop: `./gradlew :desktopApp:run` starts a debug build (separate "Daftar Debug" data directory). For UI work run
+`./gradlew :desktopApp:jvmTest`, which drives the real app offscreen with synthetic input and writes screenshots to
+`desktopApp/build/screens` (the window itself is excluded from screen capture).
+
 Release builds are minified with R8. Any new reflective, JNI or serialized code needs a rule backed by the release
 mapping (`androidApp/build/outputs/mapping/release`), not a package-wide keep.
 
 ## Module map
 
 - `build-logic`: convention plugins for every module.
-  - `daftar.kmp.library`: KMP library (Android, iosArm64, iosSimulatorArm64). Warnings are errors.
+  - `daftar.kmp.library`: KMP library (Android, iosArm64, iosSimulatorArm64, desktop JVM). Warnings are errors.
   - `daftar.kmp.compose`: Compose Multiplatform with module-scoped resources (`com.mk.daftar.<module>.resources`).
   - `daftar.kmp.feature`: a screen feature (Compose, ViewModel, navigation, Koin, core model and design system).
   - `daftar.android.application`: the Android shell.
-- `core:common`, `core:model`: primitives, exact decimals, records. No platform code.
+- `core:common`, `core:model`: primitives, exact decimals, records. No platform code, except `core:common`'s desktop
+  source set, which owns the desktop app's private directory (`DesktopAppDirectories`).
 - `core:domain`: pure valuation rules (gold by karat at the goldsmith sell price, USD to EGP, totals), the civil Hijri
   calendar and zakat rules, and use cases.
   No I/O, no clock; fully unit-tested. Prices fall back live, then last cached (with its time), then manual.
@@ -50,7 +58,8 @@ mapping (`androidApp/build/outputs/mapping/release`), not a package-wide keep.
 - `feature:*`: auth, home, assets, banks, cash, gold, journal (notes, zakat), prices, backup, settings. Features
   never depend on each other or on `core:data`.
 - `shared`: the app entry point, Koin wiring, the vault gate, lifecycle coordination and platform adapters.
-- `androidApp`, `iosApp`: thin platform shells. Release never enables developer routes.
+- `androidApp`, `iosApp`, `desktopApp`: thin platform shells. Release never enables developer routes. A desktop build
+  is debug unless built with `-Pdaftar.desktop.release=true`; the flag is compiled in.
 
 ## Security rules
 
@@ -80,6 +89,24 @@ mapping (`androidApp/build/outputs/mapping/release`), not a package-wide keep.
   1.5 s), so the prompt follows the splash at once. Guarded by `AuthViewModelTest` (cold launch, queued request survives
   resume, every lock after an unlock) and `VaultGateModelTest`.
 
+## Desktop (macOS, Windows)
+
+- Layout: phones never take a desktop branch. Wide desktop arrangements apply only on desktop AND width ≥600dp
+  (`docs/design/phase-28-desktop.md`); the mobile 600/840 behaviour is unchanged.
+- Storage: one private directory per build (`~/Library/Application Support/Daftar` on macOS, excluded from Time Machine;
+  `%LOCALAPPDATA%\Daftar` on Windows), owner-only. Security records use the same atomic file stores as Android.
+- Database: SQLite3 Multiple Ciphers in its SQLCipher v4 scheme, bound through JNA and keyed with `sqlite3_key` and the
+  raw `x'<hex>'` key from native memory that is zeroed after the call. macOS builds the official amalgamation from
+  source into a universal dylib; Windows uses the project's official x64 DLL. Both archives are pinned by SHA-256.
+- Keys: release requires a hardware protector (Secure Enclave on macOS, TPM on Windows) and refuses with
+  `UnsupportedHardware` otherwise. Debug builds may use a software key file and show the debug banner.
+- Privacy: every window is excluded from screen capture (`NSWindowSharingNone`, `WDA_EXCLUDEFROMCAPTURE`). Minimizing,
+  hiding the app, display or system sleep and session deactivation cover and lock; Cmd+L (macOS) or Ctrl+L (Windows)
+  locks at once.
+- Cloud: Google sign-in in the system browser (PKCE, loopback), a Firebase session in memory only, and Firestore over
+  REST under the same rules. The project values come from the git-ignored `desktopApp/firebase-desktop.properties`;
+  without it cloud backups are unavailable. Firestore App Check enforcement stays off for desktop (see `docs/firebase`).
+
 ## Backup and restore
 
 - An export is written as `.dftar`: a fixed binary header (Argon2id KDF, XChaCha20-Poly1305 AEAD, fresh salt and nonce)
@@ -90,7 +117,7 @@ mapping (`androidApp/build/outputs/mapping/release`), not a package-wide keep.
 - Corrupt, truncated or wrong-password files fail authentication and are rejected; the header is authenticated.
 - Recovery limits: without a recovery key, a lost backup password or a forgotten PIN with no backup means the data
   cannot be recovered. A recovery key opens only backups made after it was set up.
-- Optional cloud backups (Android only, Google sign-in) store the same `.dftar` file in Firestore on the Spark plan:
+- Optional cloud backups (Android and desktop, Google sign-in) store the same `.dftar` file in Firestore on the Spark plan:
   three fixed slots, a 768 KiB ciphertext cap and no Storage, Functions, Analytics or Crashlytics. Sign-in never
   unlocks the vault, and restoring still requires the backup password. Local OS backup stays disabled.
   The rules and runbook live in `docs/firebase`; deploy them only with `firebase deploy --only firestore`.

@@ -40,6 +40,7 @@ import com.mk.daftar.core.domain.cloud.CloudBackupVersion
 import com.mk.daftar.core.domain.cloud.CloudDownload
 import com.mk.daftar.core.domain.cloud.CloudError
 import com.mk.daftar.core.domain.cloud.CloudProvider
+import com.mk.daftar.core.domain.cloud.CloudSignInHandoff
 import com.mk.daftar.core.ui.mvi.CollectEffects
 import com.mk.daftar.core.ui.shell.ShellScreen
 import com.mk.daftar.feature.cloud.resources.Res
@@ -78,6 +79,14 @@ import com.mk.daftar.feature.cloud.resources.cloud_unknown_outcome
 import com.mk.daftar.feature.cloud.resources.cloud_unverified
 import com.mk.daftar.feature.cloud.resources.cloud_version_size
 import com.mk.daftar.feature.cloud.resources.cloud_version_title
+import com.mk.daftar.feature.cloud.resources.desktop_cloud_account
+import com.mk.daftar.feature.cloud.resources.desktop_cloud_browser_failed
+import com.mk.daftar.feature.cloud.resources.desktop_cloud_browser_intro
+import com.mk.daftar.feature.cloud.resources.desktop_cloud_declined
+import com.mk.daftar.feature.cloud.resources.desktop_cloud_retry
+import com.mk.daftar.feature.cloud.resources.desktop_cloud_timeout
+import com.mk.daftar.feature.cloud.resources.desktop_cloud_wait_body
+import com.mk.daftar.feature.cloud.resources.desktop_cloud_wait_title
 import org.jetbrains.compose.resources.stringResource
 import org.koin.compose.viewmodel.koinViewModel
 import org.koin.core.parameter.parametersOf
@@ -136,9 +145,14 @@ fun CloudContent(
                     verticalArrangement = Arrangement.spacedBy(DaftarSpacing.sm),
                 ) {
                     Spacer(Modifier.height(DaftarSpacing.sm))
+                    AccountBlock(state)
                     state.problem?.let { ProblemPanel(it, onIntent) }
-                    state.busy?.let { BusyLine(it) }
-                    CloudBody(state = state, onIntent = onIntent)
+                    if (state.waitingForBrowser) {
+                        BrowserWaiting(onIntent)
+                    } else {
+                        state.busy?.let { BusyLine(it) }
+                        CloudBody(state = state, onIntent = onIntent)
+                    }
                 }
             }
         }
@@ -176,6 +190,9 @@ private fun SignedOutBody(state: CloudUiState, onIntent: (CloudIntent) -> Unit) 
         IntroText(stringResource(Res.string.cloud_intro))
         if (state.canRestore) {
             IntroText(stringResource(Res.string.cloud_recovery_note))
+        }
+        if (state.signInHandoff == CloudSignInHandoff.BROWSER) {
+            IntroText(stringResource(Res.string.desktop_cloud_browser_intro))
         }
         PrimaryButton(
             onClick = { onIntent(CloudIntent.SignIn) },
@@ -396,8 +413,85 @@ private fun BusyLine(busy: CloudBusy) {
     }
 }
 
+/** The signed-in account, shown where the platform reports its email (desktop). Phones never set it. */
+@Composable
+private fun AccountBlock(state: CloudUiState) {
+    val email = state.accountEmail ?: return
+    if (state.view == CloudView.SignedOut || state.view == CloudView.Unavailable) return
+    Column(verticalArrangement = Arrangement.spacedBy(DaftarSpacing.xxs)) {
+        Text(
+            text = stringResource(Res.string.desktop_cloud_account),
+            style = DaftarTheme.typography.supportingBody,
+            color = DaftarTheme.colors.muted,
+        )
+        Text(
+            text = "\u2066$email\u2069",
+            style = DaftarTheme.typography.settingTitle,
+            color = DaftarTheme.colors.ink,
+        )
+    }
+}
+
+/** The browser has the sign-in: an indeterminate indicator, what to do there, and a way to stop waiting. */
+@Composable
+private fun BrowserWaiting(onIntent: (CloudIntent) -> Unit) {
+    Column(verticalArrangement = Arrangement.spacedBy(DaftarSpacing.sm)) {
+        Row(verticalAlignment = Alignment.CenterVertically) {
+            CircularProgressIndicator(color = DaftarTheme.colors.primary)
+        }
+        Text(
+            text = stringResource(Res.string.desktop_cloud_wait_title),
+            style = DaftarTheme.typography.sectionHeading,
+            color = DaftarTheme.colors.ink,
+            modifier = Modifier.semantics { heading() },
+        )
+        IntroText(stringResource(Res.string.desktop_cloud_wait_body))
+        OutlineButton(onClick = { onIntent(CloudIntent.CancelSignIn) }, fullWidth = true) {
+            Text(stringResource(Res.string.cloud_cancel))
+        }
+    }
+}
+
 @Composable
 private fun ProblemPanel(error: CloudError, onIntent: (CloudIntent) -> Unit) {
+    when (error) {
+        // Browser hand-off outcomes are notes above the signed-out content, which keeps its own sign-in action.
+        CloudError.TIMED_OUT, CloudError.DECLINED -> {
+            DaftarNotePanel(tone = DaftarNoteTone.Context) {
+                Text(
+                    text = stringResource(
+                        if (error == CloudError.TIMED_OUT) {
+                            Res.string.desktop_cloud_timeout
+                        } else {
+                            Res.string.desktop_cloud_declined
+                        },
+                    ),
+                    style = DaftarTheme.typography.supportingBody,
+                    color = DaftarTheme.colors.ink,
+                )
+            }
+            return
+        }
+
+        CloudError.BROWSER_UNAVAILABLE -> {
+            DaftarNotePanel(tone = DaftarNoteTone.Error) {
+                Text(
+                    text = stringResource(Res.string.desktop_cloud_browser_failed),
+                    style = DaftarTheme.typography.supportingBody,
+                    color = DaftarTheme.colors.ink,
+                )
+            }
+            PrimaryButton(onClick = { onIntent(CloudIntent.SignIn) }, fullWidth = true) {
+                Text(stringResource(Res.string.desktop_cloud_retry))
+            }
+            OutlineButton(onClick = { onIntent(CloudIntent.DismissProblem) }, fullWidth = true) {
+                Text(stringResource(Res.string.cloud_cancel))
+            }
+            return
+        }
+
+        else -> Unit
+    }
     val message = problemMessage(error) ?: return
     DaftarNotePanel(tone = DaftarNoteTone.Error) {
         Text(
@@ -422,6 +516,9 @@ private fun problemMessage(error: CloudError): org.jetbrains.compose.resources.S
     CloudError.REAUTH_REQUIRED -> Res.string.cloud_reauth
     CloudError.UNAVAILABLE -> Res.string.cloud_unavailable
     CloudError.NOT_SIGNED_IN, CloudError.OVERSIZE, CloudError.DELETING, CloudError.FAILED -> Res.string.cloud_failed
+    CloudError.TIMED_OUT -> Res.string.desktop_cloud_timeout
+    CloudError.BROWSER_UNAVAILABLE -> Res.string.desktop_cloud_browser_failed
+    CloudError.DECLINED -> Res.string.desktop_cloud_declined
 }
 
 @Composable

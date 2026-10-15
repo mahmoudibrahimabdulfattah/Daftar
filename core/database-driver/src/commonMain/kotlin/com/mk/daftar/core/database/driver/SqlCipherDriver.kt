@@ -7,7 +7,12 @@ import androidx.sqlite.SQLiteStatement
 /** SQLCipher's raw-key length: a 256-bit key, written as 64 hexadecimal digits. */
 internal const val RAW_KEY_BYTES = 32
 
-private const val CIPHER_VERSION_QUERY = "PRAGMA cipher_version"
+/**
+ * A query that returns a non-empty value only from an encrypting engine: SQLCipher's version on the phones, the active
+ * cipher scheme of SQLite3 Multiple Ciphers on desktop. A plain SQLite build answers with no rows.
+ */
+internal expect val CIPHER_ENGINE_QUERY: String
+
 private const val SQLITE_MASTER_QUERY = "SELECT count(*) FROM sqlite_master"
 private const val TEMP_STORE_PRAGMA = "PRAGMA temp_store = MEMORY"
 private const val BUSY_MESSAGE = "database is locked"
@@ -48,7 +53,7 @@ internal class SqlCipherDriver(
     }
 
     private fun verifySqlCipher(connection: SQLiteConnection) {
-        val version = connection.queryText(CIPHER_VERSION_QUERY)
+        val version = connection.queryText(CIPHER_ENGINE_QUERY)
         if (version.isNullOrEmpty()) {
             throw DatabaseDriverException(DatabaseDriverError.SqlCipherUnavailable)
         }

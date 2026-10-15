@@ -16,6 +16,7 @@ import com.mk.daftar.core.domain.cloud.CloudDownload
 import com.mk.daftar.core.domain.cloud.CloudError
 import com.mk.daftar.core.domain.cloud.CloudListing
 import com.mk.daftar.core.domain.cloud.CloudProvider
+import com.mk.daftar.core.domain.cloud.CloudSignInHandoff
 import com.mk.daftar.core.domain.cloud.CloudUploadPhase
 import kotlin.concurrent.Volatile
 import kotlin.time.Clock
@@ -44,6 +45,9 @@ class CloudBackupRepositoryImpl(
     override val provider: CloudProvider
         get() = gateway.provider
 
+    override val signInHandoff: CloudSignInHandoff
+        get() = gateway.signInHandoff
+
     override val account: Flow<CloudAccount?>
         get() = gateway.account
 
@@ -58,6 +62,12 @@ class CloudBackupRepositoryImpl(
         CloudAuthOutcome.NoNetwork -> Outcome.Failure(CloudError.OFFLINE)
 
         CloudAuthOutcome.Unavailable -> Outcome.Failure(CloudError.UNAVAILABLE)
+
+        CloudAuthOutcome.TimedOut -> Outcome.Failure(CloudError.TIMED_OUT)
+
+        CloudAuthOutcome.BrowserUnavailable -> Outcome.Failure(CloudError.BROWSER_UNAVAILABLE)
+
+        CloudAuthOutcome.Declined -> Outcome.Failure(CloudError.DECLINED)
 
         CloudAuthOutcome.Failed, CloudAuthOutcome.Deleted, CloudAuthOutcome.ReauthRequired ->
             Outcome.Failure(CloudError.FAILED)
@@ -139,6 +149,12 @@ class CloudBackupRepositoryImpl(
             CloudAuthOutcome.NoNetwork -> return Outcome.Failure(CloudError.OFFLINE)
 
             CloudAuthOutcome.Unavailable -> return Outcome.Failure(CloudError.UNAVAILABLE)
+
+            CloudAuthOutcome.TimedOut -> return Outcome.Failure(CloudError.TIMED_OUT)
+
+            CloudAuthOutcome.BrowserUnavailable -> return Outcome.Failure(CloudError.BROWSER_UNAVAILABLE)
+
+            CloudAuthOutcome.Declined -> return Outcome.Failure(CloudError.DECLINED)
 
             CloudAuthOutcome.Failed, CloudAuthOutcome.Deleted, CloudAuthOutcome.ReauthRequired ->
                 return Outcome.Failure(CloudError.FAILED)

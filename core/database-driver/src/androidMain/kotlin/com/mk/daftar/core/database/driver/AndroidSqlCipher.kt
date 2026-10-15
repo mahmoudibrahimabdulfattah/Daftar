@@ -46,3 +46,6 @@ internal actual fun openKeyedConnection(fileName: String, rawKeyLiteral: ByteArr
     )
     return SQLCipherConnection(database)
 }
+
+/** SQLCipher reports its version; a plain SQLite build has no such pragma. */
+internal actual val CIPHER_ENGINE_QUERY: String = "PRAGMA cipher_version"

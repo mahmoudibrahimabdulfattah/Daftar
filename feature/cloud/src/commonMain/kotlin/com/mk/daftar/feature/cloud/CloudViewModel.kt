@@ -24,6 +24,7 @@ class CloudViewModel(private val repository: CloudBackupRepository, mode: CloudM
             mode = mode,
             availability = repository.availability,
             provider = repository.provider,
+            signInHandoff = repository.signInHandoff,
         ),
     ) {
     private var work: Job? = null
@@ -42,6 +43,11 @@ class CloudViewModel(private val repository: CloudBackupRepository, mode: CloudM
             CloudIntent.Refresh -> start { loadListing() }
 
             CloudIntent.SignIn -> start { signIn() }
+
+            CloudIntent.CancelSignIn -> if (currentState.waitingForBrowser) {
+                work?.cancel()
+                reduce { copy(busy = null, problem = null) }
+            }
 
             CloudIntent.SignOut -> start { signOut() }
 
@@ -119,6 +125,7 @@ class CloudViewModel(private val repository: CloudBackupRepository, mode: CloudM
                 view = view,
                 versions = present,
                 accountState = listing.state,
+                accountEmail = listing.account.email,
                 busy = null,
             )
         }
@@ -141,6 +148,7 @@ class CloudViewModel(private val repository: CloudBackupRepository, mode: CloudM
             copy(
                 view = CloudView.SignedOut,
                 versions = emptyList(),
+                accountEmail = null,
                 accountState = CloudAccountState.ACTIVE,
                 busy = null,
                 pendingVersion = null,
