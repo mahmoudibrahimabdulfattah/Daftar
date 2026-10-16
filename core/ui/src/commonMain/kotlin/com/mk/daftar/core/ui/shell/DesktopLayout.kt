@@ -1,9 +1,19 @@
 package com.mk.daftar.core.ui.shell
 
+import androidx.compose.foundation.ScrollState
+import androidx.compose.foundation.layout.Arrangement
+import androidx.compose.foundation.layout.Column
+import androidx.compose.foundation.layout.ColumnScope
+import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
+import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.widthIn
 import androidx.compose.foundation.layout.wrapContentWidth
+import androidx.compose.foundation.rememberScrollState
+import androidx.compose.foundation.verticalScroll
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.movableContentOf
+import androidx.compose.runtime.remember
 import androidx.compose.runtime.staticCompositionLocalOf
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
@@ -11,6 +21,7 @@ import androidx.compose.ui.platform.LocalDensity
 import androidx.compose.ui.platform.LocalWindowInfo
 import androidx.compose.ui.unit.Dp
 import androidx.compose.ui.unit.dp
+import com.mk.daftar.core.designsystem.theme.DaftarSpacing
 
 /**
  * True only in the desktop app (design phase 28). Phones and tablets never set it, so every desktop arrangement below is
@@ -50,6 +61,51 @@ fun Modifier.desktopPage(cap: Dp): Modifier =
     } else {
         this
     }
+
+/**
+ * A scrolling page with its top bar. On a phone or tablet the bar scrolls with the page, as it always has. On desktop
+ * beside the rail the bar spans the whole content area and stays put, as on Assets and Home, and only the page below
+ * it is capped at [cap] and scrolls.
+ */
+@Composable
+fun DesktopPageColumn(
+    cap: Dp,
+    topBar: @Composable () -> Unit,
+    modifier: Modifier = Modifier,
+    scrollState: ScrollState = rememberScrollState(),
+    content: @Composable ColumnScope.() -> Unit,
+) {
+    val arrangement = Arrangement.spacedBy(DaftarSpacing.sm)
+    // The window can cross the rail breakpoint, so the bar and the page move between the two shapes with their state.
+    val bar = remember(topBar) { movableContentOf(topBar) }
+    val page = remember(content) { movableContentOf<ColumnScope> { scope -> scope.content() } }
+    if (LocalDesktopLayout.current && LocalShellNavigation.current == ShellNavigation.RAIL) {
+        Column(modifier = modifier.fillMaxSize()) {
+            bar()
+            Column(
+                modifier = Modifier
+                    .desktopPage(cap)
+                    .weight(1f)
+                    .verticalScroll(scrollState)
+                    .padding(horizontal = DaftarSpacing.md),
+                verticalArrangement = arrangement,
+            ) {
+                page(this)
+            }
+        }
+    } else {
+        Column(
+            modifier = modifier
+                .fillMaxSize()
+                .verticalScroll(scrollState)
+                .padding(horizontal = DaftarSpacing.md),
+            verticalArrangement = arrangement,
+        ) {
+            bar()
+            page(this)
+        }
+    }
+}
 
 /** The window's width, including the rail: the width the design's classes are defined on. */
 @Composable

@@ -52,6 +52,7 @@ import com.mk.daftar.core.navigation.LeaveRequest
 import com.mk.daftar.core.navigation.LocalNavigator
 import com.mk.daftar.core.ui.mvi.CollectEffects
 import com.mk.daftar.core.ui.presentation.moneyText
+import com.mk.daftar.core.ui.shell.DesktopPageColumn
 import com.mk.daftar.core.ui.shell.DesktopWidths
 import com.mk.daftar.core.ui.shell.PriceRefreshAction
 import com.mk.daftar.core.ui.shell.ShellScreen
@@ -156,23 +157,20 @@ fun CashListContent(
 ) {
     val hiddenText = stringResource(DesignRes.string.balance_hidden)
     ShellScreen(modifier = modifier) {
-        Column(
-            modifier = Modifier
-                .desktopPage(DesktopWidths.Page)
-                .fillMaxSize()
-                .verticalScroll(rememberScrollState())
-                .padding(horizontal = DaftarSpacing.md),
-            verticalArrangement = Arrangement.spacedBy(DaftarSpacing.sm),
+        DesktopPageColumn(
+            cap = DesktopWidths.Page,
+            topBar = {
+                DaftarTopBar(
+                    title = stringResource(Res.string.cash_title),
+                    onBack = onBack,
+                    backLabel = stringResource(DesignRes.string.btn_back),
+                    actions = {
+                        VisibilityToggle(hidden = state.hidden) { onIntent(CashListIntent.ToggleHidden) }
+                        PriceRefreshAction()
+                    },
+                )
+            },
         ) {
-            DaftarTopBar(
-                title = stringResource(Res.string.cash_title),
-                onBack = onBack,
-                backLabel = stringResource(DesignRes.string.btn_back),
-                actions = {
-                    VisibilityToggle(hidden = state.hidden) { onIntent(CashListIntent.ToggleHidden) }
-                    PriceRefreshAction()
-                },
-            )
             state.pendingRoute?.let {
                 RevealPrompt(
                     onReveal = { onIntent(CashListIntent.RevealAndOpen) },

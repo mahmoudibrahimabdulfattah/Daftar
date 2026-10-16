@@ -43,6 +43,7 @@ import com.mk.daftar.core.designsystem.theme.DaftarTheme
 import com.mk.daftar.core.navigation.LeaveRequest
 import com.mk.daftar.core.navigation.LocalNavigator
 import com.mk.daftar.core.ui.mvi.CollectEffects
+import com.mk.daftar.core.ui.shell.DesktopPageColumn
 import com.mk.daftar.core.ui.shell.DesktopWidths
 import com.mk.daftar.core.ui.shell.ShellScreen
 import com.mk.daftar.core.ui.shell.desktopPage
@@ -133,20 +134,17 @@ fun NotesListContent(
     val typography = DaftarTheme.typography
     val months = stringArrayResource(Res.array.journal_months)
     ShellScreen(modifier = modifier) {
-        Column(
-            modifier = Modifier
-                .desktopPage(DesktopWidths.Page)
-                .fillMaxSize()
-                .verticalScroll(rememberScrollState())
-                .padding(horizontal = DaftarSpacing.md),
-            verticalArrangement = Arrangement.spacedBy(DaftarSpacing.sm),
+        DesktopPageColumn(
+            cap = DesktopWidths.Page,
+            topBar = {
+                DaftarTopBar(
+                    title = stringResource(Res.string.notes_title),
+                    onBack = onBack,
+                    backLabel = stringResource(DesignRes.string.btn_back),
+                    actions = { VisibilityToggle(hidden = state.hidden) { onIntent(NotesListIntent.ToggleHidden) } },
+                )
+            },
         ) {
-            DaftarTopBar(
-                title = stringResource(Res.string.notes_title),
-                onBack = onBack,
-                backLabel = stringResource(DesignRes.string.btn_back),
-                actions = { VisibilityToggle(hidden = state.hidden) { onIntent(NotesListIntent.ToggleHidden) } },
-            )
             Text(
                 text = stringResource(Res.string.notes_heading),
                 style = typography.screenHeading,

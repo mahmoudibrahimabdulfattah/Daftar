@@ -26,6 +26,7 @@ import com.mk.daftar.core.designsystem.theme.DaftarTheme
 import com.mk.daftar.core.navigation.LocalNavigator
 import com.mk.daftar.core.navigation.TopLevelDestination
 import com.mk.daftar.core.ui.mvi.CollectEffects
+import com.mk.daftar.core.ui.shell.DesktopPageColumn
 import com.mk.daftar.core.ui.shell.DesktopWidths
 import com.mk.daftar.core.ui.shell.RootReselectScroll
 import com.mk.daftar.core.ui.shell.ShellScreen
@@ -74,18 +75,16 @@ fun JournalContent(state: JournalUiState, onIntent: (JournalIntent) -> Unit, mod
     val scroll = rememberScrollState()
     RootReselectScroll(TopLevelDestination.JOURNAL) { scroll.animateScrollTo(0) }
     ShellScreen(modifier = modifier) {
-        Column(
-            modifier = Modifier
-                .desktopPage(DesktopWidths.Page)
-                .fillMaxSize()
-                .verticalScroll(scroll)
-                .padding(horizontal = DaftarSpacing.md),
-            verticalArrangement = Arrangement.spacedBy(DaftarSpacing.sm),
+        DesktopPageColumn(
+            cap = DesktopWidths.Page,
+            scrollState = scroll,
+            topBar = {
+                DaftarTopBar(
+                    title = stringResource(Res.string.journal_title),
+                    actions = { VisibilityToggle(hidden = state.hidden) { onIntent(JournalIntent.ToggleHidden) } },
+                )
+            },
         ) {
-            DaftarTopBar(
-                title = stringResource(Res.string.journal_title),
-                actions = { VisibilityToggle(hidden = state.hidden) { onIntent(JournalIntent.ToggleHidden) } },
-            )
             Text(
                 text = stringResource(Res.string.journal_heading),
                 style = typography.screenHeading,

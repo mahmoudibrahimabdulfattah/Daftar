@@ -51,6 +51,7 @@ import com.mk.daftar.core.navigation.Navigator
 import com.mk.daftar.core.navigation.ZakatYearRoute
 import com.mk.daftar.core.ui.mvi.CollectEffects
 import com.mk.daftar.core.ui.presentation.moneyText
+import com.mk.daftar.core.ui.shell.DesktopPageColumn
 import com.mk.daftar.core.ui.shell.DesktopWidths
 import com.mk.daftar.core.ui.shell.ShellScreen
 import com.mk.daftar.core.ui.shell.desktopPage
@@ -159,20 +160,17 @@ fun ZakatListContent(
     val months = stringArrayResource(Res.array.journal_months)
     val hiddenText = stringResource(DesignRes.string.balance_hidden)
     ShellScreen(modifier = modifier) {
-        Column(
-            modifier = Modifier
-                .desktopPage(DesktopWidths.Page)
-                .fillMaxSize()
-                .verticalScroll(rememberScrollState())
-                .padding(horizontal = DaftarSpacing.md),
-            verticalArrangement = Arrangement.spacedBy(DaftarSpacing.sm),
+        DesktopPageColumn(
+            cap = DesktopWidths.Page,
+            topBar = {
+                DaftarTopBar(
+                    title = stringResource(Res.string.zakat_title),
+                    onBack = onBack,
+                    backLabel = stringResource(DesignRes.string.btn_back),
+                    actions = { VisibilityToggle(hidden = state.hidden) { onIntent(ZakatListIntent.ToggleHidden) } },
+                )
+            },
         ) {
-            DaftarTopBar(
-                title = stringResource(Res.string.zakat_title),
-                onBack = onBack,
-                backLabel = stringResource(DesignRes.string.btn_back),
-                actions = { VisibilityToggle(hidden = state.hidden) { onIntent(ZakatListIntent.ToggleHidden) } },
-            )
             Text(
                 text = stringResource(Res.string.zakat_heading),
                 style = typography.screenHeading,
