@@ -33,6 +33,14 @@ sealed interface PriceRefreshStatus {
         override val generation: Long,
         val outcome: RefreshOutcome,
         val rejections: Set<RefreshRejection> = emptySet(),
+        /** The assets for which nothing was refreshed. Every asset when the whole refresh failed. */
+        val failedAssets: Set<PriceAsset> = if (outcome ==
+            RefreshOutcome.Failed
+        ) {
+            PriceAsset.entries.toSet()
+        } else {
+            emptySet()
+        },
     ) : PriceRefreshStatus
 }
 
@@ -70,6 +78,20 @@ fun RefreshReport.rejections(): Set<RefreshRejection> = (gold.values + fx.values
     .filter { it.isFailure() }
     .mapNotNull { (it as? RefreshStepResult.Kept)?.reason }
     .toSet()
+
+/** The two kinds of price a refresh fetches. */
+enum class PriceAsset { GOLD, USD }
+
+/**
+ * The assets that did not refresh at all: no step for them was accepted or confirmed as current, and at least one
+ * failed. A karat the provider left out does not mark gold as failed while the others refreshed.
+ */
+fun RefreshReport.failedAssets(): Set<PriceAsset> = buildSet {
+    if (gold.values.notRefreshed()) add(PriceAsset.GOLD)
+    if (fx.values.notRefreshed()) add(PriceAsset.USD)
+}
+
+private fun Collection<RefreshStepResult>.notRefreshed(): Boolean = none { !it.isFailure() } && any { it.isFailure() }
 
 /** Whether a step failed to refresh: kept at its cached value for any reason but being older than what is stored. */
 fun RefreshStepResult.isFailure(): Boolean =

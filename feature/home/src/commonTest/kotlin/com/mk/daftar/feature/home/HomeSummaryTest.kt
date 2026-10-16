@@ -1,5 +1,6 @@
 package com.mk.daftar.feature.home
 
+import com.mk.daftar.core.domain.refresh.PriceAsset
 import com.mk.daftar.core.domain.refresh.PriceRefreshStatus
 import com.mk.daftar.core.domain.refresh.RefreshOutcome
 import com.mk.daftar.core.domain.repository.RefreshRejection
@@ -185,9 +186,13 @@ class HomeSummaryTest {
             quotes,
             banks,
             false,
-            PriceRefreshStatus.Finished(5, RefreshOutcome.PartiallyFailed),
+            PriceRefreshStatus.Finished(5, RefreshOutcome.PartiallyFailed, failedAssets = setOf(PriceAsset.USD)),
         )
-        assertTrue(partial.refreshFailed)
+        assertEquals(setOf(PriceAsset.USD), partial.failedPriceAssets)
+
+        val failedElsewhere =
+            homeStateOf(valuation, quotes, banks, false, PriceRefreshStatus.Finished(4, RefreshOutcome.Failed))
+        assertTrue(failedElsewhere.failedPriceAssets.isEmpty(), "another generation's failure is not shown")
         assertIs<HomeLoad.Ready>(partial.load, "a failed refresh keeps the last valid values")
     }
 
