@@ -26,6 +26,7 @@ import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.LayoutDirection
 import androidx.compose.ui.unit.dp
 import com.mk.daftar.core.designsystem.component.DaftarIcon
+import com.mk.daftar.core.designsystem.component.actionCursor
 import com.mk.daftar.core.designsystem.icon.DaftarIcons
 import com.mk.daftar.core.designsystem.theme.DaftarSpacing
 import com.mk.daftar.core.designsystem.theme.DaftarTheme
@@ -217,7 +218,7 @@ private fun DetailsEntry(onClick: () -> Unit) {
         modifier = Modifier
             .fillMaxWidth()
             .heightIn(min = DaftarSpacing.buttonMinHeight)
-            .clickable(role = Role.Button, onClick = onClick),
+            .actionCursor().clickable(role = Role.Button, onClick = onClick),
         verticalAlignment = Alignment.CenterVertically,
     ) {
         Text(

@@ -28,6 +28,7 @@ import com.mk.daftar.core.designsystem.component.DaftarLedgerRow
 import com.mk.daftar.core.designsystem.component.DaftarStatusTag
 import com.mk.daftar.core.designsystem.component.DaftarStatusTone
 import com.mk.daftar.core.designsystem.component.DaftarTextButton
+import com.mk.daftar.core.designsystem.component.actionCursor
 import com.mk.daftar.core.designsystem.icon.DaftarIcons
 import com.mk.daftar.core.designsystem.theme.DaftarSpacing
 import com.mk.daftar.core.designsystem.theme.DaftarTheme
@@ -92,7 +93,7 @@ internal fun ZakatDeclarationCheckbox(
         modifier = modifier
             .fillMaxWidth()
             .defaultMinSize(minHeight = 48.dp)
-            .toggleable(
+            .actionCursor(enabled).toggleable(
                 value = checked,
                 enabled = enabled,
                 role = Role.Checkbox,

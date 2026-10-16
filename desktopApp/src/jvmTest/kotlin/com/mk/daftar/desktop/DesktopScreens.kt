@@ -8,6 +8,7 @@ import androidx.compose.ui.test.hasClickAction
 import androidx.compose.ui.test.hasText
 import androidx.compose.ui.test.onRoot
 import androidx.compose.ui.test.performClick
+import androidx.compose.ui.test.performMouseInput
 import androidx.compose.ui.test.runDesktopComposeUiTest
 import com.mk.daftar.App
 import com.mk.daftar.core.common.desktop.DesktopAppDirectories
@@ -66,6 +67,11 @@ class DesktopScreens {
                 Thread.sleep(500)
                 waitForIdle()
                 capture("06-banks-${width}x$height")
+                // Hover: the pointer over a rail item fills it softly.
+                key("الإعدادات").performMouseInput { moveTo(center) }
+                waitForIdle()
+                Thread.sleep(400)
+                capture("07-hover-${width}x$height")
             }
         }
     }

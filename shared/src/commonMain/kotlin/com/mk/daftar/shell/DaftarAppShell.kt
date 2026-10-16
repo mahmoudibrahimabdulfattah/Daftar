@@ -33,6 +33,7 @@ import com.mk.daftar.core.navigation.Navigator
 import com.mk.daftar.core.navigation.TopLevelDestination
 import com.mk.daftar.core.ui.motion.rememberReducedMotion
 import com.mk.daftar.core.ui.shell.DaftarAdaptiveShell
+import com.mk.daftar.core.ui.shell.DesktopEscape
 import com.mk.daftar.core.ui.shell.DesktopWidths
 import com.mk.daftar.core.ui.shell.LocalDesktopLayout
 import com.mk.daftar.core.ui.shell.ShellDestination
@@ -69,6 +70,16 @@ fun DaftarAppShell(navigator: Navigator, retention: ShellRetention, modifier: Mo
     }
     val listDetail = rememberListDetailSceneStrategy<NavKey>(directive = directive)
     val reducedMotion = rememberReducedMotion()
+    // Esc on desktop goes back within the shown tab, with the draft guard; at a tab's root it does nothing.
+    DisposableEffect(navigator) {
+        val onEscape = {
+            val nested = navigator.stackOf(navigator.topLevel).size > 1
+            if (nested) navigator.requestLeave(LeaveRequest.Back)
+            nested
+        }
+        DesktopEscape.install(onEscape)
+        onDispose { DesktopEscape.uninstall(onEscape) }
+    }
     val duration = if (reducedMotion) 0 else TRANSITION_MILLIS
 
     CompositionLocalProvider(

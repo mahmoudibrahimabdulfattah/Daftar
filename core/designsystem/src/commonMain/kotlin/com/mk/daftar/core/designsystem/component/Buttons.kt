@@ -112,7 +112,7 @@ fun DaftarIconButton(
     Box(
         modifier = modifier
             .size(DaftarSpacing.touch)
-            .clickable(
+            .actionCursor(enabled).clickable(
                 interactionSource = interactionSource,
                 indication = null,
                 enabled = enabled,
@@ -152,7 +152,7 @@ private fun DaftarButton(
             modifier = modifier
                 .then(if (fullWidth) Modifier.fillMaxWidth() else Modifier)
                 .defaultMinSize(minHeight = DaftarSpacing.buttonMinHeight)
-                .clickable(
+                .actionCursor(enabled).clickable(
                     interactionSource = interactionSource,
                     indication = null,
                     enabled = enabled,

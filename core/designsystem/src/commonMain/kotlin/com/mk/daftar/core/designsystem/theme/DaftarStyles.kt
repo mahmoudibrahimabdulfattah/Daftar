@@ -5,6 +5,7 @@ import androidx.compose.foundation.style.animate
 import androidx.compose.foundation.style.contentPadding
 import androidx.compose.foundation.style.contentPaddingVertical
 import androidx.compose.foundation.style.disabled
+import androidx.compose.foundation.style.hovered
 import androidx.compose.foundation.style.pressed
 import androidx.compose.foundation.style.selected
 import androidx.compose.ui.unit.dp
@@ -13,13 +14,15 @@ import androidx.compose.ui.unit.dp
  * Container styles for the design system: shape, fill, border, padding and state changes.
  * Components apply their base style from here and accept a `style` parameter that callers
  * chain on top. Text and icon colours come from the component (see [ProvideContent]), because
- * Material text does not read colours from a style.
+ * Material text does not read colours from a style. Hover (a pointer only, so never on a touch screen) fills unfilled
+ * controls with `soft` and dims filled ones like a press.
  */
 object DaftarStyles {
     val primaryButton: Style = Style {
         shape(shapes.control)
         background(colors.primary)
         contentPadding(horizontal = 16.dp, vertical = 11.dp)
+        hovered { alpha(PRESSED_ALPHA) }
         pressed { animate { alpha(PRESSED_ALPHA) } }
         disabled { alpha(DISABLED_ALPHA) }
     }
@@ -29,6 +32,7 @@ object DaftarStyles {
         borderWidth(1.dp)
         borderColor(colors.line)
         contentPadding(horizontal = 16.dp, vertical = 11.dp)
+        hovered { background(colors.soft) }
         pressed { animate { alpha(PRESSED_ALPHA) } }
         disabled { alpha(DISABLED_ALPHA) }
     }
@@ -36,12 +40,14 @@ object DaftarStyles {
     val textButton: Style = Style {
         shape(shapes.control)
         contentPadding(horizontal = 8.dp, vertical = 8.dp)
+        hovered { background(colors.soft) }
         pressed { animate { alpha(PRESSED_ALPHA) } }
         disabled { alpha(DISABLED_ALPHA) }
     }
 
     val iconButton: Style = Style {
         shape(shapes.round)
+        hovered { background(colors.soft) }
         pressed { animate { alpha(PRESSED_ALPHA) } }
         disabled { alpha(DISABLED_ALPHA) }
     }
@@ -58,6 +64,7 @@ object DaftarStyles {
     val segment: Style = Style {
         contentPadding(horizontal = 6.dp, vertical = 6.dp)
         selected { animate { background(colors.soft) } }
+        hovered { background(colors.soft) }
         pressed { animate { alpha(PRESSED_ALPHA) } }
         disabled { alpha(DISABLED_ALPHA) }
     }
@@ -88,6 +95,7 @@ object DaftarStyles {
     val keypadKey: Style = Style {
         shape(shapes.surface)
         background(colors.surface)
+        hovered { alpha(PRESSED_ALPHA) }
         pressed { animate { alpha(PRESSED_ALPHA) } }
         disabled { alpha(DISABLED_ALPHA) }
     }
@@ -111,16 +119,19 @@ object DaftarStyles {
         shape(shapes.control)
         contentPadding(horizontal = 4.dp, vertical = 8.dp)
         selected { animate { background(colors.soft) } }
+        hovered { background(colors.soft) }
         pressed { animate { alpha(PRESSED_ALPHA) } }
     }
 
     val ledgerRow: Style = Style {
         contentPaddingVertical(15.dp)
+        hovered { background(colors.soft) }
         pressed { animate { alpha(PRESSED_ALPHA) } }
     }
 
     val settingRow: Style = Style {
         contentPaddingVertical(12.dp)
+        hovered { background(colors.soft) }
         pressed { animate { alpha(PRESSED_ALPHA) } }
     }
 

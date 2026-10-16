@@ -20,6 +20,7 @@ import com.mk.daftar.core.common.desktop.DesktopOs
 import com.mk.daftar.core.designsystem.component.DaftarFocusVisibility
 import com.mk.daftar.core.security.DesktopSecurityConfiguration
 import com.mk.daftar.core.security.desktopSecurityConfigurationModule
+import com.mk.daftar.core.ui.shell.DesktopEscape
 import com.mk.daftar.di.DesktopBuildConfiguration
 import com.mk.daftar.di.desktopBuildConfigurationModule
 import com.mk.daftar.di.initKoin
@@ -74,6 +75,10 @@ fun main() {
             },
             state = geometry,
             title = if (Locale.getDefault().language == "ar") "دفتر" else "Daftar",
+            // Reaches the window only when no focused control used the key, so popups and fields go first.
+            onKeyEvent = { event ->
+                event.type == KeyEventType.KeyDown && event.key == Key.Escape && DesktopEscape.press()
+            },
             onPreviewKeyEvent = { event ->
                 if (event.type == KeyEventType.KeyDown && event.key in FOCUS_KEYS) DaftarFocusVisibility.keyboard = true
                 val lockShortcut = event.type == KeyEventType.KeyDown && event.key == Key.L &&

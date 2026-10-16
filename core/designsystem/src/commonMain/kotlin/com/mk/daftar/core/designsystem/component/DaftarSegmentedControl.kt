@@ -75,7 +75,7 @@ private fun RowScope.DaftarSegment(label: String, selected: Boolean, enabled: Bo
         modifier = Modifier
             .weight(1f)
             .defaultMinSize(minHeight = 48.dp)
-            .selectable(
+            .actionCursor(enabled).selectable(
                 selected = selected,
                 interactionSource = interactionSource,
                 indication = null,

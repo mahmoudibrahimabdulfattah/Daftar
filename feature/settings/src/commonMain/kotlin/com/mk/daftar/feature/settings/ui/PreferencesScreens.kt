@@ -28,6 +28,7 @@ import com.mk.daftar.core.designsystem.component.DaftarNoteTone
 import com.mk.daftar.core.designsystem.component.DaftarSettingRow
 import com.mk.daftar.core.designsystem.component.DaftarSettingTrailing
 import com.mk.daftar.core.designsystem.component.PrimaryButton
+import com.mk.daftar.core.designsystem.component.actionCursor
 import com.mk.daftar.core.designsystem.icon.DaftarIcons
 import com.mk.daftar.core.designsystem.theme.DaftarSpacing
 import com.mk.daftar.core.designsystem.theme.DaftarTheme
@@ -238,7 +239,7 @@ private fun ChoiceRow(label: String, selected: Boolean, onClick: () -> Unit) {
         modifier = Modifier
             .fillMaxWidth()
             .heightIn(min = DaftarSpacing.touch)
-            .selectable(selected = selected, role = Role.RadioButton, onClick = onClick)
+            .actionCursor().selectable(selected = selected, role = Role.RadioButton, onClick = onClick)
             .padding(horizontal = DaftarSpacing.xs),
         verticalAlignment = Alignment.CenterVertically,
         horizontalArrangement = Arrangement.spacedBy(DaftarSpacing.sm),

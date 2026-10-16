@@ -67,7 +67,7 @@ fun DaftarLedgerRow(
                 .defaultMinSize(minHeight = 64.dp)
                 .then(
                     if (onClick != null) {
-                        Modifier.clickable(
+                        Modifier.actionCursor().clickable(
                             interactionSource = interactionSource,
                             indication = null,
                             role = Role.Button,

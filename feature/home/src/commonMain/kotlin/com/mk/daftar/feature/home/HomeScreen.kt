@@ -67,6 +67,7 @@ import com.mk.daftar.core.designsystem.component.DaftarTileTone
 import com.mk.daftar.core.designsystem.component.DaftarTopBar
 import com.mk.daftar.core.designsystem.component.OutlineButton
 import com.mk.daftar.core.designsystem.component.PrimaryButton
+import com.mk.daftar.core.designsystem.component.actionCursor
 import com.mk.daftar.core.designsystem.icon.DaftarIcons
 import com.mk.daftar.core.designsystem.theme.DaftarSpacing
 import com.mk.daftar.core.designsystem.theme.DaftarTheme
@@ -735,7 +736,9 @@ private fun QuoteSection(
                 .clip(RoundedCornerShape(QUOTE_CARD_RADIUS))
                 .background(colors.surface)
                 .border(1.dp, colors.line, RoundedCornerShape(QUOTE_CARD_RADIUS))
-                .clickable(role = Role.Button, onClickLabel = actionLabel) { onIntent(HomeIntent.OpenPrices) }
+                .actionCursor().clickable(role = Role.Button, onClickLabel = actionLabel) {
+                    onIntent(HomeIntent.OpenPrices)
+                }
                 .semantics(mergeDescendants = true) {
                     contentDescription = actionLabel
                     stateDescription = (values + freshness).joinToString(", ")

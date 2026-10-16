@@ -336,7 +336,7 @@ internal fun DaftarFieldShell(
                 .defaultMinSize(minHeight = minHeight)
                 .then(
                     if (onClick != null) {
-                        Modifier.clickable(
+                        Modifier.actionCursor(enabled).clickable(
                             interactionSource = interactionSource,
                             indication = null,
                             enabled = enabled,

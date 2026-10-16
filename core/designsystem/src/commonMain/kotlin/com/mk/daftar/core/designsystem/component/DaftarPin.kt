@@ -147,7 +147,7 @@ private fun RowScope.KeypadKey(enabled: Boolean, onClick: () -> Unit, content: @
         modifier = Modifier
             .weight(1f)
             .defaultMinSize(minHeight = DaftarSpacing.keypadKeyMinHeight)
-            .clickable(
+            .actionCursor(enabled).clickable(
                 interactionSource = interactionSource,
                 indication = null,
                 enabled = enabled,
