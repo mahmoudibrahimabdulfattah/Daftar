@@ -15,6 +15,8 @@ kotlin {
             implementation(projects.core.domain)
             implementation(project.dependencies.platform(libs.koin.bom))
             implementation(libs.koin.compose)
+            // Desktop pane pairs read whether their list-detail scene shows both panes.
+            implementation(libs.compose.material3.adaptive.navigation3)
             api(libs.androidx.lifecycle.viewmodel.compose)
             api(libs.androidx.lifecycle.runtime.compose)
         }

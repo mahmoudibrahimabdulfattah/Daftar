@@ -5,7 +5,7 @@
     <string name="banks_add">إضافة بنك</string>
     <string name="banks_empty_title">ابدأ باسم البنك</string>
     <string name="banks_empty_message">أضف بنكًا ثم سجّل حساباته بعملاتها.</string>
-    <string name="banks_select">اختر بنكًا</string>
+    <string name="banks_select">اختر بنكًا لعرض حساباته.</string>
     <string name="banks_available_subtotal">الإجمالي المتاح</string>
     <string name="banks_unavailable">القيمة غير متاحة</string>
     <string name="banks_stale_note">بعض الأسعار في هذه القيمة يدوية أو قديمة.</string>

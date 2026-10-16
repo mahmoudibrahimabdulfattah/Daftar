@@ -1,6 +1,7 @@
 package com.mk.daftar.feature.journal.ui
 
 import androidx.compose.foundation.layout.Arrangement
+import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
@@ -10,9 +11,11 @@ import androidx.compose.foundation.verticalScroll
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.getValue
+import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.semantics.heading
 import androidx.compose.ui.semantics.semantics
+import androidx.compose.ui.text.style.TextAlign
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import com.mk.daftar.core.designsystem.component.DaftarAmount
 import com.mk.daftar.core.designsystem.component.DaftarEmptyState
@@ -45,7 +48,9 @@ import com.mk.daftar.core.navigation.LocalNavigator
 import com.mk.daftar.core.ui.mvi.CollectEffects
 import com.mk.daftar.core.ui.presentation.moneyText
 import com.mk.daftar.core.ui.shell.DesktopWidths
+import com.mk.daftar.core.ui.shell.PaneActionsBar
 import com.mk.daftar.core.ui.shell.ShellScreen
+import com.mk.daftar.core.ui.shell.ValuesVisibilityAction
 import com.mk.daftar.core.ui.shell.desktopPage
 import com.mk.daftar.feature.journal.JournalEffect
 import com.mk.daftar.feature.journal.JournalPhase
@@ -111,6 +116,7 @@ import com.mk.daftar.feature.journal.resources.zakat_unassigned
 import com.mk.daftar.feature.journal.resources.zakat_year_add_help
 import com.mk.daftar.feature.journal.resources.zakat_year_heading
 import com.mk.daftar.feature.journal.resources.zakat_year_range
+import com.mk.daftar.feature.journal.resources.zakat_year_select
 import com.mk.daftar.feature.journal.resources.zakat_your_date
 import com.mk.daftar.feature.journal.zakat.ZakatDateIntent
 import com.mk.daftar.feature.journal.zakat.ZakatDateOption
@@ -710,5 +716,25 @@ private fun dateOptionText(option: ZakatDateOption, months: List<String>): Strin
         -1 -> stringResource(Res.string.zakat_date_earlier, date)
         1 -> stringResource(Res.string.zakat_date_later, date)
         else -> stringResource(Res.string.zakat_date_calculated, date)
+    }
+}
+
+/** Beside the years list on desktop, before a year is chosen. */
+@Composable
+fun ZakatYearPlaceholder(modifier: Modifier = Modifier) {
+    ShellScreen(modifier = modifier) {
+        Column(modifier = Modifier.fillMaxSize()) {
+            // The pair's header: the years list's bar holds the title, this one the eye at the far end.
+            PaneActionsBar { ValuesVisibilityAction() }
+            Box(modifier = Modifier.fillMaxWidth().weight(1f), contentAlignment = Alignment.Center) {
+                Text(
+                    text = stringResource(Res.string.zakat_year_select),
+                    style = DaftarTheme.typography.supportingBody,
+                    color = DaftarTheme.colors.muted,
+                    textAlign = TextAlign.Center,
+                    modifier = Modifier.padding(horizontal = DaftarSpacing.md),
+                )
+            }
+        }
     }
 }

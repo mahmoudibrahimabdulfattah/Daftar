@@ -60,6 +60,12 @@ class DesktopScreens {
                     waitForIdle()
                     capture("05-$name-${width}x$height")
                 }
+                // A list beside its (placeholder) detail where the window allows two panes.
+                tap("الأصول")
+                tap("البنوك")
+                Thread.sleep(500)
+                waitForIdle()
+                capture("06-banks-${width}x$height")
             }
         }
     }

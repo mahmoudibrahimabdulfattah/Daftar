@@ -9,7 +9,7 @@
     <string name="investments_save">حفظ</string>
     <string name="investments_add">إضافة حساب استثمار</string>
     <string name="investments_convert_action">تحويل قيد نقدي إلى استثمار</string>
-    <string name="investments_select_account">اختر حسابًا</string>
+    <string name="investments_select_account">اختر حساب استثمار لعرض تفاصيله.</string>
     <string name="investments_provider_title">اختر شركة الوساطة</string>
     <string name="investments_provider_other">شركة وساطة أخرى</string>
     <string name="investments_provider_change">تغيير شركة الوساطة</string>

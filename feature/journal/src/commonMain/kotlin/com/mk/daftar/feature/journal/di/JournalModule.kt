@@ -1,5 +1,7 @@
 package com.mk.daftar.feature.journal.di
 
+import androidx.compose.material3.adaptive.ExperimentalMaterial3AdaptiveApi
+import androidx.compose.material3.adaptive.navigation3.ListDetailSceneStrategy
 import com.mk.daftar.core.domain.usecase.ObserveZakatEstimateUseCase
 import com.mk.daftar.core.navigation.JournalRoute
 import com.mk.daftar.core.navigation.NoteAddRoute
@@ -13,6 +15,7 @@ import com.mk.daftar.core.navigation.ZakatHistoryRoute
 import com.mk.daftar.core.navigation.ZakatRoute
 import com.mk.daftar.core.navigation.ZakatYearAddRoute
 import com.mk.daftar.core.navigation.ZakatYearRoute
+import com.mk.daftar.core.ui.shell.isDesktopPlatform
 import com.mk.daftar.feature.journal.JournalViewModel
 import com.mk.daftar.feature.journal.notes.NoteEditorTarget
 import com.mk.daftar.feature.journal.notes.NoteEditorViewModel
@@ -26,6 +29,7 @@ import com.mk.daftar.feature.journal.ui.ZakatEditorScreen
 import com.mk.daftar.feature.journal.ui.ZakatHistoryScreen
 import com.mk.daftar.feature.journal.ui.ZakatListScreen
 import com.mk.daftar.feature.journal.ui.ZakatYearAddScreen
+import com.mk.daftar.feature.journal.ui.ZakatYearPlaceholder
 import com.mk.daftar.feature.journal.ui.ZakatYearScreen
 import com.mk.daftar.feature.journal.zakat.ZakatCalculatorViewModel
 import com.mk.daftar.feature.journal.zakat.ZakatDateViewModel
@@ -48,7 +52,7 @@ import org.koin.dsl.navigation3.navigation
  * The Journal feature: the overview, the zakat declarations, calculator and payment log, and the personal notes, with
  * their editors. Their use cases and the clock come from the application graph; nothing here reaches the data layer.
  */
-@OptIn(KoinExperimentalAPI::class)
+@OptIn(KoinExperimentalAPI::class, ExperimentalMaterial3AdaptiveApi::class)
 val journalModule: Module = module {
     factory<TimeZone> { TimeZone.currentSystemDefault() }
 
@@ -112,8 +116,24 @@ val journalModule: Module = module {
     navigation<JournalRoute> { JournalScreen() }
     navigation<ZakatRoute> { ZakatListScreen() }
     navigation<ZakatCalculatorRoute> { ZakatCalculatorScreen() }
-    navigation<ZakatHistoryRoute> { ZakatHistoryScreen() }
-    navigation<ZakatYearRoute> { route -> ZakatYearScreen(hijriYear = route.hijriYear) }
+    // On desktop the years list and the selected year sit side by side (design phase 28); phones and tablets keep one
+    // page at a time. Editors opened from a year stay full pages.
+    navigation<ZakatHistoryRoute>(
+        metadata = if (isDesktopPlatform) {
+            ListDetailSceneStrategy.listPane(detailPlaceholder = {
+                ZakatYearPlaceholder()
+            })
+        } else {
+            emptyMap()
+        },
+    ) {
+        ZakatHistoryScreen()
+    }
+    navigation<ZakatYearRoute>(
+        metadata = if (isDesktopPlatform) ListDetailSceneStrategy.detailPane() else emptyMap(),
+    ) { route ->
+        ZakatYearScreen(hijriYear = route.hijriYear)
+    }
     navigation<ZakatYearAddRoute> { ZakatYearAddScreen() }
     navigation<ZakatDateRoute> { route -> ZakatDateScreen(hijriYear = route.hijriYear) }
     navigation<ZakatAddRoute> { route ->

@@ -37,6 +37,7 @@ import com.mk.daftar.core.ui.presentation.moneyText
 import com.mk.daftar.core.ui.shell.LocalSimultaneousPanes
 import com.mk.daftar.core.ui.shell.PriceRefreshAction
 import com.mk.daftar.core.ui.shell.ShellScreen
+import com.mk.daftar.core.ui.shell.inDesktopPanePair
 import com.mk.daftar.feature.banks.BankListIntent
 import com.mk.daftar.feature.banks.BankListUiState
 import com.mk.daftar.feature.banks.BankPhase
@@ -95,6 +96,7 @@ fun BankListContent(
     val hiddenText = stringResource(DesignRes.string.balance_hidden)
     val unavailable = stringResource(Res.string.banks_unavailable)
     val egpUnit = stringResource(Res.string.banks_egp_unit)
+    val pair = inDesktopPanePair()
     ShellScreen(modifier = modifier) {
         Column(
             modifier = Modifier.fillMaxSize().padding(horizontal = DaftarSpacing.md),
@@ -104,9 +106,12 @@ fun BankListContent(
                 title = stringResource(Res.string.banks_title),
                 onBack = if (showsBack) onBack else null,
                 backLabel = stringResource(DesignRes.string.btn_back),
+                // Beside its detail on desktop the eye and refresh sit at the detail pane's far end instead.
                 actions = {
-                    VisibilityToggle(hidden = state.hidden) { onIntent(BankListIntent.ToggleValues) }
-                    PriceRefreshAction()
+                    if (!pair) {
+                        VisibilityToggle(hidden = state.hidden) { onIntent(BankListIntent.ToggleValues) }
+                        PriceRefreshAction()
+                    }
                 },
             )
             when (state.phase) {

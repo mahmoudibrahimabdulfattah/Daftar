@@ -9,7 +9,7 @@
     <string name="investments_save">Save</string>
     <string name="investments_add">Add investment account</string>
     <string name="investments_convert_action">Convert a cash entry to an investment</string>
-    <string name="investments_select_account">Select an account</string>
+    <string name="investments_select_account">Select an investment account to view its details.</string>
     <string name="investments_provider_title">Choose broker</string>
     <string name="investments_provider_other">Other broker</string>
     <string name="investments_provider_change">Change broker</string>
