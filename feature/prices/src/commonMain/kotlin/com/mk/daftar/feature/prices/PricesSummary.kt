@@ -90,6 +90,7 @@ fun pricesStateOf(
         valuesHidden = valuesHidden,
         refreshing = refresh.showsProgress && refresh.generation == generation,
         notice = finished?.takeIf { it.generation == generation }?.let { refreshNoticeOf(it.outcome, it.rejections) },
+        failedAssets = finished?.takeIf { it.generation == generation }?.failedAssets.orEmpty(),
     )
 }
 

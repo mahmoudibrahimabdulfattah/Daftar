@@ -70,6 +70,7 @@ import com.mk.daftar.core.designsystem.component.PrimaryButton
 import com.mk.daftar.core.designsystem.icon.DaftarIcons
 import com.mk.daftar.core.designsystem.theme.DaftarSpacing
 import com.mk.daftar.core.designsystem.theme.DaftarTheme
+import com.mk.daftar.core.domain.refresh.PriceAsset
 import com.mk.daftar.core.domain.usecase.FirstRunGuideState
 import com.mk.daftar.core.domain.valuation.AssetCategory
 import com.mk.daftar.core.model.FxBasis
@@ -77,13 +78,15 @@ import com.mk.daftar.core.model.QuoteKey
 import com.mk.daftar.core.navigation.LocalNavigator
 import com.mk.daftar.core.navigation.TopLevelDestination
 import com.mk.daftar.core.ui.mvi.CollectEffects
+import com.mk.daftar.core.ui.presentation.AssetFreshness
 import com.mk.daftar.core.ui.presentation.CountNoun
+import com.mk.daftar.core.ui.presentation.assetFreshnessText
 import com.mk.daftar.core.ui.presentation.bankAndAccountLabel
 import com.mk.daftar.core.ui.presentation.countLabel
 import com.mk.daftar.core.ui.presentation.moneyText
 import com.mk.daftar.core.ui.presentation.quoteMarkerText
-import com.mk.daftar.core.ui.presentation.quoteSummaryText
 import com.mk.daftar.core.ui.presentation.quoteUnavailableText
+import com.mk.daftar.core.ui.presentation.quoteWaitingText
 import com.mk.daftar.core.ui.shell.DesktopWidths
 import com.mk.daftar.core.ui.shell.LocalDesktopLayout
 import com.mk.daftar.core.ui.shell.RootReselectScroll
@@ -112,18 +115,6 @@ import com.mk.daftar.feature.home.resources.home_investments
 import com.mk.daftar.feature.home.resources.home_masked_value
 import com.mk.daftar.feature.home.resources.home_missing_karat
 import com.mk.daftar.feature.home.resources.home_missing_usd
-import com.mk.daftar.feature.home.resources.home_month_1
-import com.mk.daftar.feature.home.resources.home_month_10
-import com.mk.daftar.feature.home.resources.home_month_11
-import com.mk.daftar.feature.home.resources.home_month_12
-import com.mk.daftar.feature.home.resources.home_month_2
-import com.mk.daftar.feature.home.resources.home_month_3
-import com.mk.daftar.feature.home.resources.home_month_4
-import com.mk.daftar.feature.home.resources.home_month_5
-import com.mk.daftar.feature.home.resources.home_month_6
-import com.mk.daftar.feature.home.resources.home_month_7
-import com.mk.daftar.feature.home.resources.home_month_8
-import com.mk.daftar.feature.home.resources.home_month_9
 import com.mk.daftar.feature.home.resources.home_quote_action
 import com.mk.daftar.feature.home.resources.home_quote_caption
 import com.mk.daftar.feature.home.resources.home_quote_details
@@ -133,9 +124,7 @@ import com.mk.daftar.feature.home.resources.home_quote_units
 import com.mk.daftar.feature.home.resources.home_recovery_action
 import com.mk.daftar.feature.home.resources.home_recovery_suggestion
 import com.mk.daftar.feature.home.resources.home_refresh
-import com.mk.daftar.feature.home.resources.home_refresh_failed
 import com.mk.daftar.feature.home.resources.home_show_values
-import com.mk.daftar.feature.home.resources.home_stamp
 import com.mk.daftar.feature.home.resources.home_state_hidden
 import com.mk.daftar.feature.home.resources.home_state_visible
 import com.mk.daftar.feature.home.resources.home_total
@@ -167,6 +156,7 @@ import com.mk.daftar.feature.home.resources.p25_price_waiting
 import com.mk.daftar.feature.home.resources.zakat_due_count
 import com.mk.daftar.feature.home.resources.zakat_reminder
 import com.mk.daftar.feature.home.resources.zakat_year_label
+import kotlin.time.Clock
 import kotlin.time.Instant
 import kotlinx.datetime.TimeZone
 import kotlinx.datetime.toLocalDateTime
@@ -333,7 +323,7 @@ private fun ReadyBody(
             Column(modifier = Modifier.width(DesktopWidths.HomeSupporting).padding(top = anchorTop)) {
                 QuoteSection(
                     quotes = figures.quotes,
-                    refreshFailed = state.refreshFailed,
+                    failedAssets = state.failedPriceAssets,
                     attributionUrl = figures.fxAttributionUrl,
                     onIntent = onIntent,
                     topPadding = 0.dp,
@@ -353,7 +343,7 @@ private fun ReadyBody(
     }
     QuoteSection(
         quotes = figures.quotes,
-        refreshFailed = state.refreshFailed,
+        failedAssets = state.failedPriceAssets,
         attributionUrl = figures.fxAttributionUrl,
         onIntent = onIntent,
     )
@@ -710,7 +700,7 @@ private fun CategoryRow(
 @Composable
 private fun QuoteSection(
     quotes: QuoteStripFigures,
-    refreshFailed: Boolean,
+    failedAssets: Set<PriceAsset>,
     attributionUrl: String?,
     onIntent: (HomeIntent) -> Unit,
     topPadding: Dp = DaftarSpacing.lg,
@@ -718,7 +708,12 @@ private fun QuoteSection(
     val colors = DaftarTheme.colors
     val typography = DaftarTheme.typography
     val uriHandler = LocalUriHandler.current
-    val freshness = quoteSummaryText(quotes.summary, quotes.referenceAt?.let { stampText(it) })
+    val now = Clock.System.now()
+    val goldFreshness = assetFreshnessText(PriceAsset.GOLD, quotes.gold.failedIf(PriceAsset.GOLD in failedAssets), now)
+    val usdFreshness = assetFreshnessText(PriceAsset.USD, quotes.usd.failedIf(PriceAsset.USD in failedAssets), now)
+    // Before any price arrives one waiting line says it for both.
+    val waiting = if (quotes.gold == null && quotes.usd == null) quoteWaitingText() else null
+    val freshness = waiting?.let(::listOf) ?: listOf(goldFreshness, usdFreshness)
     val unavailable = quoteUnavailableText()
     val values = quotes.quotes.map { figure ->
         quoteLabel(figure.key) + " " + (figure.value?.moneyText() ?: unavailable)
@@ -772,22 +767,18 @@ private fun QuoteSection(
                             color = if (figure.value == null) colors.muted else colors.ink,
                             textAlign = TextAlign.Center,
                         )
-                        quotes.summary.markers.getOrNull(index)?.let { marker ->
+                        quotes.markers.getOrNull(index)?.let { marker ->
                             Text(quoteMarkerText(marker), style = typography.caption, color = colors.muted)
                         }
                     }
                 }
             }
             Spacer(Modifier.height(DaftarSpacing.sm))
-            Text(freshness, style = typography.fineText, color = colors.muted)
-            basis?.let {
-                Spacer(Modifier.height(DaftarSpacing.xxs))
-                Text(it, style = typography.fineText, color = colors.muted)
+            // Gold and the dollar come from different sources, so each says when it was updated and checked.
+            Column(verticalArrangement = Arrangement.spacedBy(DaftarSpacing.xxs)) {
+                freshness.forEach { Text(it, style = typography.fineText, color = colors.muted) }
+                basis?.let { Text(it, style = typography.fineText, color = colors.muted) }
             }
-        }
-        if (refreshFailed) {
-            Spacer(Modifier.height(DaftarSpacing.xs))
-            Text(stringResource(Res.string.home_refresh_failed), style = typography.fineText, color = colors.muted)
         }
         if (attributionUrl != null) {
             DaftarTextButton(onClick = { uriHandler.openUri(attributionUrl) }) {
@@ -799,6 +790,10 @@ private fun QuoteSection(
 
 private val QUOTE_CARD_RADIUS = 12.dp
 
+/** A remote freshness marked as not updated by the latest refresh; other kinds are unchanged. */
+private fun AssetFreshness?.failedIf(failed: Boolean): AssetFreshness? =
+    if (failed && this is AssetFreshness.Remote) copy(failed = true) else this
+
 /** The gap [DaftarBalanceSummary] leaves between the unit line and the allocation bar. */
 private val ALLOCATION_GAP = 20.dp
 
@@ -806,14 +801,6 @@ private val ALLOCATION_GAP = 20.dp
 private fun missingQuoteText(key: QuoteKey): String = when (key) {
     is QuoteKey.Gold -> stringResource(Res.string.home_missing_karat, quoteLabel(key))
     QuoteKey.UsdEgp -> stringResource(Res.string.home_missing_usd)
-}
-
-@Composable
-private fun stampText(at: Instant): String {
-    val local = at.toLocalDateTime(CAIRO)
-    val month = stringResource(MONTHS[local.month.ordinal])
-    val time = "${local.hour.toString().padStart(2, '0')}:${local.minute.toString().padStart(2, '0')}"
-    return stringResource(Res.string.home_stamp, local.day, month, time)
 }
 
 @Composable
@@ -845,23 +832,6 @@ private fun categoryColor(category: AssetCategory): Color = when (category) {
     AssetCategory.CASH -> DaftarTheme.colors.cashAccent
     AssetCategory.INVESTMENTS -> DaftarTheme.colors.investmentAccent
 }
-
-private val CAIRO: TimeZone = TimeZone.of("Africa/Cairo")
-
-private val MONTHS: List<StringResource> = listOf(
-    Res.string.home_month_1,
-    Res.string.home_month_2,
-    Res.string.home_month_3,
-    Res.string.home_month_4,
-    Res.string.home_month_5,
-    Res.string.home_month_6,
-    Res.string.home_month_7,
-    Res.string.home_month_8,
-    Res.string.home_month_9,
-    Res.string.home_month_10,
-    Res.string.home_month_11,
-    Res.string.home_month_12,
-)
 
 /**
  * The zakat entry. Normally a neutral row to the calculator. When years await confirmation, a warning reminder and a review

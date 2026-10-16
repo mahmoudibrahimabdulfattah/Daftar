@@ -1,7 +1,6 @@
 package com.mk.daftar.feature.home
 
 import com.mk.daftar.core.domain.refresh.PriceRefreshStatus
-import com.mk.daftar.core.domain.refresh.RefreshOutcome
 import com.mk.daftar.core.domain.refresh.showsProgress
 import com.mk.daftar.core.domain.storage.VaultRead
 import com.mk.daftar.core.domain.valuation.AssetCategory
@@ -18,8 +17,11 @@ import com.mk.daftar.core.model.MerchantSide
 import com.mk.daftar.core.model.QuoteKey
 import com.mk.daftar.core.model.QuoteKind
 import com.mk.daftar.core.model.QuoteProvider
+import com.mk.daftar.core.ui.presentation.AssetFreshness
 import com.mk.daftar.core.ui.presentation.QuoteBoardSummary
+import com.mk.daftar.core.ui.presentation.QuoteMarker
 import com.mk.daftar.core.ui.presentation.allocationPercents
+import com.mk.daftar.core.ui.presentation.assetFreshnessOf
 import com.mk.daftar.core.ui.presentation.quoteBoardSummaryOf
 import kotlin.time.Instant
 
@@ -63,6 +65,12 @@ data class QuoteStripFigures(
     val usdBasis: FxBasis? = null,
     /** One freshness statement for the four shown prices, with markers for the ones that differ. */
     val summary: QuoteBoardSummary = quoteBoardSummaryOf(emptyList()),
+    /** When the shown gold prices were updated and checked. Null when none is available. */
+    val gold: AssetFreshness? = null,
+    /** When the dollar rate was updated and checked. Null when it is not available. */
+    val usd: AssetFreshness? = null,
+    /** A marker per shown price, judged within its own asset: gold cells against gold, the dollar on its own. */
+    val markers: List<QuoteMarker?> = emptyList(),
 )
 
 /** Everything the Home screen shows about the portfolio, derived from one valuation and one quote set. */
@@ -133,13 +141,26 @@ private val STRIP_KEYS: List<QuoteKey> = listOf(
     QuoteKey.UsdEgp,
 )
 
+private val GOLD_STRIP_KEYS: List<QuoteKey> = STRIP_KEYS.filterIsInstance<QuoteKey.Gold>()
+
 private fun quoteStrip(quotes: SelectedQuotes): QuoteStripFigures {
     val figures = STRIP_KEYS.map { key -> QuoteFigure(key, quotes[key]?.value) }
     val shown = STRIP_KEYS.mapNotNull { quotes[it] }
     val badge = shown.map { it.badge() }.maxByOrNull { it.ordinal }
     val referenceAt = shown.minOfOrNull { it.referenceAt }
     val usdBasis = quotes[QuoteKey.UsdEgp]?.fxBasis?.takeIf { it != FxBasis.LEGACY_UNKNOWN }
-    return QuoteStripFigures(figures, badge, referenceAt, usdBasis, quoteBoardSummaryOf(STRIP_KEYS.map { quotes[it] }))
+    val gold = GOLD_STRIP_KEYS.map { quotes[it] }
+    val usd = quotes[QuoteKey.UsdEgp]
+    return QuoteStripFigures(
+        quotes = figures,
+        badge = badge,
+        referenceAt = referenceAt,
+        usdBasis = usdBasis,
+        summary = quoteBoardSummaryOf(STRIP_KEYS.map { quotes[it] }),
+        gold = assetFreshnessOf(gold, failed = false),
+        usd = assetFreshnessOf(listOf(usd), failed = false),
+        markers = quoteBoardSummaryOf(gold).markers + quoteBoardSummaryOf(listOf(usd)).markers,
+    )
 }
 
 /** The attribution owed when the displayed USD rate comes from the exchange-rate provider itself. */
@@ -181,8 +202,9 @@ fun homeStateOf(
         valuesHidden = valuesHidden,
         refreshing = refresh.showsProgress && refresh.generation == generation,
         waitingForPrices = refresh is PriceRefreshStatus.Refreshing && refresh.generation == generation,
-        refreshFailed = refresh is PriceRefreshStatus.Finished &&
-            refresh.generation == generation &&
-            refresh.outcome != RefreshOutcome.Succeeded,
+        failedPriceAssets = (refresh as? PriceRefreshStatus.Finished)
+            ?.takeIf { it.generation == generation }
+            ?.failedAssets
+            .orEmpty(),
     )
 }

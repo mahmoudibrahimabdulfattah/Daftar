@@ -2,15 +2,6 @@
 <resources>
     <string name="price_refresh">تحديث الأسعار</string>
     <string name="price_refreshing">جارٍ تحديث الأسعار</string>
-    <string name="quotes_norm_live">أسعار محدّثة</string>
-    <string name="quotes_norm_cached">أسعار محفوظة</string>
-    <string name="quotes_norm_manual">أسعار يدوية</string>
-    <string name="quotes_norm_stale">أسعار قديمة</string>
-    <string name="quotes_norm_clock">تعذّر التحقق من وقت الأسعار</string>
-    <string name="quotes_oldest">أقدم تحديث: %1$s</string>
-    <string name="quotes_unknown_time">وقت التحديث غير متاح</string>
-    <string name="quotes_differ">بعض الأسعار مختلفة</string>
-    <string name="quotes_some_missing">بعض الأسعار غير متاحة</string>
     <string name="quotes_waiting">في انتظار الأسعار</string>
     <string name="quotes_marker_live">محدّث</string>
     <string name="quotes_marker_cached">محفوظ</string>
@@ -20,4 +11,32 @@
     <string name="quotes_marker_manual_stale">يدوي · قديم</string>
     <string name="quotes_marker_manual_clock">يدوي · الوقت غير مؤكّد</string>
     <string name="quotes_unavailable">غير متاح</string>
+    <string name="freshness_gold">الذهب: %1$s</string>
+    <string name="freshness_usd">الدولار: %1$s</string>
+    <string name="freshness_updated_today_at">آخر تحديث اليوم، %1$s</string>
+    <string name="freshness_updated_today">آخر تحديث اليوم</string>
+    <string name="freshness_updated">آخر تحديث %1$s</string>
+    <string name="freshness_checked">تم التحقق %1$s</string>
+    <string name="freshness_today">اليوم</string>
+    <string name="freshness_saved_failed">محفوظ · آخر تحديث %1$s · تعذّر التحديث</string>
+    <string name="freshness_manual">يدوي · أُدخل %1$s</string>
+    <string name="freshness_source_unknown">وقت تحديث المصدر غير متاح · تم التحقق %1$s</string>
+    <string name="freshness_time_uncertain">تعذّر التحقق من الوقت</string>
+    <string name="freshness_stamp">%1$s، %2$s</string>
+    <string name="freshness_date">⁦%1$d⁩ %2$s</string>
+    <string name="freshness_date_year">⁦%1$d⁩ %2$s ⁦%3$d⁩</string>
+    <string-array name="freshness_months">
+        <item>يناير</item>
+        <item>فبراير</item>
+        <item>مارس</item>
+        <item>أبريل</item>
+        <item>مايو</item>
+        <item>يونيو</item>
+        <item>يوليو</item>
+        <item>أغسطس</item>
+        <item>سبتمبر</item>
+        <item>أكتوبر</item>
+        <item>نوفمبر</item>
+        <item>ديسمبر</item>
+    </string-array>
 </resources>

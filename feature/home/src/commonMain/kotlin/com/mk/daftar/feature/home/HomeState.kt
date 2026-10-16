@@ -1,6 +1,7 @@
 package com.mk.daftar.feature.home
 
 import androidx.navigation3.runtime.NavKey
+import com.mk.daftar.core.domain.refresh.PriceAsset
 import com.mk.daftar.core.domain.storage.StorageError
 import com.mk.daftar.core.domain.usecase.FirstRunGuideState
 import com.mk.daftar.core.ui.mvi.UiEffect
@@ -18,14 +19,15 @@ sealed interface HomeLoad {
 }
 
 /**
- * The Home state. [valuesHidden] comes from the session's privacy state. [refreshing] and [refreshFailed] describe the
+ * The Home state. [valuesHidden] comes from the session's privacy state. [refreshing] and [failedPriceAssets] describe the
  * refresh of the generation whose figures are shown; they never change those figures.
  */
 data class HomeUiState(
     val load: HomeLoad = HomeLoad.Loading,
     val valuesHidden: Boolean = false,
     val refreshing: Boolean = false,
-    val refreshFailed: Boolean = false,
+    /** The assets the latest refresh could not update; their freshness lines say so. */
+    val failedPriceAssets: Set<PriceAsset> = emptySet(),
     /** A refresh (quiet or not) is still running, so missing prices are awaited rather than reported. */
     val waitingForPrices: Boolean = false,
     /** The declared years awaiting confirmation, oldest first. Empty when none is due or tracking is not read. */

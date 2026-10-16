@@ -4,6 +4,7 @@ import com.mk.daftar.core.common.Outcome
 import com.mk.daftar.core.domain.refresh.PriceRefreshController
 import com.mk.daftar.core.domain.refresh.PriceRefreshStatus
 import com.mk.daftar.core.domain.refresh.RefreshOutcome
+import com.mk.daftar.core.domain.refresh.failedAssets
 import com.mk.daftar.core.domain.refresh.outcome
 import com.mk.daftar.core.domain.refresh.rejections
 import com.mk.daftar.core.domain.repository.RefreshRejection
@@ -105,7 +106,13 @@ class SessionPriceRefresh(
     }
 
     private suspend fun attempt(open: Long): PriceRefreshStatus.Finished = when (val result = refreshPrices()) {
-        is Outcome.Success -> PriceRefreshStatus.Finished(open, result.data.outcome(), result.data.rejections())
+        is Outcome.Success -> PriceRefreshStatus.Finished(
+            open,
+            result.data.outcome(),
+            result.data.rejections(),
+            result.data.failedAssets(),
+        )
+
         is Outcome.Failure -> PriceRefreshStatus.Finished(open, RefreshOutcome.Failed)
     }
 

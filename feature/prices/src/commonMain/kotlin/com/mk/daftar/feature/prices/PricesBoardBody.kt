@@ -29,14 +29,16 @@ import com.mk.daftar.core.designsystem.component.DaftarIcon
 import com.mk.daftar.core.designsystem.icon.DaftarIcons
 import com.mk.daftar.core.designsystem.theme.DaftarSpacing
 import com.mk.daftar.core.designsystem.theme.DaftarTheme
+import com.mk.daftar.core.domain.refresh.PriceAsset
 import com.mk.daftar.core.domain.valuation.SelectedQuote
 import com.mk.daftar.core.model.FxBasis
 import com.mk.daftar.core.ui.presentation.QuoteBoardSummary
 import com.mk.daftar.core.ui.presentation.QuoteMarker
+import com.mk.daftar.core.ui.presentation.assetFreshnessOf
+import com.mk.daftar.core.ui.presentation.assetFreshnessText
 import com.mk.daftar.core.ui.presentation.moneyText
 import com.mk.daftar.core.ui.presentation.quoteBoardSummaryOf
 import com.mk.daftar.core.ui.presentation.quoteMarkerText
-import com.mk.daftar.core.ui.presentation.quoteSummaryText
 import com.mk.daftar.core.ui.presentation.quoteUnavailableText
 import com.mk.daftar.feature.prices.resources.Res
 import com.mk.daftar.feature.prices.resources.prices_col_buy
@@ -52,21 +54,27 @@ import com.mk.daftar.feature.prices.resources.prices_usd_title
 import com.mk.daftar.feature.prices.resources.prices_usd_unit
 import com.mk.daftar.feature.prices.resources.prices_usd_unknown
 import com.mk.daftar.feature.prices.resources.prices_valuation_note
+import kotlin.time.Clock
 import org.jetbrains.compose.resources.StringResource
 import org.jetbrains.compose.resources.stringResource
 
-/** The seven shown prices in reading order: each karat's sell then buy, then USD. */
-private fun PricesBoard.shownQuotes(): List<SelectedQuote?> = karats.flatMap { listOf(it.sell, it.buy) } + usd
+/** The six shown gold prices in reading order: each karat's sell then buy. */
+private fun PricesBoard.goldQuotes(): List<SelectedQuote?> = karats.flatMap { listOf(it.sell, it.buy) }
 
 /**
- * The prices at a glance: one gold table, one dollar row, one freshness paragraph for the whole board, and a single way
- * into Sources and details. Per-quote providers, times, links and manual entry live on the details page.
+ * The prices at a glance: one gold table and one dollar row, each with its own freshness line (they come from
+ * different sources on different schedules), and a single way into Sources and details. Per-quote providers, times, links and manual entry live on the details page.
  */
 @Composable
 internal fun PricesBoardBody(board: PricesBoard, state: PricesUiState, onIntent: (PricesIntent) -> Unit) {
     val colors = DaftarTheme.colors
     val typography = DaftarTheme.typography
-    val summary = quoteBoardSummaryOf(board.shownQuotes())
+    val gold = board.goldQuotes()
+    val summary = quoteBoardSummaryOf(gold)
+    val usdMarker = quoteBoardSummaryOf(listOf(board.usd)).markers.single()
+    val now = Clock.System.now()
+    val goldFreshness = assetFreshnessOf(gold, failed = PriceAsset.GOLD in state.failedAssets)
+    val usdFreshness = assetFreshnessOf(listOf(board.usd), failed = PriceAsset.USD in state.failedAssets)
     Column(modifier = Modifier.fillMaxWidth()) {
         Spacer(Modifier.height(DaftarSpacing.sm))
         Text(
@@ -80,15 +88,13 @@ internal fun PricesBoardBody(board: PricesBoard, state: PricesUiState, onIntent:
         Spacer(Modifier.height(DaftarSpacing.sm))
         GoldTable(board = board, summary = summary)
         Spacer(Modifier.height(DaftarSpacing.xs))
+        Text(assetFreshnessText(PriceAsset.GOLD, goldFreshness, now), style = typography.fineText, color = colors.muted)
+        Spacer(Modifier.height(DaftarSpacing.xxs))
         Text(stringResource(Res.string.prices_valuation_note), style = typography.fineText, color = colors.muted)
         Spacer(Modifier.height(DaftarSpacing.xl))
-        UsdRow(usd = board.usd, marker = summary.markers.last())
+        UsdRow(usd = board.usd, marker = usdMarker)
         Spacer(Modifier.height(DaftarSpacing.sm))
-        Text(
-            quoteSummaryText(summary, summary.oldest?.let { stampOf(it) }),
-            style = typography.fineText,
-            color = colors.muted,
-        )
+        Text(assetFreshnessText(PriceAsset.USD, usdFreshness, now), style = typography.fineText, color = colors.muted)
         state.notice?.let { notice ->
             Spacer(Modifier.height(DaftarSpacing.xs))
             Text(stringResource(notice.messageResource()), style = typography.supportingBody, color = colors.ink)

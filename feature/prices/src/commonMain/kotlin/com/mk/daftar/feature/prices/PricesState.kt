@@ -1,6 +1,7 @@
 package com.mk.daftar.feature.prices
 
 import androidx.navigation3.runtime.NavKey
+import com.mk.daftar.core.domain.refresh.PriceAsset
 import com.mk.daftar.core.domain.storage.StorageError
 import com.mk.daftar.core.domain.valuation.SelectedQuote
 import com.mk.daftar.core.model.Decimal
@@ -72,6 +73,8 @@ data class PricesUiState(
     val valuesHidden: Boolean = false,
     val refreshing: Boolean = false,
     val notice: RefreshNotice? = null,
+    /** The assets the latest refresh could not update; their freshness lines say so. */
+    val failedAssets: Set<PriceAsset> = emptySet(),
 ) : UiState
 
 sealed interface PricesIntent : UiIntent {
