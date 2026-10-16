@@ -69,6 +69,7 @@ kotlin {
                 implementation(projects.shared)
                 implementation(projects.core.common)
                 implementation(projects.core.designsystem)
+                implementation(projects.core.ui)
                 implementation(projects.core.data)
                 implementation(projects.core.security)
                 implementation(projects.core.account)

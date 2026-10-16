@@ -101,7 +101,7 @@ private fun SettingLink(text: String, onClick: () -> Unit) {
     Row(
         modifier = Modifier
             .heightIn(min = DaftarSpacing.touch)
-            .clickable(
+            .actionCursor().clickable(
                 interactionSource = interactionSource,
                 indication = null,
                 role = Role.Button,

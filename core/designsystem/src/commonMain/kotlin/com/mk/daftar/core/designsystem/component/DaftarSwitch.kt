@@ -43,7 +43,7 @@ fun DaftarSwitch(
         modifier = modifier
             .defaultMinSize(minWidth = 48.dp, minHeight = 48.dp)
             .semantics { contentDescription = label }
-            .toggleable(
+            .actionCursor(enabled).toggleable(
                 value = checked,
                 interactionSource = interactionSource,
                 indication = null,

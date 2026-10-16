@@ -69,7 +69,7 @@ fun RowScope.DaftarNavigationItem(
         modifier = modifier
             .weight(1f)
             .defaultMinSize(minHeight = DaftarSpacing.navItemMinHeight)
-            .selectable(
+            .actionCursor().selectable(
                 selected = selected,
                 interactionSource = interactionSource,
                 indication = null,
@@ -138,7 +138,7 @@ fun ColumnScope.DaftarNavigationRailItem(
         modifier = modifier
             .width(DaftarSpacing.railItemWidth)
             .defaultMinSize(minHeight = DaftarSpacing.railItemMinHeight)
-            .selectable(
+            .actionCursor().selectable(
                 selected = selected,
                 interactionSource = interactionSource,
                 indication = null,
