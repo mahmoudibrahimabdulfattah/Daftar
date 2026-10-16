@@ -5,6 +5,8 @@ import androidx.compose.animation.fadeIn
 import androidx.compose.animation.fadeOut
 import androidx.compose.animation.togetherWith
 import androidx.compose.material3.adaptive.ExperimentalMaterial3AdaptiveApi
+import androidx.compose.material3.adaptive.currentWindowAdaptiveInfoV2
+import androidx.compose.material3.adaptive.layout.calculatePaneScaffoldDirective
 import androidx.compose.material3.adaptive.navigation3.rememberListDetailSceneStrategy
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.CompositionLocalProvider
@@ -31,7 +33,10 @@ import com.mk.daftar.core.navigation.Navigator
 import com.mk.daftar.core.navigation.TopLevelDestination
 import com.mk.daftar.core.ui.motion.rememberReducedMotion
 import com.mk.daftar.core.ui.shell.DaftarAdaptiveShell
+import com.mk.daftar.core.ui.shell.DesktopWidths
+import com.mk.daftar.core.ui.shell.LocalDesktopLayout
 import com.mk.daftar.core.ui.shell.ShellDestination
+import com.mk.daftar.core.ui.shell.windowWidth
 import org.jetbrains.compose.resources.stringResource
 import org.koin.compose.navigation3.koinEntryProvider
 import org.koin.core.annotation.KoinExperimentalAPI
@@ -53,7 +58,16 @@ fun DaftarAppShell(navigator: Navigator, retention: ShellRetention, modifier: Mo
         onDispose { retention.savedStates = registry.performSave() }
     }
     val provider = koinEntryProvider<NavKey>()
-    val listDetail = rememberListDetailSceneStrategy<NavKey>()
+    val defaultDirective = calculatePaneScaffoldDirective(currentWindowAdaptiveInfoV2())
+    // Desktop (design phase 28): a narrower list (wider at the large width) and a 24dp gap. Phones and tablets keep
+    // the platform defaults.
+    val directive = if (LocalDesktopLayout.current) {
+        val list = if (windowWidth() >= DesktopWidths.Large) DesktopWidths.ListPaneLarge else DesktopWidths.ListPane
+        defaultDirective.copy(defaultPanePreferredWidth = list, horizontalPartitionSpacerSize = DesktopWidths.Gutter)
+    } else {
+        defaultDirective
+    }
+    val listDetail = rememberListDetailSceneStrategy<NavKey>(directive = directive)
     val reducedMotion = rememberReducedMotion()
     val duration = if (reducedMotion) 0 else TRANSITION_MILLIS
 

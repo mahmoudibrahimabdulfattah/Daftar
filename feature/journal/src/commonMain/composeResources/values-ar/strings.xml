@@ -224,4 +224,5 @@
     <string name="zakat_category_investments_help">قيم حسابات الوساطة التي سجّلتها</string>
     <string name="zakat_investments_disclosure">يشمل تقدير التجهيز قيم الاستثمارات التي سجّلتها؛ لا يحدّد دفتر حكم زكاتها.</string>
     <string name="journal_unit_short">ج.م</string>
+    <string name="zakat_year_select">اختر سنة لعرض حالتها ودفعاتها.</string>
 </resources>

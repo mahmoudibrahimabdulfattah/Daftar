@@ -1,7 +1,9 @@
 package com.mk.daftar.feature.banks.di
 
 import androidx.compose.foundation.layout.Box
+import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.fillMaxSize
+import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.material3.Text
 import androidx.compose.material3.adaptive.ExperimentalMaterial3AdaptiveApi
 import androidx.compose.material3.adaptive.navigation3.ListDetailSceneStrategy
@@ -15,7 +17,10 @@ import com.mk.daftar.core.navigation.BankAddRoute
 import com.mk.daftar.core.navigation.BankDetailRoute
 import com.mk.daftar.core.navigation.BankEditRoute
 import com.mk.daftar.core.navigation.BanksRoute
+import com.mk.daftar.core.ui.shell.PaneActionsBar
+import com.mk.daftar.core.ui.shell.PriceRefreshAction
 import com.mk.daftar.core.ui.shell.ShellScreen
+import com.mk.daftar.core.ui.shell.ValuesVisibilityAction
 import com.mk.daftar.feature.banks.AccountEditorTarget
 import com.mk.daftar.feature.banks.AccountEditorViewModel
 import com.mk.daftar.feature.banks.BankDetailViewModel
@@ -96,12 +101,19 @@ val banksModule: Module = module {
 @Composable
 private fun SelectBankPlaceholder() {
     ShellScreen {
-        Box(modifier = Modifier.fillMaxSize(), contentAlignment = Alignment.Center) {
-            Text(
-                text = stringResource(Res.string.banks_select),
-                style = DaftarTheme.typography.supportingBody,
-                color = DaftarTheme.colors.muted,
-            )
+        Column(modifier = Modifier.fillMaxSize()) {
+            // The pair's header: the list's bar holds the title, this one the actions at the far end.
+            PaneActionsBar {
+                ValuesVisibilityAction()
+                PriceRefreshAction()
+            }
+            Box(modifier = Modifier.fillMaxWidth().weight(1f), contentAlignment = Alignment.Center) {
+                Text(
+                    text = stringResource(Res.string.banks_select),
+                    style = DaftarTheme.typography.supportingBody,
+                    color = DaftarTheme.colors.muted,
+                )
+            }
         }
     }
 }

@@ -48,6 +48,15 @@ object DesktopWidths {
 
     /** The large width class, where Home and Assets use two columns. */
     val Large: Dp = 1200.dp
+
+    /** The outer gutter of a desktop page, from the rail or the window edge to its content. */
+    val Gutter: Dp = 24.dp
+
+    /** A list beside its detail, up to [Large]. */
+    val ListPane: Dp = 280.dp
+
+    /** A list beside its detail at [Large] and wider. */
+    val ListPaneLarge: Dp = 320.dp
 }
 
 /**
@@ -57,7 +66,12 @@ object DesktopWidths {
 @Composable
 fun Modifier.desktopPage(cap: Dp): Modifier =
     if (LocalDesktopLayout.current && LocalShellNavigation.current == ShellNavigation.RAIL) {
-        this.fillMaxWidth().wrapContentWidth(Alignment.CenterHorizontally).widthIn(max = cap)
+        // The page pads its content by DaftarSpacing.md; the extra gutter makes the outer edge 24dp, and the cap
+        // counts only the content inside that padding.
+        this.fillMaxWidth()
+            .padding(horizontal = DesktopWidths.Gutter - DaftarSpacing.md)
+            .wrapContentWidth(Alignment.CenterHorizontally)
+            .widthIn(max = cap + DaftarSpacing.md * 2)
     } else {
         this
     }

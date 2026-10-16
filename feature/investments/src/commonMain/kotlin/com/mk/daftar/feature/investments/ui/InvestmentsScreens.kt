@@ -51,6 +51,7 @@ import com.mk.daftar.core.ui.shell.DesktopPageColumn
 import com.mk.daftar.core.ui.shell.DesktopWidths
 import com.mk.daftar.core.ui.shell.ShellScreen
 import com.mk.daftar.core.ui.shell.desktopPage
+import com.mk.daftar.core.ui.shell.inDesktopPanePair
 import com.mk.daftar.feature.investments.InvestmentDetailIntent
 import com.mk.daftar.feature.investments.InvestmentDetailUiState
 import com.mk.daftar.feature.investments.InvestmentDetailViewModel
@@ -119,6 +120,7 @@ fun InvestmentsListContent(
     modifier: Modifier = Modifier,
 ) {
     val hiddenText = stringResource(DesignRes.string.balance_hidden)
+    val pair = inDesktopPanePair()
     ShellScreen(modifier = modifier) {
         DesktopPageColumn(
             cap = DesktopWidths.Page,
@@ -127,8 +129,13 @@ fun InvestmentsListContent(
                     title = stringResource(Res.string.investments_title),
                     onBack = onBack,
                     backLabel = stringResource(DesignRes.string.btn_back),
+                    // Beside its detail on desktop the eye sits at the detail pane's far end instead.
                     actions = {
-                        VisibilityToggle(hidden = state.hidden) { onIntent(InvestmentListIntent.ToggleHidden) }
+                        if (!pair) {
+                            VisibilityToggle(hidden = state.hidden) {
+                                onIntent(InvestmentListIntent.ToggleHidden)
+                            }
+                        }
                     },
                 )
             },

@@ -1,7 +1,9 @@
 package com.mk.daftar.feature.investments.di
 
 import androidx.compose.foundation.layout.Box
+import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.fillMaxSize
+import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.material3.Text
 import androidx.compose.material3.adaptive.ExperimentalMaterial3AdaptiveApi
 import androidx.compose.material3.adaptive.navigation3.ListDetailSceneStrategy
@@ -15,7 +17,9 @@ import com.mk.daftar.core.navigation.InvestmentAddRoute
 import com.mk.daftar.core.navigation.InvestmentDetailRoute
 import com.mk.daftar.core.navigation.InvestmentEditRoute
 import com.mk.daftar.core.navigation.InvestmentsRoute
+import com.mk.daftar.core.ui.shell.PaneActionsBar
 import com.mk.daftar.core.ui.shell.ShellScreen
+import com.mk.daftar.core.ui.shell.ValuesVisibilityAction
 import com.mk.daftar.feature.investments.InvestmentConvertViewModel
 import com.mk.daftar.feature.investments.InvestmentDetailViewModel
 import com.mk.daftar.feature.investments.InvestmentEditorTarget
@@ -96,12 +100,16 @@ val investmentsModule: Module = module {
 @Composable
 private fun SelectAccountPlaceholder() {
     ShellScreen {
-        Box(modifier = Modifier.fillMaxSize(), contentAlignment = Alignment.Center) {
-            Text(
-                text = stringResource(Res.string.investments_select_account),
-                style = DaftarTheme.typography.supportingBody,
-                color = DaftarTheme.colors.muted,
-            )
+        Column(modifier = Modifier.fillMaxSize()) {
+            // The pair's header: the list's bar holds the title, this one the actions at the far end.
+            PaneActionsBar { ValuesVisibilityAction() }
+            Box(modifier = Modifier.fillMaxWidth().weight(1f), contentAlignment = Alignment.Center) {
+                Text(
+                    text = stringResource(Res.string.investments_select_account),
+                    style = DaftarTheme.typography.supportingBody,
+                    color = DaftarTheme.colors.muted,
+                )
+            }
         }
     }
 }

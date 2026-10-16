@@ -5,7 +5,7 @@
     <string name="banks_add">Add bank</string>
     <string name="banks_empty_title">Start with a bank</string>
     <string name="banks_empty_message">Add a bank, then record its accounts in their own currencies.</string>
-    <string name="banks_select">Select a bank</string>
+    <string name="banks_select">Select a bank to view its accounts.</string>
     <string name="banks_available_subtotal">Available subtotal</string>
     <string name="banks_unavailable">Value unavailable</string>
     <string name="banks_stale_note">Some rates in this value are manual or stale.</string>

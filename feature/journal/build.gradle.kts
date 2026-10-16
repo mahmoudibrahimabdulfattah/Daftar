@@ -18,6 +18,7 @@ kotlin {
         commonMain.dependencies {
             // Entry validation reads the numeric normalizer; the journal never reaches core:data.
             implementation(projects.core.common)
+            implementation(libs.compose.material3.adaptive.navigation3)
         }
         getByName("androidDeviceTest").dependencies {
             implementation(libs.androidx.test.runner)
