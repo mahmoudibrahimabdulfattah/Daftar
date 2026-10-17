@@ -52,11 +52,7 @@ final class ScenePrivacy {
         let cover = UIWindow(windowScene: scene)
         cover.windowLevel = .alert + 1
         let controller = UIViewController()
-        controller.view.backgroundColor = UIColor { trait in
-            trait.userInterfaceStyle == .dark
-                ? UIColor(red: 0.098, green: 0.118, blue: 0.094, alpha: 1)
-                : UIColor(red: 0.961, green: 0.953, blue: 0.922, alpha: 1)
-        }
+        controller.view.backgroundColor = PrivacyCover.color
         cover.rootViewController = controller
         cover.isHidden = false
         covers[identifier] = cover
