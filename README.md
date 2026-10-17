@@ -261,4 +261,4 @@ Copyright © 2026 Mahmoud Ibrahim. **All rights reserved.** The source is publis
 
 If Daftar is useful to you, give the repository a star.
 
-Mahmoud Ibrahim · [@mahmoudibrahimabdulfattah](https://github.com/mahmoudibrahimabdulfattah)
+Mahmoud Ibrahim · [Website](https://mahmoudibrahimabdulfattah.github.io/) · [mahmoudibrahimabdulfattah@gmail.com](mailto:mahmoudibrahimabdulfattah@gmail.com) · [@mahmoudibrahimabdulfattah](https://github.com/mahmoudibrahimabdulfattah)
