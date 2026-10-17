@@ -7,7 +7,6 @@ import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.rememberScrollState
-import androidx.compose.foundation.verticalScroll
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.getValue
@@ -52,6 +51,7 @@ import com.mk.daftar.core.ui.shell.PaneActionsBar
 import com.mk.daftar.core.ui.shell.ShellScreen
 import com.mk.daftar.core.ui.shell.ValuesVisibilityAction
 import com.mk.daftar.core.ui.shell.desktopPage
+import com.mk.daftar.core.ui.shell.pageScroll
 import com.mk.daftar.feature.journal.JournalEffect
 import com.mk.daftar.feature.journal.JournalPhase
 import com.mk.daftar.feature.journal.resources.Res
@@ -181,7 +181,7 @@ fun ZakatYearContent(
                     .desktopPage(DesktopWidths.Page)
                     .weight(1f)
                     .fillMaxWidth()
-                    .verticalScroll(rememberScrollState())
+                    .pageScroll(rememberScrollState())
                     .padding(horizontal = DaftarSpacing.md),
                 verticalArrangement = Arrangement.spacedBy(DaftarSpacing.sm),
             ) {
@@ -430,7 +430,7 @@ fun ZakatHistoryContent(
                     .desktopPage(DesktopWidths.Editor)
                     .weight(1f)
                     .fillMaxWidth()
-                    .verticalScroll(rememberScrollState())
+                    .pageScroll(rememberScrollState())
                     .padding(horizontal = DaftarSpacing.md),
                 verticalArrangement = Arrangement.spacedBy(DaftarSpacing.sm),
             ) {
@@ -534,7 +534,7 @@ fun ZakatYearAddContent(
                     .desktopPage(DesktopWidths.Editor)
                     .weight(1f)
                     .fillMaxWidth()
-                    .verticalScroll(rememberScrollState())
+                    .pageScroll(rememberScrollState())
                     .padding(horizontal = DaftarSpacing.md),
                 verticalArrangement = Arrangement.spacedBy(DaftarSpacing.sm),
             ) {
@@ -633,7 +633,7 @@ fun ZakatDateContent(
                     .desktopPage(DesktopWidths.Editor)
                     .weight(1f)
                     .fillMaxWidth()
-                    .verticalScroll(rememberScrollState())
+                    .pageScroll(rememberScrollState())
                     .padding(horizontal = DaftarSpacing.md),
                 verticalArrangement = Arrangement.spacedBy(DaftarSpacing.sm),
             ) {

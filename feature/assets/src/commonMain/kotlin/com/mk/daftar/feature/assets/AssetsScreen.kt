@@ -7,7 +7,6 @@ import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.rememberScrollState
-import androidx.compose.foundation.verticalScroll
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.getValue
@@ -43,6 +42,7 @@ import com.mk.daftar.core.ui.shell.LocalDesktopLayout
 import com.mk.daftar.core.ui.shell.RootReselectScroll
 import com.mk.daftar.core.ui.shell.ShellScreen
 import com.mk.daftar.core.ui.shell.desktopPage
+import com.mk.daftar.core.ui.shell.pageScroll
 import com.mk.daftar.core.ui.shell.windowWidth
 import com.mk.daftar.feature.assets.resources.Res
 import com.mk.daftar.feature.assets.resources.assets_banks
@@ -119,7 +119,7 @@ fun AssetsContent(state: AssetsUiState, onIntent: (AssetsIntent) -> Unit, modifi
                     .desktopPage(if (twoColumns) DesktopWidths.HomeGroup else DesktopWidths.Page)
                     .weight(1f)
                     .fillMaxWidth()
-                    .verticalScroll(scroll)
+                    .pageScroll(scroll)
                     .padding(horizontal = DaftarSpacing.md)
                     .padding(bottom = DaftarSpacing.xl),
                 verticalArrangement = Arrangement.spacedBy(DaftarSpacing.sm),

@@ -11,7 +11,6 @@ import androidx.compose.foundation.layout.imePadding
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.widthIn
 import androidx.compose.foundation.rememberScrollState
-import androidx.compose.foundation.verticalScroll
 import androidx.compose.material3.CircularProgressIndicator
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
@@ -41,6 +40,7 @@ import com.mk.daftar.core.designsystem.resources.btn_back
 import com.mk.daftar.core.designsystem.theme.DaftarSpacing
 import com.mk.daftar.core.designsystem.theme.DaftarTheme
 import com.mk.daftar.core.ui.mvi.CollectEffects
+import com.mk.daftar.core.ui.shell.pageScroll
 import com.mk.daftar.feature.backup.resources.Res
 import com.mk.daftar.feature.backup.resources.restore_account_count
 import com.mk.daftar.feature.backup.resources.restore_bank_count
@@ -146,7 +146,7 @@ fun RestoreContent(state: RestoreUiState, onIntent: (RestoreIntent) -> Unit, mod
                 .weight(1f)
                 .fillMaxWidth()
                 .imePadding()
-                .verticalScroll(rememberScrollState())
+                .pageScroll(rememberScrollState())
                 .padding(horizontal = DaftarSpacing.md)
                 .padding(bottom = DaftarSpacing.xl),
         ) {

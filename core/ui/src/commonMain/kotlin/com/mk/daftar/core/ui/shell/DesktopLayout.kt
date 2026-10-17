@@ -10,7 +10,6 @@ import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.widthIn
 import androidx.compose.foundation.layout.wrapContentWidth
 import androidx.compose.foundation.rememberScrollState
-import androidx.compose.foundation.verticalScroll
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.movableContentOf
 import androidx.compose.runtime.remember
@@ -100,7 +99,7 @@ fun DesktopPageColumn(
                 modifier = Modifier
                     .desktopPage(cap)
                     .weight(1f)
-                    .verticalScroll(scrollState)
+                    .pageScroll(scrollState)
                     .padding(horizontal = DaftarSpacing.md),
                 verticalArrangement = arrangement,
             ) {
@@ -111,7 +110,7 @@ fun DesktopPageColumn(
         Column(
             modifier = modifier
                 .fillMaxSize()
-                .verticalScroll(scrollState)
+                .pageScroll(scrollState)
                 .padding(horizontal = DaftarSpacing.md),
             verticalArrangement = arrangement,
         ) {

@@ -17,7 +17,6 @@ import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.shape.RoundedCornerShape
-import androidx.compose.foundation.verticalScroll
 import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.material3.ModalBottomSheet
 import androidx.compose.material3.Text
@@ -93,6 +92,7 @@ import com.mk.daftar.core.ui.shell.LocalDesktopLayout
 import com.mk.daftar.core.ui.shell.RootReselectScroll
 import com.mk.daftar.core.ui.shell.ShellScreen
 import com.mk.daftar.core.ui.shell.desktopPage
+import com.mk.daftar.core.ui.shell.pageScroll
 import com.mk.daftar.core.ui.shell.windowWidth
 import com.mk.daftar.feature.home.resources.Res
 import com.mk.daftar.feature.home.resources.badge_cached
@@ -225,7 +225,7 @@ fun HomeContent(state: HomeUiState, onIntent: (HomeIntent) -> Unit, modifier: Mo
                     modifier = Modifier
                         .desktopPage(if (twoColumns) DesktopWidths.HomeGroup else DesktopWidths.Page)
                         .fillMaxSize()
-                        .verticalScroll(scroll)
+                        .pageScroll(scroll)
                         .padding(horizontal = DaftarSpacing.md)
                         .padding(bottom = DaftarSpacing.xl),
                 ) {

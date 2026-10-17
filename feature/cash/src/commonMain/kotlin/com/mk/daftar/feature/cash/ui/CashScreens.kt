@@ -6,7 +6,6 @@ import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.rememberScrollState
-import androidx.compose.foundation.verticalScroll
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.DisposableEffect
@@ -57,6 +56,7 @@ import com.mk.daftar.core.ui.shell.DesktopWidths
 import com.mk.daftar.core.ui.shell.PriceRefreshAction
 import com.mk.daftar.core.ui.shell.ShellScreen
 import com.mk.daftar.core.ui.shell.desktopPage
+import com.mk.daftar.core.ui.shell.pageScroll
 import com.mk.daftar.feature.cash.CashAction
 import com.mk.daftar.feature.cash.CashBalanceError
 import com.mk.daftar.feature.cash.CashBusy
@@ -377,7 +377,7 @@ fun CashEditorContent(
                     .desktopPage(DesktopWidths.Editor)
                     .weight(1f)
                     .fillMaxWidth()
-                    .verticalScroll(rememberScrollState())
+                    .pageScroll(rememberScrollState())
                     .padding(horizontal = DaftarSpacing.md),
                 verticalArrangement = Arrangement.spacedBy(DaftarSpacing.sm),
             ) {

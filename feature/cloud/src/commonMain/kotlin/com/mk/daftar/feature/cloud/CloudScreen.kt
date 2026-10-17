@@ -11,7 +11,6 @@ import androidx.compose.foundation.layout.imePadding
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.widthIn
 import androidx.compose.foundation.rememberScrollState
-import androidx.compose.foundation.verticalScroll
 import androidx.compose.material3.CircularProgressIndicator
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
@@ -43,6 +42,7 @@ import com.mk.daftar.core.domain.cloud.CloudProvider
 import com.mk.daftar.core.domain.cloud.CloudSignInHandoff
 import com.mk.daftar.core.ui.mvi.CollectEffects
 import com.mk.daftar.core.ui.shell.ShellScreen
+import com.mk.daftar.core.ui.shell.pageScroll
 import com.mk.daftar.feature.cloud.resources.Res
 import com.mk.daftar.feature.cloud.resources.cloud_back
 import com.mk.daftar.feature.cloud.resources.cloud_cancel
@@ -136,7 +136,7 @@ fun CloudContent(
                     .weight(1f)
                     .fillMaxWidth()
                     .imePadding()
-                    .verticalScroll(rememberScrollState())
+                    .pageScroll(rememberScrollState())
                     .padding(horizontal = DaftarSpacing.md)
                     .padding(bottom = DaftarSpacing.xl),
             ) {

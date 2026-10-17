@@ -10,7 +10,6 @@ import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.widthIn
 import androidx.compose.foundation.rememberScrollState
-import androidx.compose.foundation.verticalScroll
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
@@ -47,7 +46,9 @@ import com.mk.daftar.core.domain.repository.InactivityTimeout
 import com.mk.daftar.core.domain.repository.ThemeMode
 import com.mk.daftar.core.navigation.TopLevelDestination
 import com.mk.daftar.core.security.PinEntryBuffer
+import com.mk.daftar.core.ui.shell.PageScrollHost
 import com.mk.daftar.core.ui.shell.RootReselectScroll
+import com.mk.daftar.core.ui.shell.pageScroll
 import com.mk.daftar.feature.settings.SecurityActionFailure
 import com.mk.daftar.feature.settings.resources.Res
 import com.mk.daftar.feature.settings.resources.bio_cancelled
@@ -87,25 +88,27 @@ internal fun SettingsPage(
     if (rootDestination != null) {
         RootReselectScroll(rootDestination) { scroll.animateScrollTo(0) }
     }
-    Column(modifier = modifier.fillMaxSize().background(DaftarTheme.colors.paper)) {
-        DaftarTopBar(
-            title = title,
-            onBack = onBack,
-            backLabel = if (onBack != null) stringResource(DesignRes.string.btn_back) else null,
-        )
-        Column(
-            modifier = Modifier
-                .weight(1f)
-                .fillMaxWidth()
-                .verticalScroll(scroll)
-                .padding(horizontal = DaftarSpacing.md, vertical = DaftarSpacing.sm),
-            horizontalAlignment = Alignment.CenterHorizontally,
-        ) {
-            Column(
-                modifier = Modifier.widthIn(max = MAX_PAGE_WIDTH).fillMaxWidth(),
-                verticalArrangement = Arrangement.spacedBy(DaftarSpacing.sm),
-                content = content,
+    PageScrollHost(modifier = modifier.fillMaxSize().background(DaftarTheme.colors.paper)) {
+        Column(modifier = Modifier.fillMaxSize()) {
+            DaftarTopBar(
+                title = title,
+                onBack = onBack,
+                backLabel = if (onBack != null) stringResource(DesignRes.string.btn_back) else null,
             )
+            Column(
+                modifier = Modifier
+                    .weight(1f)
+                    .fillMaxWidth()
+                    .pageScroll(scroll)
+                    .padding(horizontal = DaftarSpacing.md, vertical = DaftarSpacing.sm),
+                horizontalAlignment = Alignment.CenterHorizontally,
+            ) {
+                Column(
+                    modifier = Modifier.widthIn(max = MAX_PAGE_WIDTH).fillMaxWidth(),
+                    verticalArrangement = Arrangement.spacedBy(DaftarSpacing.sm),
+                    content = content,
+                )
+            }
         }
     }
 }
