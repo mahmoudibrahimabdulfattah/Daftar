@@ -1,6 +1,5 @@
 package com.mk.daftar.feature.settings.ui
 
-import androidx.compose.foundation.background
 import androidx.compose.foundation.focusable
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Column
@@ -46,8 +45,8 @@ import com.mk.daftar.core.domain.repository.InactivityTimeout
 import com.mk.daftar.core.domain.repository.ThemeMode
 import com.mk.daftar.core.navigation.TopLevelDestination
 import com.mk.daftar.core.security.PinEntryBuffer
-import com.mk.daftar.core.ui.shell.PageScrollHost
 import com.mk.daftar.core.ui.shell.RootReselectScroll
+import com.mk.daftar.core.ui.shell.ShellScreen
 import com.mk.daftar.core.ui.shell.pageScroll
 import com.mk.daftar.feature.settings.SecurityActionFailure
 import com.mk.daftar.feature.settings.resources.Res
@@ -88,7 +87,7 @@ internal fun SettingsPage(
     if (rootDestination != null) {
         RootReselectScroll(rootDestination) { scroll.animateScrollTo(0) }
     }
-    PageScrollHost(modifier = modifier.fillMaxSize().background(DaftarTheme.colors.paper)) {
+    ShellScreen(modifier = modifier) {
         Column(modifier = Modifier.fillMaxSize()) {
             DaftarTopBar(
                 title = title,
