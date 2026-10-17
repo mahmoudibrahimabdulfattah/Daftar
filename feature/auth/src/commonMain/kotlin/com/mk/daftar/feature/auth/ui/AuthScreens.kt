@@ -17,7 +17,6 @@ import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.layout.widthIn
 import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.shape.CircleShape
-import androidx.compose.foundation.verticalScroll
 import androidx.compose.material3.CircularProgressIndicator
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
@@ -76,6 +75,7 @@ import com.mk.daftar.core.designsystem.resources.pin_biometric
 import com.mk.daftar.core.designsystem.theme.DaftarSpacing
 import com.mk.daftar.core.designsystem.theme.DaftarTheme
 import com.mk.daftar.core.security.PinEntryBuffer
+import com.mk.daftar.core.ui.shell.pageScroll
 import com.mk.daftar.feature.auth.AuthBusy
 import com.mk.daftar.feature.auth.AuthError
 import com.mk.daftar.feature.auth.AuthIntent
@@ -219,7 +219,7 @@ fun AuthContent(
                 modifier = Modifier
                     .weight(1f)
                     .fillMaxWidth()
-                    .verticalScroll(rememberScrollState())
+                    .pageScroll(rememberScrollState())
                     .padding(horizontal = DaftarSpacing.md, vertical = DaftarSpacing.md),
                 horizontalAlignment = Alignment.CenterHorizontally,
             ) {
@@ -559,7 +559,7 @@ private fun PinScreen(state: AuthUiState, onIntent: (AuthIntent) -> Unit, modifi
             Column(
                 modifier = Modifier
                     .fillMaxSize()
-                    .verticalScroll(rememberScrollState())
+                    .pageScroll(rememberScrollState())
                     .padding(horizontal = padding, vertical = padding),
                 horizontalAlignment = Alignment.CenterHorizontally,
             ) {

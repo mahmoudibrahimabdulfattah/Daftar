@@ -6,7 +6,6 @@ import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.rememberScrollState
-import androidx.compose.foundation.verticalScroll
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.DisposableEffect
@@ -47,6 +46,7 @@ import com.mk.daftar.core.ui.shell.DesktopPageColumn
 import com.mk.daftar.core.ui.shell.DesktopWidths
 import com.mk.daftar.core.ui.shell.ShellScreen
 import com.mk.daftar.core.ui.shell.desktopPage
+import com.mk.daftar.core.ui.shell.pageScroll
 import com.mk.daftar.feature.journal.JournalAction
 import com.mk.daftar.feature.journal.JournalBusy
 import com.mk.daftar.feature.journal.JournalEffect
@@ -272,7 +272,7 @@ fun NoteEditorContent(
                     .desktopPage(DesktopWidths.Editor)
                     .weight(1f)
                     .fillMaxWidth()
-                    .verticalScroll(rememberScrollState())
+                    .pageScroll(rememberScrollState())
                     .padding(horizontal = DaftarSpacing.md),
                 verticalArrangement = Arrangement.spacedBy(DaftarSpacing.sm),
             ) {

@@ -11,11 +11,14 @@ import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.ime
 import androidx.compose.foundation.layout.navigationBars
 import androidx.compose.foundation.layout.only
+import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.safeDrawing
 import androidx.compose.foundation.layout.systemBars
 import androidx.compose.foundation.layout.windowInsetsPadding
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.CompositionLocalProvider
+import androidx.compose.runtime.remember
+import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.layout.Layout
 import androidx.compose.ui.platform.LocalDensity
@@ -25,6 +28,7 @@ import com.mk.daftar.core.designsystem.component.DaftarNavigationBar
 import com.mk.daftar.core.designsystem.component.DaftarNavigationItem
 import com.mk.daftar.core.designsystem.component.DaftarNavigationRail
 import com.mk.daftar.core.designsystem.component.DaftarNavigationRailItem
+import com.mk.daftar.core.designsystem.theme.DaftarSpacing
 import com.mk.daftar.core.designsystem.theme.DaftarTheme
 
 /**
@@ -175,6 +179,6 @@ fun ShellScreen(modifier: Modifier = Modifier, content: @Composable () -> Unit) 
                 },
             ),
     ) {
-        content()
+        PageScrollHost(content = content)
     }
 }

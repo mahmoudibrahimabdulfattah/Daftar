@@ -11,7 +11,6 @@ import androidx.compose.foundation.layout.imePadding
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.widthIn
 import androidx.compose.foundation.rememberScrollState
-import androidx.compose.foundation.verticalScroll
 import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.material3.ModalBottomSheet
 import androidx.compose.material3.Text
@@ -45,6 +44,7 @@ import com.mk.daftar.core.navigation.ManualQuoteRoute
 import com.mk.daftar.core.ui.mvi.CollectEffects
 import com.mk.daftar.core.ui.presentation.moneyText
 import com.mk.daftar.core.ui.shell.ShellScreen
+import com.mk.daftar.core.ui.shell.pageScroll
 import com.mk.daftar.feature.prices.resources.Res
 import com.mk.daftar.feature.prices.resources.manual_choose
 import com.mk.daftar.feature.prices.resources.manual_conflict
@@ -132,7 +132,7 @@ fun ManualQuoteContent(
                     .weight(1f)
                     .fillMaxWidth()
                     .imePadding()
-                    .verticalScroll(rememberScrollState())
+                    .pageScroll(rememberScrollState())
                     .padding(horizontal = DaftarSpacing.md)
                     .padding(bottom = DaftarSpacing.xl),
             ) {
