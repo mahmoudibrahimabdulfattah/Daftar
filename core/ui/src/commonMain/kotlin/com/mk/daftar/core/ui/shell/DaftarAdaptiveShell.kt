@@ -17,10 +17,12 @@ import androidx.compose.foundation.layout.systemBars
 import androidx.compose.foundation.layout.windowInsetsPadding
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.CompositionLocalProvider
+import androidx.compose.runtime.movableContentOf
 import androidx.compose.runtime.remember
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.layout.Layout
+import androidx.compose.ui.layout.layoutId
 import androidx.compose.ui.platform.LocalDensity
 import androidx.compose.ui.unit.Constraints
 import androidx.compose.ui.unit.LayoutDirection
@@ -73,17 +75,22 @@ private fun ShellFrame(
     modifier: Modifier = Modifier,
     content: @Composable () -> Unit,
 ) {
+    // Tab follows the order children are placed, so on desktop the rail comes first: rail, then the page (design phase
+    // 28). It is composed first as well; the desktop window never narrows below the rail breakpoint.
+    val railFirst = LocalDesktopLayout.current
+    val nav = remember(navigationContent) { movableContentOf(navigationContent) }
     Layout(
         modifier = modifier,
         content = {
-            Box(Modifier.fillMaxSize()) { content() }
-            if (navigationVisible) navigationContent()
+            if (railFirst && navigationVisible) Box(Modifier.layoutId(NAV_ID)) { nav() }
+            Box(Modifier.fillMaxSize().layoutId(MAIN_ID)) { content() }
+            if (!railFirst && navigationVisible) Box(Modifier.layoutId(NAV_ID)) { nav() }
         },
     ) { measurables, constraints ->
         val width = constraints.maxWidth
         val height = constraints.maxHeight
-        val mainMeasurable = measurables[0]
-        val navMeasurable = measurables.getOrNull(1)
+        val mainMeasurable = measurables.first { it.layoutId == MAIN_ID }
+        val navMeasurable = measurables.firstOrNull { it.layoutId == NAV_ID }
         when (navigation) {
             ShellNavigation.BOTTOM -> {
                 val nav = navMeasurable?.measure(Constraints(maxWidth = width))
@@ -101,13 +108,18 @@ private fun ShellFrame(
                 val main = mainMeasurable.measure(Constraints.fixed((width - navWidth).coerceAtLeast(0), height))
                 val rtl = layoutDirection == LayoutDirection.Rtl
                 layout(width, height) {
+                    // Placement order is focus order: on desktop the rail is placed first.
+                    if (railFirst) nav?.place(if (rtl) width - navWidth else 0, 0)
                     main.place(if (rtl) 0 else navWidth, 0)
-                    nav?.place(if (rtl) width - navWidth else 0, 0)
+                    if (!railFirst) nav?.place(if (rtl) width - navWidth else 0, 0)
                 }
             }
         }
     }
 }
+
+private const val MAIN_ID = "main"
+private const val NAV_ID = "navigation"
 
 @Composable
 private fun ShellNavigationContent(
