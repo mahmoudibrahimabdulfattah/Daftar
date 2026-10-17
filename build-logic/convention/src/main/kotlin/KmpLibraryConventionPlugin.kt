@@ -9,6 +9,7 @@ import org.gradle.api.Project
 import org.gradle.kotlin.dsl.configure
 import org.gradle.kotlin.dsl.dependencies
 import org.jetbrains.kotlin.gradle.dsl.KotlinMultiplatformExtension
+import org.jetbrains.kotlin.gradle.targets.native.tasks.KotlinNativeSimulatorTest
 
 /** A Kotlin Multiplatform library for Android, iOS (device + Apple Silicon simulator) and desktop (JVM: macOS, Windows). */
 class KmpLibraryConventionPlugin : Plugin<Project> {
@@ -45,6 +46,12 @@ class KmpLibraryConventionPlugin : Plugin<Project> {
                 implementation(libs.library("kotlin-test"))
                 implementation(libs.library("kotlinx-coroutines-test"))
             }
+        }
+
+        // CI machines ship whichever simulators their Xcode has; `-Pdaftar.ios.simulator=<udid>` picks one.
+        val simulator = providers.gradleProperty("daftar.ios.simulator").orNull
+        if (simulator != null) {
+            tasks.withType(KotlinNativeSimulatorTest::class.java).configureEach { device.set(simulator) }
         }
     }
 }

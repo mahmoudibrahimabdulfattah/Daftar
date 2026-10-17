@@ -35,7 +35,7 @@ https://github.com/user-attachments/assets/e88e267e-59a0-49d1-bf31-2a17da892096
 - **Capture protection:** [Android](androidApp/src/main/kotlin/com/mk/daftar/android/MainActivity.kt) and [desktop](desktopApp/src/jvmMain/kotlin/com/mk/daftar/desktop/WindowPrivacy.kt) window controls plus an [iOS shield](iosApp/iosApp/CaptureShield.swift); verification status is listed below.
 - **Exact valuation:** [Base-10 decimals](core/model/src/commonMain/kotlin/com/mk/daftar/core/model/Decimal.kt) keep money, weights and prices precise, with explicit rounding.
 - **Custom design system:** [Stateless Compose components](core/designsystem), Arabic RTL, English, bundled fonts and light/dark themes.
-- **Tests and CI:** [Domain tests](core/domain/src/commonTest), [vault tests](core/security/src/commonTest) and [CI](.github/workflows/ci.yml) covering formatting, Android host tests, lint and the debug build.
+- **Tests and CI:** [Domain tests](core/domain/src/commonTest), [vault tests](core/security/src/commonTest) and [CI](.github/workflows/ci.yml) building and testing Android, desktop and iOS.
 
 ## What you can do
 
@@ -166,7 +166,7 @@ Cloud storage receives the encrypted backup file. Configuration and Firestore ru
 
 ## Verification
 
-[CI](.github/workflows/ci.yml) runs Spotless, Android host tests, Android lint and the debug build. Release, desktop, iOS and device checks belong to the broader local verification required before a PR.
+[CI](.github/workflows/ci.yml) runs three jobs on every push and pull request: **Android** (Spotless, host tests, lint, and the debug and R8-minified release builds), **Desktop** (desktop tests and the app compile on macOS) and **iOS** (Kotlin tests on a simulator, the shared framework and the Xcode app build). Device tests and real-hardware checks stay part of the local verification required before a PR.
 
 <details>
 <summary>Build and test commands</summary>
