@@ -4,7 +4,7 @@ import Shared
 
 struct ComposeView: UIViewControllerRepresentable {
     func makeUIViewController(context: Context) -> UIViewController {
-        MainViewControllerKt.MainViewController()
+        CaptureShieldController(content: MainViewControllerKt.MainViewController())
     }
 
     func updateUIViewController(_ uiViewController: UIViewController, context: Context) {}

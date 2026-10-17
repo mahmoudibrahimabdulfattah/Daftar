@@ -68,6 +68,9 @@ mapping (`androidApp/build/outputs/mapping/release`), not a package-wide keep.
 - Release requires hardware-backed keys. Software-backed keys are accepted only in debug builds, which show a
   persistent banner. The developer entries (design catalog, shell preview) exist only in debug builds.
 - `FLAG_SECURE` on every Android window. Lock on background and on foreground inactivity; cover the app in recents.
+- iOS has no public capture switch: the app is hosted in a secure text field's canvas (`CaptureShield.swift`), so
+  screenshots, recordings and mirroring show only the neutral cover. If that canvas is ever missing, the app is covered
+  while the screen is captured. Verify capture changes on a real iPhone; the simulator's own capture bypasses it.
 - No balances, PINs or notes in logs, notifications, the clipboard, semantics or screenshots of released surfaces.
   The one exception is the recovery key, copied only on the owner's tap: marked sensitive, device-only, cleared after
   60 seconds.
