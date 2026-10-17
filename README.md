@@ -190,7 +190,7 @@ Follow [AGENTS.md](AGENTS.md), keep each phase to one branch and one PR, and inc
 
 Bundled font licenses and third-party notices are available in Settings → About.
 
-LICENSE_LINE
+Copyright © 2026 Mahmoud Ibrahim. All rights reserved. The source is published for viewing and evaluation only; see [LICENSE](LICENSE). Third-party fonts and libraries keep their own licenses.
 
 If Daftar is useful to you, give the repository a star.
 

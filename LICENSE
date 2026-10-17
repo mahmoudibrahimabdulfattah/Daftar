@@ -1,0 +1,9 @@
+Copyright (c) 2026 Mahmoud Ibrahim. All rights reserved.
+
+The source code in this repository is published for viewing and evaluation only. No license is granted to use,
+copy, modify, merge, publish, distribute, sublicense or sell any part of it, in source or binary form, without
+prior written permission from the copyright holder.
+
+Third-party components keep their own licenses. The bundled Alexandria and Rubik fonts are licensed under the
+SIL Open Font License 1.1 (docs/licenses), and the libraries the app depends on are listed with their notices
+in the app under Settings > About.
