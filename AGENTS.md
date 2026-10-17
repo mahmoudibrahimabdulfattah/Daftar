@@ -9,7 +9,7 @@ encrypted on the device behind an app-specific PIN. Arabic (RTL) is the primary 
 
 - One phase = one branch = one PR. Open the PR with a short description (what the task was, how it was done),
   squash-merge into `master`, delete the branch locally and on the remote, pull `master`, then start the next phase.
-- Commits and PRs never mention AI tools or assistants and carry no `Co-authored-by` trailers.
+- Commit messages and PR descriptions describe the change only and carry no `Co-authored-by` trailers.
 - Never commit real balances, keystores, `keystore.properties`, signing passwords or Firebase config.
 - Never commit `androidApp/google-services.json`, `iosApp/iosApp/GoogleService-Info.plist` or
   `desktopApp/firebase-desktop.properties`. Firebase config is
