@@ -1,14 +1,19 @@
 package com.mk.daftar.desktop
 
 import androidx.compose.ui.graphics.toAwtImage
+import androidx.compose.ui.input.key.Key
 import androidx.compose.ui.test.DesktopComposeUiTest
 import androidx.compose.ui.test.ExperimentalTestApi
 import androidx.compose.ui.test.SemanticsNodeInteraction
+import androidx.compose.ui.test.assert
 import androidx.compose.ui.test.hasClickAction
 import androidx.compose.ui.test.hasText
+import androidx.compose.ui.test.isFocused
 import androidx.compose.ui.test.onRoot
 import androidx.compose.ui.test.performClick
+import androidx.compose.ui.test.performKeyInput
 import androidx.compose.ui.test.performMouseInput
+import androidx.compose.ui.test.pressKey
 import androidx.compose.ui.test.runDesktopComposeUiTest
 import com.mk.daftar.App
 import com.mk.daftar.core.common.desktop.DesktopAppDirectories
@@ -55,6 +60,13 @@ class DesktopScreens {
                 Thread.sleep(800)
                 waitForIdle()
                 capture("04-home-${width}x$height")
+                if (width == 1024) {
+                    // Keyboard order starts at the rail (design phase 28).
+                    onRoot().performKeyInput { pressKey(Key.Tab) }
+                    waitForIdle()
+                    onNode(isFocused()).assert(hasText("الرئيسية"))
+                    capture("04-tab-${width}x$height")
+                }
                 for ((label, name) in listOf("الأصول" to "assets", "السجل" to "journal", "الإعدادات" to "settings")) {
                     tap(label)
                     Thread.sleep(500)
