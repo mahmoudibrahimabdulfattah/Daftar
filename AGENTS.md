@@ -56,7 +56,7 @@ mapping (`androidApp/build/outputs/mapping/release`), not a package-wide keep.
 - `core:backup`: the `.dftar` encrypted export and restore format; the format is frozen (see `BackupFormat`).
 - `core:designsystem`, `core:ui`, `core:navigation`: theme, components, shared shell screens, typed routes.
 - `feature:*`: auth, home, assets, banks, cash, gold, journal (notes, zakat), prices, backup, settings. Features
-  never depend on each other or on `core:data`.
+  never depend on each other or on `core:data`; `daftar.kmp.feature` fails the build if they do.
 - `shared`: the app entry point, Koin wiring, the vault gate, lifecycle coordination and platform adapters.
 - `androidApp`, `iosApp`, `desktopApp`: thin platform shells. Release never enables developer routes. A desktop build
   is debug unless built with `-Pdaftar.desktop.release=true`; the flag is compiled in.

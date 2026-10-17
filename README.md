@@ -29,7 +29,7 @@ https://github.com/user-attachments/assets/e88e267e-59a0-49d1-bf31-2a17da892096
 ## Engineering highlights
 
 - **One codebase:** [Kotlin and Compose Multiplatform](shared) share business logic and UI across Android, iOS and desktop.
-- **Module boundaries:** [Feature modules](build-logic/convention/src/main/kotlin/KmpFeatureConventionPlugin.kt) depend on domain contracts, never on one another or `core:data`.
+- **Module boundaries:** [Feature modules](build-logic/convention/src/main/kotlin/KmpFeatureConventionPlugin.kt) depend on domain contracts, never on one another or `core:data`; the build fails if one does.
 - **Encrypted vault:** [A random data key, PIN wrapping and persistent backoff](core/security/src/commonMain/kotlin/com/mk/daftar/core/security/DefaultVaultSecurity.kt) protect access to encrypted SQLite.
 - **Hardware-backed keys:** [Release vaults require hardware protection](core/security); unsupported hardware is refused.
 - **Capture protection:** [Android](androidApp/src/main/kotlin/com/mk/daftar/android/MainActivity.kt) and [desktop](desktopApp/src/jvmMain/kotlin/com/mk/daftar/desktop/WindowPrivacy.kt) window controls plus an [iOS shield](iosApp/iosApp/CaptureShield.swift); verification status is listed below.
@@ -108,7 +108,7 @@ flowchart TD
     Domain --> Model["core:model · core:common"]
 ```
 
-The diagram shows the main dependency direction. Features do not depend on one another or on `core:data`.
+The diagram shows the main dependency direction. Features do not depend on one another or on `core:data`, and the feature convention plugin fails the build if they do.
 
 <details>
 <summary>Explore the modules</summary>
