@@ -182,11 +182,11 @@ This starts a debug build with its own **Daftar Debug** data directory. Desktop 
 
 Android release signing is also optional for compilation. Copy [`keystore.properties.example`](keystore.properties.example) to the git-ignored `keystore.properties` and reference a keystore outside the repository. Without signing configuration, `:androidApp:assembleRelease` produces an unsigned APK and never falls back to the debug key.
 
-## Project status and contributing
+## Project status
 
 Daftar is under active development. Windows hardware protection and real-iPhone capture verification remain open. The [roadmap](docs/roadmap.md) records the project phases and their acceptance criteria.
 
-Follow [AGENTS.md](AGENTS.md), keep each phase to one branch and one PR, and include the relevant verification results. UI changes should follow the approved design and keep the component catalog current. Use illustrative data in tests, screenshots and reports.
+Issues and suggestions are welcome. The engineering workflow is in [AGENTS.md](AGENTS.md): one phase per branch and PR, verification results with every change, the approved design for UI work, and illustrative data in tests, screenshots and reports.
 
 Bundled font licenses and third-party notices are available in Settings → About.
 
