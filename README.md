@@ -253,7 +253,7 @@ Without signing configuration, `:androidApp:assembleRelease` produces an unsigne
 
 Daftar is under active development. Windows hardware protection and real-iPhone capture verification remain open. The [roadmap](docs/roadmap.md) records project phases and acceptance criteria.
 
-Issues and suggestions are welcome. See [AGENTS.md](AGENTS.md) for the engineering workflow and verification requirements.
+Issues and suggestions are welcome. See [AGENTS.md](AGENTS.md) for the engineering workflow and verification requirements. Report security issues privately as described in [SECURITY.md](SECURITY.md).
 
 Bundled font licenses and third-party notices are available in Settings → About.
 
