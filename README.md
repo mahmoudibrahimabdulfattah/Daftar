@@ -22,7 +22,7 @@ Android, iOS and macOS. Arabic and English, light and dark. All screenshots and 
 
 A short 1080p walkthrough across all three platforms, with English captions and Arabic subtitles. No audio.
 
-VIDEO_URL
+https://github.com/user-attachments/assets/e88e267e-59a0-49d1-bf31-2a17da892096
 
 ## What it does
 
