@@ -84,9 +84,13 @@ fun DaftarAmount(
     }
     // One line that shrinks to fit the width: the figure and its unit never wrap apart, whatever the screen.
     val maxSize = if (style.fontSize.isSpecified) style.fontSize else 32.sp
+    val layoutDirection = LocalLayoutDirection.current
+    // Arabic text keeps zero tracking. Negative tracking on the figure lets the wrapped width come out narrower than
+    // the drawn text, which drops the unit's last glyph in Arabic. English keeps the approved tracking.
+    val shaped = if (layoutDirection == LayoutDirection.Rtl) style.copy(letterSpacing = 0.sp) else style
     BasicText(
         text = text,
-        style = style.copy(color = color).withAmountDirection(LocalLayoutDirection.current),
+        style = shaped.copy(color = color).withAmountDirection(layoutDirection),
         maxLines = 1,
         autoSize = TextAutoSize.StepBased(minFontSize = 14.sp, maxFontSize = maxSize),
         modifier = amountModifier,

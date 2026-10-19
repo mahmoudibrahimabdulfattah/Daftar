@@ -1,0 +1,115 @@
+<!doctype html>
+<html lang="ar" dir="rtl">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=1080, initial-scale=1">
+<title>دفتر · لقطة المتجر</title>
+<style>
+  /* The app's own bundled variable fonts, so renders never depend on the network. */
+  @font-face { font-family: Alexandria; src: url("../../../core/designsystem/src/commonMain/composeResources/font/alexandria_variable.ttf") format("truetype"); font-weight: 100 900; }
+  @font-face { font-family: Rubik; src: url("../../../core/designsystem/src/commonMain/composeResources/font/rubik_variable.ttf") format("truetype"); font-weight: 300 900; }
+</style>
+<style>
+  :root { --paper: #f5f3eb; --ink: #262d24; --primary: #45583d; --muted: #626657; --line: #c8cbbb; }
+  html[data-theme="dark"] { --paper: #191e18; --ink: #eff0e6; --primary: #bfd0ad; --muted: #bdc4b3; --line: #515d49; color-scheme: dark; }
+  * { box-sizing: border-box; }
+  body { margin: 0; font-family: Rubik, Alexandria, sans-serif; font-variant-numeric: tabular-nums; }
+  /* Rubik supplies Latin and digits; Arabic glyphs use Alexandria. */
+  html[lang="ar"] body { font-family: Rubik, Alexandria, sans-serif; }
+  .mark { display: block; flex: none; color: var(--primary); }
+  h1, p { margin: 0; }
+  body { background: var(--paper); color: var(--ink); }
+  .screenshot { position: relative; width: 1080px; height: 1920px; overflow: hidden; background: var(--paper); }
+  .brand { position: absolute; inset-block-start: 48px; inset-inline-start: 84px; display: flex; align-items: center; gap: 12px; color: var(--primary); font-size: 34px; font-weight: 500; line-height: 52px; }
+  .mark { width: 52px; height: 52px; }
+  h1 { position: absolute; inset-block-start: 118px; inset-inline: 84px; font-size: 64px; font-weight: 500; line-height: 1.35; text-align: start; text-wrap: balance; }
+  /* Entire 1080 × 2400 capture at 19/30 scale: no crop, overlay or device chrome. */
+  .capture { position: absolute; top: 320px; left: 198px; display: block; width: 684px; height: 1520px; object-fit: contain; outline: 1px solid var(--line); }
+  .demo { position: absolute; inset-block-start: 1860px; inset-inline: 84px; color: var(--muted); text-align: center; font-size: 26px; line-height: 40px; }
+</style>
+</head>
+<body>
+<main class="screenshot" aria-labelledby="caption">
+  <div class="brand"><svg class="mark" viewBox="0 0 48 48" fill="none" aria-hidden="true"><rect x="10" y="6" width="28" height="36" rx="5" fill="currentColor"/><path d="M18 7v34" stroke="var(--paper)" stroke-width="2"/><path d="M24 17h8m-8 7h8" stroke="var(--paper)" stroke-width="2.5" stroke-linecap="round"/></svg><span id="brand">دفتر</span></div>
+  <h1 id="caption"></h1>
+  <img class="capture" id="capture" width="684" height="1520" alt="">
+  <p class="demo" id="demo">بيانات توضيحية</p>
+</main>
+<script>
+  'use strict';
+  // Captions verbatim from docs/store/listing.md (store-listing branch).
+  const scenes = [
+    {
+        "file": "01-home",
+        "ar": "أصولك في نظرة واحدة",
+        "en": "Your assets at a glance"
+    },
+    {
+        "file": "02-gold",
+        "ar": "ذهبك بالعيار والوزن",
+        "en": "Gold by karat and weight"
+    },
+    {
+        "file": "03-bank-detail",
+        "ar": "أرصدة تسجّلها بنفسك",
+        "en": "Balances you record yourself"
+    },
+    {
+        "file": "04-investment-detail",
+        "ar": "قيمة استثمارك، بتاريخها",
+        "en": "Investment value, with its date"
+    },
+    {
+        "file": "05-prices",
+        "ar": "أسعار الذهب والدولار",
+        "en": "Gold and dollar prices"
+    },
+    {
+        "file": "06-zakat-calculator",
+        "ar": "تقدير الزكاة وموعد رمضان",
+        "en": "Zakat estimate and Ramadan date"
+    },
+    {
+        "file": "07-notes",
+        "ar": "مساحة لما تريد تذكّره",
+        "en": "Room for things to remember"
+    },
+    {
+        "file": "08-settings",
+        "ar": "رمز خاص وقفل عند المغادرة",
+        "en": "Your PIN. Locked when you leave."
+    }
+];
+  const params = new URLSearchParams(location.search);
+  const lang = params.get('lang') === 'en' ? 'en' : 'ar';
+  const requestedScene = params.get('n') || '1';
+  const n = /^[1-8]$/.test(requestedScene) ? Number(requestedScene) : 1;
+  const scene = scenes[n - 1];
+  document.documentElement.lang = lang;
+  document.documentElement.dir = lang === 'ar' ? 'rtl' : 'ltr';
+  document.documentElement.dataset.theme = n >= 7 ? 'dark' : 'light';
+  document.title = (lang === 'ar' ? 'دفتر · ' : 'Daftar · ') + scene[lang];
+  document.getElementById('brand').textContent = lang === 'ar' ? 'دفتر' : 'Daftar';
+  document.getElementById('caption').textContent = scene[lang];
+  document.getElementById('demo').textContent = lang === 'ar' ? 'بيانات توضيحية' : 'Demo data';
+  const capture = document.getElementById('capture');
+  capture.alt = scene[lang];
+  capture.src = `../../../desktopApp/build/store-screens/${lang}/${scene.file}.png`;
+  // Exporters should await window.renderReady; missing captures/fonts reject instead of silently exporting.
+  window.renderReady = Promise.all([
+    capture.decode().then(() => {
+      if (capture.naturalWidth !== 1080 || capture.naturalHeight !== 2400) {
+        throw new Error('Expected a 1080 × 2400 raw capture.');
+      }
+    }),
+    document.fonts.load('500 64px Alexandria', 'دفتر'),
+    document.fonts.load('500 64px Rubik', 'Daftar'),
+    document.fonts.load('400 26px Alexandria', 'بيانات توضيحية'),
+    document.fonts.load('400 26px Rubik', 'Demo data')
+  ]).then(() => document.fonts.ready).then(() => {
+    document.documentElement.dataset.ready = 'true';
+  });
+  window.renderReady.catch(() => { document.documentElement.dataset.ready = 'error'; });
+</script>
+</body>
+</html>
