@@ -76,7 +76,8 @@ mapping (`androidApp/build/outputs/mapping/release`), not a package-wide keep.
   60 seconds.
 - Keychain items are device-only. The database and staged backups are excluded from iCloud and Android backup,
   and transfer is disabled. Staged export files live in a no-backup area and are deleted after use.
-- Cleartext traffic is prohibited. The only merged permissions are `INTERNET` and `USE_BIOMETRIC`.
+- Cleartext traffic is prohibited. The only merged permissions are `INTERNET` and `USE_BIOMETRIC`, plus the normal
+  `ACCESS_NETWORK_STATE` and `WAKE_LOCK` that Firebase needs to schedule crash and analytics uploads.
 - Changing the PIN rewraps the data key; the database is not re-encrypted.
 - Recovery key (optional, created in Settings after the current PIN): 18 random bytes + a CRC-16, shown once as 32
   Crockford base32 characters and never stored. Only its X25519 public key is kept, in a recovery slot sealed by the
@@ -125,9 +126,11 @@ mapping (`androidApp/build/outputs/mapping/release`), not a package-wide keep.
 - Recovery limits: without a recovery key, a lost backup password or a forgotten PIN with no backup means the data
   cannot be recovered. A recovery key opens only backups made after it was set up.
 - Optional cloud backups (Android and desktop, Google sign-in) store the same `.dftar` file in Firestore on the Spark plan:
-  three fixed slots, a 768 KiB ciphertext cap and no Storage, Functions, Analytics or Crashlytics. Sign-in never
+  three fixed slots, a 768 KiB ciphertext cap and no Storage or Functions. Sign-in never
   unlocks the vault, and restoring still requires the backup password. Local OS backup stays disabled.
   The rules and runbook live in `docs/firebase`; deploy them only with `firebase deploy --only firestore`.
+- Crashlytics and Analytics run in Android release builds only (off in debug builds). Analytics reports screen names
+  alone, with no advertising ID; Crashlytics sends default crash reports with no custom keys or logs.
 
 ## Design system (`core:designsystem`)
 

@@ -4,16 +4,24 @@ plugins {
     id("daftar.android.application")
 }
 
-// Firebase is optional. The Google Services plugin runs only when the ignored, variant-specific config file is present;
-// without it the app builds, runs everything local, and reports cloud backups as unavailable.
+// Firebase is optional. The Google Services and Crashlytics plugins run only when the ignored, variant-specific config
+// file is present; without it the app builds, runs everything local, and reports cloud backups as unavailable.
 if (file("google-services.json").exists()) {
     pluginManager.apply("com.google.gms.google-services")
+    pluginManager.apply("com.google.firebase.crashlytics")
     // A variant whose package is not registered in the file (e.g. release before its app exists in Firebase) builds
     // without Firebase, and the app then reports cloud backups as unavailable.
     val registered = file("google-services.json").readText()
+    val releaseRegistered = "\"package_name\": \"com.mk.daftar\"" in registered
     tasks.matching { it.name == "processReleaseGoogleServices" }.configureEach {
-        enabled = "\"package_name\": \"com.mk.daftar\"" in registered
+        enabled = releaseRegistered
     }
+    // Mapping files reach Crashlytics from release builds only. Debug builds never upload, and an unregistered release
+    // package has nowhere to upload to, so its upload and mapping-id injection tasks are disabled.
+    tasks.matching { it.name.contains("CrashlyticsMappingFile") }
+        .configureEach {
+            enabled = releaseRegistered && name.endsWith("Release")
+        }
 }
 
 // The upload key stays out of git. keystore.properties (storeFile, storePassword, keyAlias, keyPassword) sits next to
@@ -29,6 +37,9 @@ android {
         versionCode = 1
         versionName = "1.0.0"
         testInstrumentationRunner = "androidx.test.runner.AndroidJUnitRunner"
+        // Crash reports and analytics are on in release only, so emulator and debug sessions never reach the data.
+        manifestPlaceholders["crashlyticsCollectionEnabled"] = "true"
+        manifestPlaceholders["analyticsCollectionEnabled"] = "true"
     }
     signingConfigs {
         if (keystore != null) {
@@ -51,6 +62,8 @@ android {
     buildTypes {
         debug {
             applicationIdSuffix = ".debug"
+            manifestPlaceholders["crashlyticsCollectionEnabled"] = "false"
+            manifestPlaceholders["analyticsCollectionEnabled"] = "false"
         }
         release {
             // Stated explicitly: a release build is never debuggable, whatever the shell defaults are.
@@ -77,6 +90,7 @@ dependencies {
     implementation(libs.androidx.credentials)
     implementation(project.dependencies.platform(libs.firebase.bom))
     implementation(libs.firebase.appcheck.playintegrity)
+    implementation(libs.firebase.crashlytics)
     debugImplementation(libs.firebase.appcheck.debug)
     implementation(projects.core.account)
     implementation(projects.core.cloud)

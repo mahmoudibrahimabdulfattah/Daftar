@@ -9,6 +9,19 @@
     <!-- androidx.biometric also merges the legacy USE_FINGERPRINT permission, which it needs on API 26-27. -->
 
     <!--
+        Merged by the Firebase SDKs, but unused here: Analytics reads no advertising ID, install referrer or ad
+        attribution. ACCESS_NETWORK_STATE and WAKE_LOCK stay: the SDKs schedule their uploads as jobs with a network
+        constraint, which throws on Android 14+ without ACCESS_NETWORK_STATE.
+    -->
+    <uses-permission android:name="com.google.android.gms.permission.AD_ID" tools:node="remove" />
+    <uses-permission
+        android:name="com.google.android.finsky.permission.BIND_GET_INSTALL_REFERRER_SERVICE"
+        tools:node="remove" />
+    <uses-permission android:name="android.permission.ACCESS_ADSERVICES_ATTRIBUTION" tools:node="remove" />
+    <uses-permission android:name="android.permission.ACCESS_ADSERVICES_AD_ID" tools:node="remove" />
+    <uses-permission android:name="com.google.android.providers.gsf.permission.READ_GSERVICES" tools:node="remove" />
+
+    <!--
         Merged from dependencies, but unused here: the app registers no dynamic receivers, so the custom
         signature permission for them is removed. Room's invalidation service runs only with multi-instance
         invalidation, which the database does not enable.
@@ -31,6 +44,24 @@
         android:supportsRtl="true"
         android:usesCleartextTraffic="false"
         android:theme="@style/Theme.Daftar.Starting">
+        <!-- Crash reports and analytics are on in release and off in debug, set per build type. -->
+        <meta-data
+            android:name="firebase_crashlytics_collection_enabled"
+            android:value="${crashlyticsCollectionEnabled}" />
+        <meta-data
+            android:name="firebase_analytics_collection_enabled"
+            android:value="${analyticsCollectionEnabled}" />
+        <!-- Analytics only measures screen names: no advertising ID, no ad personalization and no Android ID. -->
+        <meta-data
+            android:name="google_analytics_adid_collection_enabled"
+            android:value="false" />
+        <meta-data
+            android:name="google_analytics_default_allow_ad_personalization_signals"
+            android:value="false" />
+        <meta-data
+            android:name="google_analytics_ssaid_collection_enabled"
+            android:value="false" />
+
         <!-- Profile-install receiver: exported and guarded only by DUMP. Not part of this app's surface. -->
         <!-- The classes are merged out of the app, so they are absent from the lint classpath. -->
         <receiver

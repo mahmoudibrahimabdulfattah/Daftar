@@ -32,6 +32,7 @@ val daftarModules: List<Module> = listOf(
     platformServicesModule,
     platformBiometricModule,
     platformBuildInfoModule,
+    platformAnalyticsModule,
     authModule,
     homeModule,
     assetsModule,

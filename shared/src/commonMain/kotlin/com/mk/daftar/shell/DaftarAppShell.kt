@@ -11,6 +11,7 @@ import androidx.compose.material3.adaptive.navigation3.rememberListDetailSceneSt
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.CompositionLocalProvider
 import androidx.compose.runtime.DisposableEffect
+import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.saveable.LocalSaveableStateRegistry
 import androidx.compose.ui.Modifier
@@ -31,6 +32,7 @@ import com.mk.daftar.core.navigation.LocalNavigator
 import com.mk.daftar.core.navigation.LocalNavigatorOrNull
 import com.mk.daftar.core.navigation.Navigator
 import com.mk.daftar.core.navigation.TopLevelDestination
+import com.mk.daftar.core.navigation.analyticsScreenName
 import com.mk.daftar.core.ui.motion.rememberReducedMotion
 import com.mk.daftar.core.ui.shell.DaftarAdaptiveShell
 import com.mk.daftar.core.ui.shell.DesktopEscape
@@ -38,7 +40,9 @@ import com.mk.daftar.core.ui.shell.DesktopWidths
 import com.mk.daftar.core.ui.shell.LocalDesktopLayout
 import com.mk.daftar.core.ui.shell.ShellDestination
 import com.mk.daftar.core.ui.shell.windowWidth
+import com.mk.daftar.diagnostics.AppAnalytics
 import org.jetbrains.compose.resources.stringResource
+import org.koin.compose.koinInject
 import org.koin.compose.navigation3.koinEntryProvider
 import org.koin.core.annotation.KoinExperimentalAPI
 
@@ -59,6 +63,13 @@ fun DaftarAppShell(navigator: Navigator, retention: ShellRetention, modifier: Mo
         onDispose { retention.savedStates = registry.performSave() }
     }
     val provider = koinEntryProvider<NavKey>()
+    // The visible screen's fixed name, reported once each time the top route changes. Only the shell is composed while
+    // the vault is open, so lock and setup screens never report.
+    val analytics = koinInject<AppAnalytics>()
+    val visibleRoute = navigator.stackOf(navigator.topLevel).lastOrNull()
+    LaunchedEffect(visibleRoute) {
+        if (visibleRoute != null) analytics.screen(analyticsScreenName(visibleRoute))
+    }
     val defaultDirective = calculatePaneScaffoldDirective(currentWindowAdaptiveInfoV2())
     // Desktop (design phase 28): a narrower list (wider at the large width) and a 24dp gap. Phones and tablets keep
     // the platform defaults.
