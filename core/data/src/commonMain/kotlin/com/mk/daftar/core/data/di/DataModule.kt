@@ -12,6 +12,7 @@ import com.mk.daftar.core.data.repository.GoldRecordRepository
 import com.mk.daftar.core.data.repository.InvestmentRecordRepository
 import com.mk.daftar.core.data.repository.JournalRecordRepository
 import com.mk.daftar.core.data.repository.PriceRecordRepository
+import com.mk.daftar.core.data.repository.UpdateSnoozeRecordRepository
 import com.mk.daftar.core.data.repository.UserPreferencesRecordRepository
 import com.mk.daftar.core.data.repository.ZakatYearRecordRepository
 import com.mk.daftar.core.data.restore.GenerationRestoreEngine
@@ -33,6 +34,7 @@ import com.mk.daftar.core.domain.repository.PriceRepository
 import com.mk.daftar.core.domain.repository.UserPreferencesRepository
 import com.mk.daftar.core.domain.repository.ZakatYearRepository
 import com.mk.daftar.core.domain.session.VaultSession
+import com.mk.daftar.core.domain.update.UpdateSnoozeRepository
 import com.mk.daftar.core.model.InvestmentAccountId
 import com.mk.daftar.core.network.FxNetworkDataSource
 import com.mk.daftar.core.network.GoldNetworkDataSource
@@ -84,6 +86,7 @@ val dataModule: Module = module {
     }
     single<UserPreferencesRepository> { UserPreferencesRecordRepository(get()) }
     single<FirstRunGuideRepository> { FirstRunGuideRecordRepository(get()) }
+    single<UpdateSnoozeRepository> { UpdateSnoozeRecordRepository(get()) }
     single<BackupSnapshotSource> { VaultBackupSnapshotReader(get<DaftarVaultSession>().host, get()) }
     single<PostCommitInstaller> { RestorePreferencesInstaller(get()) }
     single<RestoreEngine> {

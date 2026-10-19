@@ -56,6 +56,7 @@ kotlin {
             implementation(libs.androidx.appcompat)
             implementation(project.dependencies.platform(libs.firebase.bom))
             implementation(libs.firebase.analytics)
+            implementation(libs.firebase.config)
         }
     }
 

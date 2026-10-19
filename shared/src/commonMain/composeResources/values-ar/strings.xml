@@ -7,4 +7,16 @@
     <string name="progress_closing">جارٍ القفل…</string>
     <string name="biometric_prompt_title">التحقق لفتح دفتر</string>
     <string name="biometric_prompt_negative">استخدام رمز دفتر</string>
+    <string name="update_soft_title">تحديث جديد متاح</string>
+    <string name="update_soft_body">يتوفر تحديث جديد لتطبيق «دفتر». يمكنك التحديث الآن أو لاحقًا.</string>
+    <string name="update_soft_body_version">الإصدار ⁦%1$s⁩ من «دفتر» متاح. يمكنك التحديث الآن أو لاحقًا.</string>
+    <string name="update_force_title">يلزم تحديث «دفتر»</string>
+    <string name="update_force_body">حدّث التطبيق من Google Play للمتابعة.</string>
+    <string name="update_action">تحديث</string>
+    <string name="update_later">لاحقًا</string>
+    <string name="update_retry">حاول مرة أخرى</string>
+    <string name="update_checking">جارٍ التحقق…</string>
+    <string name="update_retry_failed">تعذّر التحقق من التحديث. حاول مرة أخرى.</string>
+    <string name="update_still_required">ما زال التحديث مطلوبًا.</string>
+    <string name="update_store_failed">تعذّر فتح المتجر. حاول مرة أخرى.</string>
 </resources>

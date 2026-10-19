@@ -12,4 +12,6 @@ internal object BuildVariant {
     val showsDebugBanner: Boolean = false
 
     val developerTools: Boolean = false
+
+    val debugBuild: Boolean = false
 }
