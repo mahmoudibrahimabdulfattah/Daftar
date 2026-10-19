@@ -85,6 +85,7 @@ kotlin {
         jvmTest.dependencies {
             implementation(compose.desktop.uiTestJUnit4)
             implementation(libs.kotlin.test)
+            implementation(projects.core.network)
         }
     }
 }
@@ -93,6 +94,7 @@ kotlin {
 val screensRequested = gradle.startParameter.taskNames.any { it.contains("desktopApp:jvmTest") }
 tasks.withType<Test>().configureEach {
     systemProperty("daftar.screens.dir", layout.buildDirectory.dir("screens").get().asFile.absolutePath)
+    systemProperty("daftar.storeScreens.dir", layout.buildDirectory.dir("store-screens").get().asFile.absolutePath)
     val requested = screensRequested
     onlyIf { requested }
 }

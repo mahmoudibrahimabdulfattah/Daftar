@@ -230,20 +230,22 @@ internal fun monthNames(): List<String> = listOf(
     stringResource(Res.string.investments_month_12),
 )
 
-/** A value date in Cairo time, isolated left to right so its digits never reorder in Arabic. */
+/**
+ * A value date in Cairo time. Each number is isolated left to right on its own, so the day, year and time keep their
+ * place in the Arabic sentence instead of the whole date being reordered as one run.
+ */
 @Composable
 internal fun cairoDateText(instant: Instant): String {
     val months = monthNames()
     val local = cairoLocalOf(instant)
     val time = "${local.hour.toString().padStart(2, '0')}:${local.minute.toString().padStart(2, '0')}"
-    val text = stringResource(
+    return stringResource(
         Res.string.investments_datetime,
-        local.day.toString(),
+        "⁦${local.day}⁩",
         months[local.month.ordinal],
-        local.year.toString(),
-        time,
+        "⁦${local.year}⁩",
+        "⁦$time⁩",
     )
-    return "⁦$text⁩"
 }
 
 /**

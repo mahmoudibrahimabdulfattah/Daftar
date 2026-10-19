@@ -1,0 +1,70 @@
+<!doctype html>
+<html lang="ar" dir="rtl">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=1024, initial-scale=1">
+<title>دفتر · صورة أوضح لما تملك</title>
+<style>
+  /* The app's own bundled variable fonts, so renders never depend on the network. */
+  @font-face { font-family: Alexandria; src: url("../../../core/designsystem/src/commonMain/composeResources/font/alexandria_variable.ttf") format("truetype"); font-weight: 100 900; }
+  @font-face { font-family: Rubik; src: url("../../../core/designsystem/src/commonMain/composeResources/font/rubik_variable.ttf") format("truetype"); font-weight: 300 900; }
+</style>
+<style>
+  :root { --paper: #f5f3eb; --ink: #262d24; --primary: #45583d; --line: #c8cbbb; --soft: #e4e8d9; --gold: #835b24; }
+  * { box-sizing: border-box; }
+  body { margin: 0; font-family: Rubik, Alexandria, sans-serif; font-variant-numeric: tabular-nums; }
+  /* Rubik supplies Latin and digits; Arabic glyphs use Alexandria. */
+  html[lang="ar"] body { font-family: Rubik, Alexandria, sans-serif; }
+  .mark { display: block; flex: none; color: var(--primary); }
+  h1, p { margin: 0; }
+  body { color: var(--ink); background: var(--paper); }
+  /* Fixed opaque artboard; all focal content is inside a 96px safe inset. */
+  .feature { width: 1024px; height: 500px; padding: 96px; display: grid; grid-template-columns: 464px 272px; gap: 96px; align-items: center; overflow: hidden; background: var(--paper); }
+  .brand { display: flex; align-items: center; gap: 16px; margin-block-end: 24px; }
+  .mark { width: 80px; height: 80px; }
+  h1 { font-size: 64px; font-weight: 500; line-height: 1.25; }
+  .tagline { max-width: 440px; font-size: 38px; font-weight: 400; line-height: 1.45; text-wrap: balance; }
+  .ledger { border-block-start: 1px solid var(--line); }
+  .entry { height: 72px; display: flex; align-items: center; gap: 24px; border-block-end: 1px solid var(--line); color: var(--primary); }
+  .symbol { display: grid; place-items: center; width: 48px; height: 48px; flex: none; }
+  .ico { display: block; width: 32px; height: 32px; }
+  .gold { color: var(--gold); }
+  .entry::after { content: ''; width: 176px; height: 1px; background: var(--soft); }
+</style>
+</head>
+<body>
+<main class="feature" aria-labelledby="brand tagline">
+  <section>
+    <div class="brand"><svg class="mark" viewBox="0 0 48 48" fill="none" aria-hidden="true"><rect x="10" y="6" width="28" height="36" rx="5" fill="currentColor"/><path d="M18 7v34" stroke="var(--paper)" stroke-width="2"/><path d="M24 17h8m-8 7h8" stroke="var(--paper)" stroke-width="2.5" stroke-linecap="round"/></svg><h1 id="brand">دفتر</h1></div>
+    <p class="tagline" id="tagline">صورة أوضح لما تملك</p>
+  </section>
+  <!-- Approved category symbols and notebook mark copied unchanged from daftar.html.
+       Direction mirrors the layout, never the glyphs. The rules contain no financial data. -->
+  <div class="ledger" aria-hidden="true">
+    <div class="entry gold"><span class="symbol"><svg class="ico " viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path fill="currentColor" stroke="none" fill-rule="evenodd" d="M6 5H18L22 16V19H2V16Z M4.5 15L3.8 17H20.2L19.5 15Z"/></svg></span></div>
+    <div class="entry"><span class="symbol"><svg class="ico " viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="m3 8 9-5 9 5H3Zm2 3v7m7-7v7m7-7v7M3 21h18"/></svg></span></div>
+    <div class="entry"><span class="symbol"><svg class="ico " viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><rect x="3" y="5" width="18" height="15" rx="2"/><path d="M3 8h18m-5 5h5v4h-5z"/></svg></span></div>
+    <div class="entry"><span class="symbol"><svg class="ico " viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M4 20V10h4v10M10 20V4h4v16M16 20V7h4v13M3 20h18"/></svg></span></div>
+  </div>
+</main>
+<script>
+  'use strict';
+  const lang = new URLSearchParams(location.search).get('lang') === 'en' ? 'en' : 'ar';
+  document.documentElement.lang = lang;
+  document.documentElement.dir = lang === 'ar' ? 'rtl' : 'ltr';
+  document.getElementById('brand').textContent = lang === 'ar' ? 'دفتر' : 'Daftar';
+  document.getElementById('tagline').textContent = lang === 'ar' ? 'صورة أوضح لما تملك' : 'A clearer view of what you own';
+  document.title = document.getElementById('brand').textContent + ' · ' + document.getElementById('tagline').textContent;
+  // Await window.renderReady before capturing at 1024 × 500 with deviceScaleFactor: 1.
+  window.renderReady = Promise.all([
+    document.fonts.load('500 64px Alexandria', 'دفتر'),
+    document.fonts.load('500 64px Rubik', 'Daftar'),
+    document.fonts.load('400 38px Alexandria', 'صورة أوضح لما تملك'),
+    document.fonts.load('400 38px Rubik', 'A clearer view of what you own')
+  ]).then(() => document.fonts.ready).then(() => {
+    document.documentElement.dataset.ready = 'true';
+  });
+  window.renderReady.catch(() => { document.documentElement.dataset.ready = 'error'; });
+</script>
+</body>
+</html>
