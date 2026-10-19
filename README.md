@@ -24,8 +24,6 @@
 
 https://github.com/user-attachments/assets/e88e267e-59a0-49d1-bf31-2a17da892096
 
-*Watch Daftar on Android, iPhone and macOS. 1080p, English captions and Arabic subtitles; no audio. The demo and screenshots use illustrative data.*
-
 ## Engineering highlights
 
 - **One codebase:** [Kotlin and Compose Multiplatform](shared) share business logic and UI across Android, iOS and desktop.
