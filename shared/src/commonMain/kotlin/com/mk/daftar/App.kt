@@ -51,6 +51,7 @@ import com.mk.daftar.refresh.ZakatTrackingRefresh
 import com.mk.daftar.shared.resources.Res
 import com.mk.daftar.shared.resources.app_name
 import com.mk.daftar.shell.ShellStateOwner
+import com.mk.daftar.update.UpdateGate
 import kotlinx.coroutines.flow.map
 import org.jetbrains.compose.resources.stringResource
 import org.koin.compose.koinInject
@@ -155,12 +156,19 @@ private fun PreferredContent(
                         .fillMaxWidth()
                         .then(if (showsDebugBanner) Modifier.consumeWindowInsets(topInsets) else Modifier),
                 ) {
-                    VaultGate(
-                        state = sessionState,
-                        shell = shell,
-                        developerTools = developerTools,
+                    // A forced update replaces the vault gate, so the lock surface and its biometric request never run.
+                    UpdateGate(
+                        sessionState = sessionState,
                         covered = covered,
-                    )
+                        modifier = Modifier.fillMaxSize(),
+                    ) {
+                        VaultGate(
+                            state = sessionState,
+                            shell = shell,
+                            developerTools = developerTools,
+                            covered = covered,
+                        )
+                    }
                 }
             }
         }

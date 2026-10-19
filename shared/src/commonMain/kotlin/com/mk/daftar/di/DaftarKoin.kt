@@ -49,6 +49,7 @@ val daftarModules: List<Module> = listOf(
     cloudModule(DAFTAR_APP_VERSION),
     cloudFeatureModule,
     settingsModule,
+    updateModule,
 )
 
 /**

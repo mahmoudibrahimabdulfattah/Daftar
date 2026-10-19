@@ -8,8 +8,10 @@ import com.google.firebase.FirebaseApp
 import com.mk.daftar.core.security.androidSecurityConfigurationModule
 import com.mk.daftar.di.initKoin
 import com.mk.daftar.lifecycle.VaultLifecycleCoordinator
+import com.mk.daftar.update.AndroidUpdateBuild
 import org.koin.android.ext.koin.androidContext
 import org.koin.core.context.GlobalContext
+import org.koin.dsl.module
 
 /**
  * Starts dependency injection once, with the build variant's key policy. The process-level ON_STOP is a fallback
@@ -26,6 +28,7 @@ class DaftarApplication : Application() {
         initKoin {
             androidContext(this@DaftarApplication)
             modules(androidSecurityConfigurationModule(BuildVariant.securityConfiguration))
+            modules(module { single { AndroidUpdateBuild(debugBuild = BuildVariant.debugBuild) } })
         }
         vaultLifecycle = GlobalContext.get().get()
         // Cloud backups are optional: App Check is installed only when Firebase is configured in this build.

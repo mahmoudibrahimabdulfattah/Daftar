@@ -6,6 +6,7 @@ import androidx.datastore.preferences.core.MutablePreferences
 import androidx.datastore.preferences.core.Preferences
 import androidx.datastore.preferences.core.booleanPreferencesKey
 import androidx.datastore.preferences.core.intPreferencesKey
+import androidx.datastore.preferences.core.longPreferencesKey
 import androidx.datastore.preferences.core.stringPreferencesKey
 import com.mk.daftar.core.common.Outcome
 import com.mk.daftar.core.domain.repository.AppLanguage
@@ -14,7 +15,9 @@ import com.mk.daftar.core.domain.repository.PreferencesRead
 import com.mk.daftar.core.domain.repository.ThemeMode
 import com.mk.daftar.core.domain.repository.UserPreferences
 import com.mk.daftar.core.domain.storage.StorageError
+import com.mk.daftar.core.domain.update.SoftUpdateSnooze
 import kotlin.coroutines.cancellation.CancellationException
+import kotlin.time.Instant
 import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.catch
@@ -97,6 +100,26 @@ class DaftarPreferencesDataSource internal constructor(
     suspend fun setFirstRunGuideDone(done: Boolean): Outcome<Unit, StorageError> =
         write { it[FIRST_RUN_GUIDE_DONE] = done }
 
+    /**
+     * The postponed soft update, or null when none is stored or the store cannot be read. A null read fails open, so an
+     * unreadable store never hides an update that is due.
+     */
+    suspend fun softUpdateSnooze(): SoftUpdateSnooze? = try {
+        val prefs = dataStore.data.first()
+        val build = prefs[SNOOZED_UPDATE_BUILD]
+        val until = prefs[SNOOZED_UPDATE_UNTIL_MILLIS]
+        if (build != null && until != null) SoftUpdateSnooze(build, Instant.fromEpochMilliseconds(until)) else null
+    } catch (error: CancellationException) {
+        throw error
+    } catch (error: Throwable) {
+        null
+    }
+
+    suspend fun setSoftUpdateSnooze(snooze: SoftUpdateSnooze): Outcome<Unit, StorageError> = write {
+        it[SNOOZED_UPDATE_BUILD] = snooze.build
+        it[SNOOZED_UPDATE_UNTIL_MILLIS] = snooze.until.toEpochMilliseconds()
+    }
+
     private suspend fun write(change: (MutablePreferences) -> Unit): Outcome<Unit, StorageError> = try {
         dataStore.updateData { prefs -> prefs.toMutablePreferences().also(change).toPreferences() }
         Outcome.Success(Unit)
@@ -115,6 +138,8 @@ private val BIOMETRIC_ENABLED = booleanPreferencesKey("biometric_enabled")
 private val AUTO_BIOMETRIC_CONSUMED = booleanPreferencesKey("biometric_auto_attempt_consumed")
 private val VALUES_HIDDEN = booleanPreferencesKey("values_hidden")
 private val FIRST_RUN_GUIDE_DONE = booleanPreferencesKey("first_run_guide_done")
+private val SNOOZED_UPDATE_BUILD = longPreferencesKey("soft_update_snoozed_build")
+private val SNOOZED_UPDATE_UNTIL_MILLIS = longPreferencesKey("soft_update_snoozed_until_millis")
 
 /** Maps stored values to domain settings. Unknown or out-of-range values fall back to the defaults. */
 internal fun Preferences.toUserPreferences(): UserPreferences {

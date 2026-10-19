@@ -14,4 +14,7 @@ internal object BuildVariant {
 
     /** Debug builds offer the developer entries on the locked surface: the design catalog and the shell preview. */
     val developerTools: Boolean = true
+
+    /** Debug builds fetch Remote Config without a minimum interval, so update rules can be tested at once. */
+    val debugBuild: Boolean = true
 }
