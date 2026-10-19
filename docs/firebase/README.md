@@ -1,7 +1,8 @@
 # Daftar cloud backups: Firebase runbook
 
-Scope: Android and desktop (macOS, Windows), Google sign-in, Firebase Auth and Firestore on the Spark plan. No Storage, Functions,
-Analytics, Crashlytics or billing account. Backups are the encrypted `.dftar` file, stored as raw bytes in three fixed
+Scope: Android and desktop (macOS, Windows), Google sign-in, Firebase Auth and Firestore on the Spark plan. Android
+release builds also use Crashlytics, Google Analytics (screen names only, no advertising ID) and Remote Config (update
+prompts). No Storage, Functions or billing account. Backups are the encrypted `.dftar` file, stored as raw bytes in three fixed
 slots per user. Firebase never sees a backup password, vault PIN, database key or decrypted content.
 
 ## Values the code expects
@@ -26,6 +27,14 @@ slots per user. Firebase never sees a backup password, vault PIN, database key o
     firebase deploy --only firestore:rules,firestore:indexes --project <project-id>
 
 Use separate development and production projects. Debug App Check tokens belong only to the development project.
+
+## Hosting (privacy policy and account deletion)
+
+`hosting/` holds the public pages Google Play links to: `/privacy` and `/delete-account`. Update the date at the top of
+the policy with every change, keep it in step with [`../store/play-console.md`](../store/play-console.md), then:
+
+    cd docs/firebase
+    firebase deploy --only hosting --project <project-id>
 
 ## Rules tests
 

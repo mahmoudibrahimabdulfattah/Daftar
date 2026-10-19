@@ -1,0 +1,110 @@
+<!doctype html>
+<html lang="ar" dir="rtl">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>سياسة خصوصية دفتر · Daftar privacy policy</title>
+<meta name="description" content="How Daftar stores and protects your records, and what leaves your device.">
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Alexandria:wght@400;500&family=Rubik:wght@400;500&display=swap">
+<link rel="stylesheet" href="/style.css?v=2">
+</head>
+<body>
+<main>
+<header>
+  <svg viewBox="0 0 48 48" fill="none" aria-hidden="true"><rect x="10" y="6" width="28" height="36" rx="5" fill="currentColor"/><path d="M18 7v34" stroke="var(--paper)" stroke-width="2"/><path d="M24 17h8m-8 7h8" stroke="var(--paper)" stroke-width="2.5" stroke-linecap="round"/></svg>
+  <strong>«دفتر»</strong>
+</header>
+<nav><a href="#en" lang="en">English</a><a href="/delete-account">حذف الحساب السحابي</a></nav>
+
+<h1>سياسة الخصوصية</h1>
+<p>آخر تحديث: <bdi>19 October 2026</bdi></p>
+
+<p>«دفتر» دفتر خاص لثروتك: الذهب والحسابات البنكية والنقدية والاستثمارات وسجلات الزكاة والملاحظات، مقيّمة بأسعار السوق المصرية. لا يحتوي التطبيق على إعلانات ولا يتتبعك عبر التطبيقات، ولا نبيع أي بيانات.</p>
+
+<h2>ما يبقى على جهازك</h2>
+<ul>
+  <li>كل سجلاتك: الأرصدة والذهب والبنوك والحسابات والاستثمارات والنقدية والزكاة والملاحظات، والإعدادات وآخر أسعار محفوظة.</li>
+  <li>السجلات محفوظة في قاعدة بيانات مشفّرة (SQLCipher). مفتاحها مشتق من رمز «دفتر» الخاص بك مع سرّ في مخزن المفاتيح الآمن بالجهاز (Android Keystore أو iOS Keychain أو Secure Enclave). لا نعرف رمزك ولا نستطيع فتح بياناتك.</li>
+  <li>البيانات مستبعدة من نسخ Android وiCloud الاحتياطية التلقائية، ولا تُزامن تلقائيًا مع أي خادم.</li>
+  <li>مفتاح الاسترداد (إن أنشأته) يُعرض لك مرة واحدة ولا يُحفظ؛ يُحفظ فقط مفتاحه العام على جهازك.</li>
+</ul>
+
+<h2>ما يخرج من جهازك، ولمن</h2>
+<div class="wrap"><table>
+<tr><th>الجهة</th><th>ما يُرسل</th><th>لماذا</th></tr>
+<tr><td>مصادر الأسعار: موقع iSagha للذهب، وبنك مصر، و<bdi>open.er-api.com</bdi>، وواجهة <bdi>fawazahmed0 currency-api</bdi> (عبر <bdi>jsDelivr</bdi> ومرآتها)</td><td>طلب عادي لصفحة أو ملف الأسعار، بدون أي بيانات عنك أو عن أرصدتك. هذه الخوادم ترى عنوان IP الخاص بك كأي موقع ويب.</td><td>عرض أسعار الذهب والدولار وتقييم أصولك</td></tr>
+<tr><td>Google ‏(Firebase Crashlytics) — أندرويد</td><td>تفاصيل تقنية عن الأعطال: تتبع الخطأ، وإصدار التطبيق، وطراز الجهاز، وإصدار النظام، ومعرّف تثبيت Crashlytics. لا تُضاف إليها أرصدة أو أسماء أو ملاحظات.</td><td>اكتشاف الأعطال وإصلاحها</td></tr>
+<tr><td>Google ‏(Google Analytics for Firebase) — أندرويد</td><td>أسماء الشاشات التي تفتحها (مثل «الرئيسية» أو «الذهب») وأحداث الجلسة، ومعرّف مثيل التطبيق، وطراز الجهاز والنظام وإصدار التطبيق واللغة، والدولة أو المنطقة التقريبية المستنتجة من عنوان IP. لا يُرسل أي مبلغ أو اسم بنك أو ملاحظة أو معرّف سجل، ولا يُجمع المعرّف الإعلاني، وتخصيص الإعلانات مُعطّل.</td><td>فهم استخدام الميزات وتحسينها</td></tr>
+<tr><td>Google ‏(Firebase Remote Config) — أندرويد</td><td>معرّف تثبيت Firebase</td><td>معرفة توفر تحديث جديد أو تحديث مطلوب</td></tr>
+<tr><td>Google ‏(Firebase Authentication) — فقط إذا سجّلت الدخول للنسخ السحابية</td><td>معرّف حسابك في Firebase، وبريدك الإلكتروني واسمك من حساب Google</td><td>ربط نسخك السحابية بحسابك</td></tr>
+<tr><td>Google ‏(Cloud Firestore) — فقط عندما ترفع نسخة بنفسك</td><td>ملف النسخة المشفّر (<bdi>.dftar</bdi>) وبياناته الوصفية: الحجم، والبصمة (<bdi>SHA-256</bdi>)، ووقت الإنشاء، وإصدار التنسيق. بحد أقصى ثلاث نسخ.</td><td>استرجاع بياناتك على جهاز جديد</td></tr>
+<tr><td>Google ‏(Firebase App Check عبر Play Integrity) — أندرويد عند استخدام النسخ السحابية</td><td>رمز يثبت أن الطلب من التطبيق الأصلي</td><td>حماية الخدمة من الإساءة</td></tr>
+</table></div>
+
+<p class="note">النسخة السحابية مشفّرة على جهازك قبل الرفع (Argon2id وXChaCha20-Poly1305) بكلمة مرور نسخ احتياطي منفصلة لا تقل عن 12 حرفًا، أو بمفتاح الاسترداد. لا نحن ولا Google نستطيع قراءة محتواها. تسجيل الدخول وحده لا يفتح بياناتك، وفقدان كلمة المرور ومفتاح الاسترداد يعني تعذّر فتح النسخة.</p>
+
+<p>تعمل Google كمزوّد خدمة نيابةً عن «دفتر» وفق <a href="https://firebase.google.com/support/privacy">شروط خصوصية Firebase</a> و<a href="https://policies.google.com/privacy">سياسة خصوصية Google</a>. كل الاتصالات تتم عبر HTTPS فقط.</p>
+<p>نسخ iOS وسطح المكتب لا تحتوي على Crashlytics أو Analytics أو Remote Config. نسخة سطح المكتب تدعم النسخ السحابية بنفس الطريقة عبر المتصفح.</p>
+
+<h2>الاحتفاظ والحذف</h2>
+<ul>
+  <li><b>على جهازك:</b> تبقى البيانات حتى تحذفها أو تزيل التطبيق. إزالة التطبيق تحذفها نهائيًا.</li>
+  <li><b>النسخ السحابية وحساب Firebase:</b> تبقى حتى تحذفها. من التطبيق: الإعدادات ← النسخ السحابية ← «حذف الحساب السحابي»، فيحذف النسخ ثم الحساب. يمكنك أيضًا <a href="/delete-account">طلب الحذف من الويب</a> حتى بعد إزالة التطبيق.</li>
+  <li><b>تقارير الأعطال:</b> تحتفظ بها Crashlytics لمدة تصل إلى <bdi>90</bdi> يومًا.</li>
+  <li><b>بيانات Analytics:</b> تُحذف تلقائيًا بعد شهرين على مستوى المستخدم والحدث.</li>
+</ul>
+
+<h2>الأطفال</h2>
+<p>«دفتر» غير موجّه للأطفال دون <bdi>13</bdi> عامًا ولا نجمع بياناتهم عن قصد.</p>
+
+<h2>التغييرات والتواصل</h2>
+<p>إذا تغيّرت هذه السياسة سنحدّث تاريخها في أعلى الصفحة. للأسئلة أو الطلبات: <a href="mailto:mahmoudibrahimabdulfattah@gmail.com?subject=Daftar%20privacy"><bdi>mahmoudibrahimabdulfattah@gmail.com</bdi></a>.</p>
+
+<section class="lang" id="en" lang="en" dir="ltr">
+<h1>Privacy policy</h1>
+<p>Last updated: 19 October 2026</p>
+
+<p>Daftar (دفتر) is a private notebook for your wealth: gold, bank accounts, cash, investments, zakat records and notes, valued at Egyptian market prices. It has no ads, no cross-app tracking, and we sell no data.</p>
+
+<h2>What stays on your device</h2>
+<ul>
+  <li>All your records: balances, gold, banks, accounts, investments, cash, zakat and notes, plus settings and the last saved prices.</li>
+  <li>Records are kept in an encrypted database (SQLCipher). Its key is derived from your Daftar PIN together with a secret in the device's secure key store (Android Keystore, iOS Keychain or Secure Enclave). We never know your PIN and cannot open your data.</li>
+  <li>The data is excluded from automatic Android and iCloud backups and is never synced automatically to any server.</li>
+  <li>A recovery key, if you create one, is shown once and never stored; only its public key is kept on your device.</li>
+</ul>
+
+<h2>What leaves your device, and to whom</h2>
+<div class="wrap"><table>
+<tr><th>Recipient</th><th>What</th><th>Why</th></tr>
+<tr><td>Price sources: iSagha (gold), Banque Misr, open.er-api.com and the fawazahmed0 currency API (via jsDelivr and its mirror)</td><td>A plain request for a price page or file, with no data about you or your balances. These servers see your IP address like any website.</td><td>To show gold and dollar prices and value your assets</td></tr>
+<tr><td>Google (Firebase Crashlytics) — Android</td><td>Technical crash details: stack trace, app version, device model, OS version and a Crashlytics installation ID. No balances, names or notes are added.</td><td>To find and fix crashes</td></tr>
+<tr><td>Google (Google Analytics for Firebase) — Android</td><td>Names of the screens you open (such as "home" or "gold") and session events, an app-instance ID, device model, OS, app version, language, and an approximate country or region derived from the IP address. No amount, bank name, note or record ID is sent; the advertising ID is not collected and ad personalization is off.</td><td>To understand and improve how features are used</td></tr>
+<tr><td>Google (Firebase Remote Config) — Android</td><td>A Firebase installation ID</td><td>To learn whether a new or required update exists</td></tr>
+<tr><td>Google (Firebase Authentication) — only if you sign in for cloud backups</td><td>Your Firebase account ID, and your email and name from your Google account</td><td>To link your cloud backups to your account</td></tr>
+<tr><td>Google (Cloud Firestore) — only when you upload a backup yourself</td><td>The encrypted backup file (.dftar) and its metadata: size, SHA-256 digest, creation time and format version. At most three backups.</td><td>To restore your data on a new device</td></tr>
+<tr><td>Google (Firebase App Check with Play Integrity) — Android, when cloud backups are used</td><td>A token proving the request comes from the genuine app</td><td>To protect the service from abuse</td></tr>
+</table></div>
+
+<p class="note">A cloud backup is encrypted on your device before upload (Argon2id and XChaCha20-Poly1305) with a separate backup password of at least 12 characters, or with your recovery key. Neither we nor Google can read it. Signing in alone never unlocks your data, and losing both the password and the recovery key means the backup cannot be opened.</p>
+
+<p>Google acts as a service provider on Daftar's behalf under the <a href="https://firebase.google.com/support/privacy">Firebase privacy terms</a> and the <a href="https://policies.google.com/privacy">Google Privacy Policy</a>. All connections use HTTPS only.</p>
+<p>The iOS and desktop apps contain no Crashlytics, Analytics or Remote Config. The desktop app supports cloud backups the same way, through the browser.</p>
+
+<h2>Retention and deletion</h2>
+<ul>
+  <li><b>On your device:</b> kept until you delete it or uninstall the app. Uninstalling removes it permanently.</li>
+  <li><b>Cloud backups and Firebase account:</b> kept until you delete them. In the app: Settings → Cloud backups → "Delete cloud account", which deletes the backups and then the account. You can also <a href="/delete-account">request deletion on the web</a>, even after uninstalling.</li>
+  <li><b>Crash reports:</b> kept by Crashlytics for up to 90 days.</li>
+  <li><b>Analytics data:</b> user- and event-level data is deleted automatically after two months.</li>
+</ul>
+
+<h2>Children</h2>
+<p>Daftar is not directed at children under 13 and does not knowingly collect their data.</p>
+
+<h2>Changes and contact</h2>
+<p>If this policy changes, the date at the top is updated. Questions or requests: <a href="mailto:mahmoudibrahimabdulfattah@gmail.com?subject=Daftar%20privacy">mahmoudibrahimabdulfattah@gmail.com</a>.</p>
+</section>
+</main>
+</body>
+</html>

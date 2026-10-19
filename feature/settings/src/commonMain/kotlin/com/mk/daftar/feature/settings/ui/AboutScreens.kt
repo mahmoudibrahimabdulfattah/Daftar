@@ -14,6 +14,8 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.platform.LocalUriHandler
 import androidx.compose.ui.unit.dp
 import com.mk.daftar.core.designsystem.component.DaftarMark
+import com.mk.daftar.core.designsystem.component.DaftarSettingRow
+import com.mk.daftar.core.designsystem.component.DaftarSettingTrailing
 import com.mk.daftar.core.designsystem.component.DaftarTextButton
 import com.mk.daftar.core.designsystem.theme.DaftarSpacing
 import com.mk.daftar.core.designsystem.theme.DaftarTheme
@@ -22,6 +24,8 @@ import com.mk.daftar.core.navigation.LocalNavigator
 import com.mk.daftar.feature.settings.AppBuildInfo
 import com.mk.daftar.feature.settings.resources.Res
 import com.mk.daftar.feature.settings.resources.about_build
+import com.mk.daftar.feature.settings.resources.about_delete_body
+import com.mk.daftar.feature.settings.resources.about_delete_title
 import com.mk.daftar.feature.settings.resources.about_font_alexandria
 import com.mk.daftar.feature.settings.resources.about_font_rubik
 import com.mk.daftar.feature.settings.resources.about_license_texts
@@ -33,12 +37,21 @@ import com.mk.daftar.feature.settings.resources.about_source_alexandria
 import com.mk.daftar.feature.settings.resources.about_source_rubik
 import com.mk.daftar.feature.settings.resources.about_title
 import com.mk.daftar.feature.settings.resources.about_version
+import com.mk.daftar.feature.settings.resources.settings_about_open
+import com.mk.daftar.feature.settings.resources.settings_privacy_body
+import com.mk.daftar.feature.settings.resources.settings_privacy_title
 import org.jetbrains.compose.resources.stringResource
 import org.koin.compose.koinInject
 
 /** The upstream sources of the bundled fonts, as their own license files name them. */
 private const val ALEXANDRIA_SOURCE: String = "https://github.com/Gue3bara/Alexandria"
 private const val RUBIK_SOURCE: String = "https://github.com/googlefonts/rubik"
+
+/** The public privacy policy, shared by the Settings and About pages. */
+internal const val PRIVACY_POLICY_URL: String = "https://daftar-f7c67.web.app/privacy"
+
+/** The public guide to deleting the account and its cloud backups. */
+internal const val ACCOUNT_DELETION_URL: String = "https://daftar-f7c67.web.app/delete-account"
 
 /** A bundled license or notice file, read from the app's resources, for display in full. */
 data class LicenseText(val title: String, val text: String)
@@ -90,6 +103,22 @@ fun AboutContent(
         }
         InfoRow(label = stringResource(Res.string.about_version), value = info.versionName)
         InfoRow(label = stringResource(Res.string.about_build), value = info.buildNumber)
+        DaftarSettingRow(
+            title = stringResource(Res.string.settings_privacy_title),
+            subtitle = stringResource(Res.string.settings_privacy_body),
+            trailing = DaftarSettingTrailing.Link(
+                stringResource(Res.string.settings_about_open),
+                onClick = { onOpenSource(PRIVACY_POLICY_URL) },
+            ),
+        )
+        DaftarSettingRow(
+            title = stringResource(Res.string.about_delete_title),
+            subtitle = stringResource(Res.string.about_delete_body),
+            trailing = DaftarSettingTrailing.Link(
+                stringResource(Res.string.settings_about_open),
+                onClick = { onOpenSource(ACCOUNT_DELETION_URL) },
+            ),
+        )
 
         SectionTitle(stringResource(Res.string.about_licenses))
         LicenseEntry(

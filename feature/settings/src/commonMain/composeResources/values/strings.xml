@@ -29,7 +29,9 @@
     <string name="settings_about_open">Open</string>
     <string name="settings_about_title">About Daftar</string>
     <string name="settings_about_body">Version ⁦%1$s⁩</string>
-    <string name="settings_footer">Local only · no sync · version ⁦%1$s⁩</string>
+    <string name="settings_footer">Records on device · no auto-sync · encrypted backup upload by choice</string>
+    <string name="settings_privacy_title">Privacy policy</string>
+    <string name="settings_privacy_body">How we use data</string>
     <string name="settings_unavailable">Security settings are unavailable right now.</string>
 
     <string name="prefs_title">Preferences</string>
@@ -99,7 +101,9 @@
     <string name="about_source">Source</string>
     <string name="about_source_alexandria">Alexandria project</string>
     <string name="about_source_rubik">Rubik project</string>
-    <string name="about_local">Local only · no sync</string>
+    <string name="about_local">Records on device · no auto-sync · encrypted backup upload by choice</string>
+    <string name="about_delete_title">Cloud account deletion information</string>
+    <string name="about_delete_body">Ways to delete your account and cloud backups</string>
     <string name="settings_cloud_title">Cloud backups</string>
     <string name="settings_cloud_subtitle">Google, optional, encrypted</string>
     <string name="settings_cloud_action">Open</string>

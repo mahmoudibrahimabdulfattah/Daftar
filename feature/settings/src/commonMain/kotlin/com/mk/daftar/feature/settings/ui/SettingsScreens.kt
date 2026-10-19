@@ -13,6 +13,7 @@ import androidx.compose.runtime.Composable
 import androidx.compose.runtime.getValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.platform.LocalUriHandler
 import androidx.compose.ui.semantics.heading
 import androidx.compose.ui.semantics.semantics
 import androidx.compose.ui.text.style.TextAlign
@@ -75,6 +76,8 @@ import com.mk.daftar.feature.settings.resources.settings_lock_value
 import com.mk.daftar.feature.settings.resources.settings_pin_body
 import com.mk.daftar.feature.settings.resources.settings_pin_change
 import com.mk.daftar.feature.settings.resources.settings_pin_title
+import com.mk.daftar.feature.settings.resources.settings_privacy_body
+import com.mk.daftar.feature.settings.resources.settings_privacy_title
 import com.mk.daftar.feature.settings.resources.settings_recovery_body
 import com.mk.daftar.feature.settings.resources.settings_recovery_off
 import com.mk.daftar.feature.settings.resources.settings_recovery_on
@@ -102,6 +105,7 @@ fun SettingsScreen(modifier: Modifier = Modifier) {
     val state by viewModel.state.collectAsStateWithLifecycle()
     val appInfo: AppBuildInfo = koinInject()
     val cloud: CloudBackupRepository = koinInject()
+    val uriHandler = LocalUriHandler.current
     // Device settings may have changed biometric enrollment while the app was away: read the platform again.
     LifecycleEventEffect(Lifecycle.Event.ON_RESUME) { viewModel.onIntent(SettingsIntent.Refresh) }
     SettingsContent(
@@ -112,6 +116,7 @@ fun SettingsScreen(modifier: Modifier = Modifier) {
         onOpenRecoveryKey = { navigator.goTo(RecoveryKeyRoute) },
         onOpenPreferences = { navigator.goTo(PreferencesRoute) },
         onOpenAbout = { navigator.goTo(AboutRoute) },
+        onOpenPrivacy = { uriHandler.openUri(PRIVACY_POLICY_URL) },
         onOpenExport = { navigator.goTo(BackupExportRoute) },
         cloudOffered = cloud.availability == CloudAvailability.AVAILABLE,
         onOpenCloud = { navigator.goTo(CloudRoute) },
@@ -129,6 +134,7 @@ fun SettingsContent(
     onOpenPreferences: () -> Unit,
     onOpenRecoveryKey: () -> Unit = {},
     onOpenAbout: () -> Unit,
+    onOpenPrivacy: () -> Unit,
     onOpenExport: () -> Unit,
     cloudOffered: Boolean = false,
     onOpenCloud: () -> Unit = {},
@@ -206,8 +212,13 @@ fun SettingsContent(
             subtitle = stringResource(Res.string.settings_about_body, appInfo.versionName),
             trailing = DaftarSettingTrailing.Link(stringResource(Res.string.settings_about_open), onOpenAbout),
         )
+        DaftarSettingRow(
+            title = stringResource(Res.string.settings_privacy_title),
+            subtitle = stringResource(Res.string.settings_privacy_body),
+            trailing = DaftarSettingTrailing.Link(stringResource(Res.string.settings_about_open), onOpenPrivacy),
+        )
         Text(
-            text = stringResource(Res.string.settings_footer, appInfo.versionName),
+            text = stringResource(Res.string.settings_footer),
             style = DaftarTheme.typography.fineText,
             color = DaftarTheme.colors.muted,
             textAlign = TextAlign.Center,
