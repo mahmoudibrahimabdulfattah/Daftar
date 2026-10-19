@@ -35,7 +35,7 @@ The steps below need the Firebase and Play Console accounts.
 ## Play Console
 
 1. Create the app «دفتر» (default language Arabic – ar), free, app (not game).
-2. Main store listing: Arabic and English texts, icon 512×512, feature graphic 1024×500, phone screenshots made from
+2. Main store listing: Arabic and English texts from [listing.md](listing.md), icon 512×512, feature graphic 1024×500, phone screenshots made from
    demo data (see play-console.md).
 3. App content: privacy policy, app access, ads, content rating, target audience, data safety, financial features,
    government/news/health declarations — answers in [play-console.md](play-console.md).
