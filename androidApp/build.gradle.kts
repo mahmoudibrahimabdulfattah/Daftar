@@ -17,8 +17,8 @@ if (file("google-services.json").exists()) {
         enabled = releaseRegistered
     }
     // Mapping files reach Crashlytics from release builds only. Debug builds never upload, and an unregistered release
-    // package has nowhere to upload to, so its upload and mapping-id injection tasks are disabled.
-    tasks.matching { it.name.contains("CrashlyticsMappingFile") }
+    // package has nowhere to upload to. The mapping-id injection always runs: Crashlytics refuses to start without it.
+    tasks.matching { it.name.startsWith("uploadCrashlyticsMappingFile") }
         .configureEach {
             enabled = releaseRegistered && name.endsWith("Release")
         }
