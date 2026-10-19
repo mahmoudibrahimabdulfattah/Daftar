@@ -73,6 +73,7 @@ class SettingsScreenshotHostActivity : ComponentActivity() {
                             onChangePin = {},
                             onOpenPreferences = {},
                             onOpenAbout = {},
+                            onOpenPrivacy = {},
                             onOpenExport = {},
                             modifier = Modifier,
                         )

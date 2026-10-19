@@ -29,7 +29,9 @@
     <string name="settings_about_open">فتح</string>
     <string name="settings_about_title">حول دفتر</string>
     <string name="settings_about_body">الإصدار ⁦%1$s⁩</string>
-    <string name="settings_footer">محلي فقط · بدون مزامنة · الإصدار ⁦%1$s⁩</string>
+    <string name="settings_footer">سجلاتك على جهازك · بلا مزامنة تلقائية · رفع نسخة مشفّرة بطلبك</string>
+    <string name="settings_privacy_title">سياسة الخصوصية</string>
+    <string name="settings_privacy_body">كيف نستخدم البيانات</string>
     <string name="settings_unavailable">إعدادات الأمان غير متاحة الآن.</string>
 
     <string name="prefs_title">التفضيلات</string>
@@ -102,7 +104,9 @@
     <string name="about_source">المصدر</string>
     <string name="about_source_alexandria">مشروع Alexandria</string>
     <string name="about_source_rubik">مشروع Rubik</string>
-    <string name="about_local">محلي فقط · بدون مزامنة</string>
+    <string name="about_local">سجلاتك على جهازك · بلا مزامنة تلقائية · رفع نسخة مشفّرة بطلبك</string>
+    <string name="about_delete_title">معلومات حذف الحساب السحابي</string>
+    <string name="about_delete_body">طرق حذف الحساب ونسخه السحابية</string>
     <string name="settings_cloud_title">النسخ السحابية</string>
     <string name="settings_cloud_subtitle">Google، اختيارية، ومشفّرة</string>
     <string name="settings_cloud_action">فتح</string>
