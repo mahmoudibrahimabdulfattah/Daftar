@@ -17,6 +17,7 @@ import com.mk.daftar.core.database.mapper.toRemoteEntity
 import com.mk.daftar.core.domain.repository.UserPreferences
 import com.mk.daftar.core.security.KeyLease
 import com.mk.daftar.core.security.SecretBytes
+import com.mk.daftar.core.security.SecurityError
 import com.mk.daftar.core.security.VaultGeneration
 import com.mk.daftar.core.security.VaultGenerations
 import kotlinx.coroutines.CancellationException
@@ -43,7 +44,14 @@ internal class RoomStagingFactory(
         val security = generations.securityFor(generation)
         try {
             val lease: KeyLease = when (val created = security.create(pin)) {
-                is Outcome.Failure -> return Outcome.Failure(RestoreFailure.Staging)
+                is Outcome.Failure -> return Outcome.Failure(
+                    if (created.error == SecurityError.InsufficientMemory) {
+                        RestoreFailure.InsufficientMemory
+                    } else {
+                        RestoreFailure.Staging
+                    },
+                )
+
                 is Outcome.Success -> created.data
             }
             try {

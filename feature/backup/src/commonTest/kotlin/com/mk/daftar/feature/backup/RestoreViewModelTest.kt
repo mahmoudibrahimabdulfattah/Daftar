@@ -4,6 +4,7 @@ package com.mk.daftar.feature.backup
 
 import com.mk.daftar.core.backup.BackupDecryptor
 import com.mk.daftar.core.backup.BackupError
+import com.mk.daftar.core.backup.BackupFormat
 import com.mk.daftar.core.backup.BackupPreferences
 import com.mk.daftar.core.backup.BackupSnapshot
 import com.mk.daftar.core.backup.DecodedBackup
@@ -61,11 +62,11 @@ class RestoreViewModelTest {
         Dispatchers.resetMain()
     }
 
-    private class FakeCiphertext : StagedCiphertext {
-        override val size: Int = 64
+    private class FakeCiphertext(private val content: ByteArray = ByteArray(64)) : StagedCiphertext {
+        override val size: Int = content.size
         var discards = 0
 
-        override suspend fun readAll(): ByteArray = ByteArray(size)
+        override suspend fun readAll(): ByteArray = content.copyOf()
 
         override fun discard() {
             discards++
@@ -129,8 +130,9 @@ class RestoreViewModelTest {
         decrypt: Outcome<DecodedBackup, BackupError>,
         pick: Outcome<StagedCiphertext?, BackupError>,
         decodeDispatcher: CoroutineDispatcher,
+        content: ByteArray = ByteArray(64),
     ) {
-        val file = FakeCiphertext()
+        val file = FakeCiphertext(content)
         val decryptor = FakeDecryptor(decrypt)
         val engine = FakeEngine()
         val drafts = RestoreDraftRegistry()
@@ -171,7 +173,8 @@ class RestoreViewModelTest {
     private fun harness(
         decrypt: Outcome<DecodedBackup, BackupError> = Outcome.Success(backup()),
         pick: Outcome<StagedCiphertext?, BackupError> = Outcome.Success(FakeCiphertext()),
-    ) = Harness(decrypt, pick, dispatcher)
+        content: ByteArray = ByteArray(64),
+    ) = Harness(decrypt, pick, dispatcher, content)
 
     private fun TestScope.settle() = advanceUntilIdle()
 
@@ -569,5 +572,57 @@ class RestoreViewModelTest {
         assertTrue(h.decryptor.passwords.isEmpty())
         assertEquals(RestorePhase.Review, h.vm.phase())
         assertEquals("", h.vm.state.value.password)
+    }
+
+    /** A header whose profile is the given Argon2id memory in KiB and three passes. Only the header bytes are set. */
+    private fun headerWithMemory(memoryKiB: Int): ByteArray = ByteArray(BackupFormat.HEADER_BYTES).also { header ->
+        header[12] = (memoryKiB ushr 24).toByte()
+        header[13] = (memoryKiB ushr 16).toByte()
+        header[14] = (memoryKiB ushr 8).toByte()
+        header[15] = memoryKiB.toByte()
+        header[19] = BackupFormat.PASSES.toByte()
+    }
+
+    @Test
+    fun aMemoryShortageKeepsTheFileAndTryAgainAsksForThePasswordAgain() = runTest(dispatcher) {
+        val h = harness(decrypt = Outcome.Failure(BackupError.InsufficientMemory))
+        reviewReached(h)
+        assertEquals(RestorePhase.Failed(RestoreProblem.InsufficientMemory), h.vm.phase())
+        assertEquals(0, h.file.discards, "the backup file is kept for a retry")
+
+        h.vm.onIntent(RestoreIntent.RetryAfterMemory)
+        settle()
+        assertEquals(RestorePhase.Password, h.vm.phase())
+        assertEquals("", h.vm.state.value.password)
+
+        h.vm.typePassword("correct horse battery")
+        h.vm.onIntent(RestoreIntent.SubmitPassword)
+        settle()
+        assertEquals(2, h.decryptor.passwords.size)
+        assertEquals(RestorePhase.Failed(RestoreProblem.InsufficientMemory), h.vm.phase())
+
+        h.vm.onIntent(RestoreIntent.Close)
+        settle()
+        assertEquals(1, h.file.discards, "cancelling the restore drops the staged file")
+    }
+
+    @Test
+    fun aStandardBackupShortageAddsTheOtherDeviceAdvice() = runTest(dispatcher) {
+        val h = harness(
+            decrypt = Outcome.Failure(BackupError.InsufficientMemory),
+            content = headerWithMemory(65536),
+        )
+        reviewReached(h)
+        assertEquals(RestorePhase.Failed(RestoreProblem.InsufficientMemoryStandard), h.vm.phase())
+    }
+
+    @Test
+    fun aLowMemoryBackupShortageHasNoOtherDeviceAdvice() = runTest(dispatcher) {
+        val h = harness(
+            decrypt = Outcome.Failure(BackupError.InsufficientMemory),
+            content = headerWithMemory(BackupFormat.LOW_MEMORY_KIB),
+        )
+        reviewReached(h)
+        assertEquals(RestorePhase.Failed(RestoreProblem.InsufficientMemory), h.vm.phase())
     }
 }

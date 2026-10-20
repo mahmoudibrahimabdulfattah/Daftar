@@ -5,9 +5,13 @@ import kotlin.time.Duration
 import kotlin.time.Duration.Companion.milliseconds
 
 /**
- * Chooses the Argon2id pass count at enrollment. Memory stays at the 64 MiB baseline, and the pass count is the
- * largest value in 3..6 whose measured derivation time stays at or under [TARGET_MAX]. Passes never drop below the
+ * Chooses the Argon2id pass count at enrollment. Memory stays at the 64 MiB Standard baseline, and the pass count is
+ * the largest value in 3..6 whose measured derivation time stays at or under [TARGET_MAX]. Passes never drop below the
  * baseline of 3, even on a slow device, so the result is never weaker than the baseline.
+ *
+ * An allocation failure ([SecurityError.InsufficientMemory]) on the first step, pass count 3, is returned so the caller
+ * can fall back to LowMemory. A failure on a later step stops calibration and keeps the largest pass count that already
+ * succeeded at 64 MiB, so a device that could run Standard once never drops to LowMemory.
  */
 internal class KdfCalibrator(
     private val kdf: PinKdf,
@@ -20,7 +24,11 @@ internal class KdfCalibrator(
         var selected = KdfPolicy.MIN_PASSES
         for (passes in KdfPolicy.MIN_PASSES..KdfPolicy.MAX_PASSES) {
             val elapsed = when (val measured = measure(dummyPin, salt, passes)) {
-                is Outcome.Failure -> return Outcome.Failure(measured.error)
+                is Outcome.Failure -> {
+                    if (measured.error == SecurityError.InsufficientMemory && passes > KdfPolicy.MIN_PASSES) break
+                    return Outcome.Failure(measured.error)
+                }
+
                 is Outcome.Success -> measured.data
             }
             if (elapsed > TARGET_MAX) break

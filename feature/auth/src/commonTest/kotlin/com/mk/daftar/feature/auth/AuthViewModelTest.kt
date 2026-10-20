@@ -983,4 +983,134 @@ class AuthViewModelTest {
         assertFalse(vm.state.value.recovering)
         assertFalse(vm.state.value.biometricAutoPending, "returning from recovery never prompts by itself")
     }
+
+    @Test
+    fun createMemoryFailureKeepsTheCandidateAndRetriesTheSameCreate() = runTest(dispatcher) {
+        val gateway = FakeGateway()
+        gateway.status = SecurityStatus.NotInitialized
+        gateway.onCreate =
+            {
+                if (gateway.createCalls ==
+                    1
+                ) {
+                    AuthResult.Security(SecurityError.InsufficientMemory)
+                } else {
+                    AuthResult.Opened
+                }
+            }
+        val (vm, _) = rig(gateway)
+        advanceUntilIdle()
+        vm.type("123456")
+        vm.onIntent(AuthIntent.Submit)
+        advanceUntilIdle()
+        vm.type("123456")
+        vm.onIntent(AuthIntent.Submit)
+        advanceUntilIdle()
+        vm.onIntent(AuthIntent.SkipBiometrics)
+        advanceUntilIdle()
+
+        assertEquals(AuthError.InsufficientMemoryCreate, vm.state.value.error)
+        assertEquals(AuthPhase.Biometric, vm.state.value.phase)
+        assertNull(vm.state.value.busy)
+        assertEquals(1, gateway.createCalls)
+
+        vm.onIntent(AuthIntent.RetryAfterMemory)
+        advanceUntilIdle()
+        assertEquals(2, gateway.createCalls)
+        assertEquals(listOf("123456", "123456"), gateway.pins)
+        assertNull(vm.state.value.error)
+    }
+
+    @Test
+    fun cancelAfterCreateMemoryFailureCreatesNothingAndKeepsTheScreen() = runTest(dispatcher) {
+        val gateway = FakeGateway()
+        gateway.status = SecurityStatus.NotInitialized
+        gateway.onCreate = { AuthResult.Security(SecurityError.InsufficientMemory) }
+        val (vm, _) = rig(gateway)
+        advanceUntilIdle()
+        vm.type("123456")
+        vm.onIntent(AuthIntent.Submit)
+        advanceUntilIdle()
+        vm.type("123456")
+        vm.onIntent(AuthIntent.Submit)
+        advanceUntilIdle()
+        vm.onIntent(AuthIntent.SkipBiometrics)
+        advanceUntilIdle()
+
+        vm.onIntent(AuthIntent.CancelAfterMemory)
+        advanceUntilIdle()
+        assertNull(vm.state.value.error)
+        assertEquals(AuthPhase.Biometric, vm.state.value.phase)
+        assertEquals(1, gateway.createCalls)
+        vm.onIntent(AuthIntent.RetryAfterMemory)
+        advanceUntilIdle()
+        assertEquals(1, gateway.createCalls)
+    }
+
+    @Test
+    fun unlockMemoryFailureIsNotAWrongPinAndRetryReusesTheDigits() = runTest(dispatcher) {
+        val gateway = FakeGateway()
+        gateway.status = SecurityStatus.Locked(null)
+        gateway.onUnlock =
+            {
+                if (gateway.unlockCalls ==
+                    1
+                ) {
+                    AuthResult.Security(SecurityError.InsufficientMemory)
+                } else {
+                    AuthResult.Opened
+                }
+            }
+        val (vm, _) = rig(gateway)
+        advanceUntilIdle()
+        vm.type("123456")
+        vm.onIntent(AuthIntent.Submit)
+        advanceUntilIdle()
+
+        assertEquals(AuthError.InsufficientMemoryUnlock, vm.state.value.error)
+        assertEquals(AuthPhase.Unlock, vm.state.value.phase)
+        assertEquals(6, vm.state.value.enteredCount)
+        assertNull(vm.state.value.retrySeconds)
+        assertNull(vm.state.value.busy)
+
+        vm.onIntent(AuthIntent.RetryAfterMemory)
+        advanceUntilIdle()
+        assertEquals(2, gateway.unlockCalls)
+        assertEquals(listOf("123456", "123456"), gateway.pins)
+    }
+
+    @Test
+    fun cancelAfterUnlockMemoryFailureClearsTheDigits() = runTest(dispatcher) {
+        val gateway = FakeGateway()
+        gateway.status = SecurityStatus.Locked(null)
+        gateway.onUnlock = { AuthResult.Security(SecurityError.InsufficientMemory) }
+        val (vm, _) = rig(gateway)
+        advanceUntilIdle()
+        vm.type("123456")
+        vm.onIntent(AuthIntent.Submit)
+        advanceUntilIdle()
+
+        vm.onIntent(AuthIntent.CancelAfterMemory)
+        advanceUntilIdle()
+        assertNull(vm.state.value.error)
+        assertEquals(0, vm.state.value.enteredCount)
+        assertEquals(1, gateway.unlockCalls)
+    }
+
+    @Test
+    fun biometricMemoryFailureShowsTheUnlockNoticeWithoutAPinAttempt() = runTest(dispatcher) {
+        val gateway = FakeGateway()
+        gateway.status = SecurityStatus.Locked(null)
+        gateway.ready = true
+        gateway.onUnlockWithBiometrics = { AuthResult.Security(SecurityError.InsufficientMemory) }
+        val (vm, _) = rig(gateway)
+        advanceUntilIdle()
+        vm.onIntent(AuthIntent.BiometricUnlock)
+        advanceUntilIdle()
+
+        assertEquals(AuthError.InsufficientMemoryUnlock, vm.state.value.error)
+        assertEquals(0, gateway.unlockCalls)
+        assertEquals(1, gateway.biometricUnlockCalls)
+        assertNull(vm.state.value.retrySeconds)
+    }
 }

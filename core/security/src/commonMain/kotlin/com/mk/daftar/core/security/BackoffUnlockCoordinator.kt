@@ -165,6 +165,7 @@ internal class BackoffUnlockCoordinator(private val store: BackoffStore, private
     private companion object {
         val ROLLBACK_ERRORS: Set<SecurityError> = setOf(
             SecurityError.ResourceUnavailable,
+            SecurityError.InsufficientMemory,
             SecurityError.DeviceKeyUnavailable,
             SecurityError.UnsupportedHardware,
             SecurityError.CorruptState,

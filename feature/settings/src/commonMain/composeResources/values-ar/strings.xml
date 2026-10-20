@@ -138,4 +138,9 @@
     <string name="settings_recovery_off">غير مُعدّ</string>
     <string name="rk_copy">نسخ المفتاح</string>
     <string name="rk_copied">تم النسخ. الصقه حيث تحفظه بأمان؛ سيُمسح من الحافظة بعد دقيقة.</string>
+    <string name="pin_memory_title">الذاكرة المتاحة غير كافية</string>
+    <string name="pin_memory_body">تعذّر على دفتر توفير الذاكرة اللازمة لإكمال هذه العملية. أغلق التطبيقات الأخرى أو أعد تشغيل هاتفك، ثم حاول مرة أخرى.</string>
+    <string name="pin_memory_context">لم يتم تغيير رمز الدخول.</string>
+    <string name="pin_memory_try_again">إعادة المحاولة</string>
+    <string name="pin_memory_cancel">إلغاء</string>
 </resources>

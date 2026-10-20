@@ -3,6 +3,7 @@ package com.mk.daftar.feature.backup.restore
 import androidx.lifecycle.viewModelScope
 import com.mk.daftar.core.backup.BackupDecryptor
 import com.mk.daftar.core.backup.BackupError
+import com.mk.daftar.core.backup.BackupFormat
 import com.mk.daftar.core.backup.DecodedBackup
 import com.mk.daftar.core.backup.RestoreEngine
 import com.mk.daftar.core.backup.RestoreFailure
@@ -84,6 +85,8 @@ class RestoreViewModel(
 
             RestoreIntent.Acknowledge -> acknowledge()
 
+            RestoreIntent.RetryAfterMemory -> retryAfterMemory()
+
             RestoreIntent.Close -> close()
 
             RestoreIntent.PrivacyInvalidated -> invalidate()
@@ -125,8 +128,10 @@ class RestoreViewModel(
         val password = if (recoveryKey == null) currentState.password.encodeToByteArray() else ByteArray(0)
         reduce { copy(phase = RestorePhase.Decrypting, password = "", usingRecoveryKey = false) }
         work = viewModelScope.launch {
+            var standardProfile = false
             val outcome = try {
                 val bytes = file.readAll()
+                standardProfile = BackupFormat.isStandardProfile(bytes)
                 withContext(decodeDispatcher) {
                     if (recoveryKey != null) {
                         decryptor.decryptWithRecoveryKey(bytes, recoveryKey)
@@ -135,16 +140,22 @@ class RestoreViewModel(
                     }
                 }
             } catch (cancelled: CancellationException) {
+                file.discard()
+                if (ciphertext === file) ciphertext = null
                 throw cancelled
             } catch (failure: Exception) {
                 Outcome.Failure(BackupError.ResourceUnavailable)
             } finally {
                 password.fill(0)
+            }
+            // A memory shortage keeps the file, so the same backup can be retried; every other outcome discards it.
+            val memoryShortage = outcome is Outcome.Failure && outcome.error == BackupError.InsufficientMemory
+            if (!memoryShortage) {
                 file.discard()
                 if (ciphertext === file) ciphertext = null
             }
             when (outcome) {
-                is Outcome.Failure -> fail(outcome.error.toProblem())
+                is Outcome.Failure -> fail(outcome.error.toProblem(standardProfile))
 
                 is Outcome.Success -> {
                     val backup = outcome.data
@@ -153,6 +164,21 @@ class RestoreViewModel(
                 }
             }
         }
+    }
+
+    /**
+     * Returns to the password step for the same file. The password was wiped when the decryption started, so it is typed
+     * again. If the file was dropped while the notice was up, the user chooses it again.
+     */
+    private fun retryAfterMemory() {
+        val failed = currentState.phase as? RestorePhase.Failed ?: return
+        if (failed.problem != RestoreProblem.InsufficientMemory &&
+            failed.problem != RestoreProblem.InsufficientMemoryStandard
+        ) {
+            return
+        }
+        val nextPhase = if (ciphertext == null) RestorePhase.ChooseFile else RestorePhase.Password
+        reduce { copy(phase = nextPhase, password = "") }
     }
 
     private fun continueToPin() {
@@ -392,9 +418,18 @@ private fun DecodedBackup.summary(): RestoreSummary = RestoreSummary(
     manualQuotes = snapshot.manualQuotes.size,
 )
 
-/** A decryption or file failure, in the screen's terms. Wrong password and damage share one answer. */
-internal fun BackupError.toProblem(): RestoreProblem = when (this) {
+/**
+ * A decryption or file failure, in the screen's terms. Wrong password and damage share one answer. [standardProfile] is
+ * true when the file was written with the Standard profile, which decides the extra advice for a memory shortage.
+ */
+internal fun BackupError.toProblem(standardProfile: Boolean = false): RestoreProblem = when (this) {
     BackupError.UnsupportedFormat -> RestoreProblem.NewerFormat
+
+    BackupError.InsufficientMemory -> if (standardProfile) {
+        RestoreProblem.InsufficientMemoryStandard
+    } else {
+        RestoreProblem.InsufficientMemory
+    }
 
     BackupError.AuthenticationFailed,
     BackupError.NotABackup,
@@ -413,4 +448,5 @@ internal fun BackupError.toProblem(): RestoreProblem = when (this) {
 internal fun RestoreFailure.toProblem(): RestoreProblem = when (this) {
     RestoreFailure.Staging, RestoreFailure.Verification, RestoreFailure.NotReplaced -> RestoreProblem.NotReplaced
     RestoreFailure.RecoveryRequired -> RestoreProblem.RecoveryRequired
+    RestoreFailure.InsufficientMemory -> RestoreProblem.InsufficientMemory
 }

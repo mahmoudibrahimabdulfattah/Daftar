@@ -38,6 +38,14 @@ internal object Libsodium {
 }
 
 /**
+ * Serializes every memory-hungry Argon2id derivation in the process, PIN and backup alike, so two 64 MiB
+ * derivations never run at once on a low-memory device.
+ */
+internal object KdfGate {
+    val mutex = Mutex()
+}
+
+/**
  * Argon2id v1.3 through libsodium's `crypto_pwhash`, pinned to the ARGON2ID13 algorithm and never the algorithm
  * default. The derivation runs on [dispatcher], off the caller's thread.
  *
@@ -57,29 +65,31 @@ internal class LibsodiumPinKdf(private val dispatcher: CoroutineDispatcher = Dis
             is Outcome.Failure -> return Outcome.Failure(ready.error)
             is Outcome.Success -> Unit
         }
-        return withContext(dispatcher) {
-            val password = pin.decodeToString()
-            val saltUnsigned = salt.toUnsigned()
-            try {
-                val output = PasswordHash.pwhash(
-                    KdfPolicy.OUTPUT_BYTES,
-                    password,
-                    saltUnsigned,
-                    params.passes.toULong(),
-                    params.memoryKiB * 1024,
-                    crypto_pwhash_argon2id_ALG_ARGON2ID13,
-                )
-                val key = output.toSigned()
-                output.fill(0u)
-                Outcome.Success(SecretBytes.owned(key))
-            } catch (failure: PasswordHashingFailed) {
-                Outcome.Failure(SecurityError.ResourceUnavailable)
-            } catch (failure: GeneralLibsodiumException) {
-                // crypto_pwhash reports -1 when the device cannot allocate the Argon2id memory. It is a resource
-                // failure the caller reports, never a crash.
-                Outcome.Failure(SecurityError.ResourceUnavailable)
-            } finally {
-                saltUnsigned.fill(0u)
+        return KdfGate.mutex.withLock {
+            withContext(dispatcher) {
+                val password = pin.decodeToString()
+                val saltUnsigned = salt.toUnsigned()
+                try {
+                    val output = PasswordHash.pwhash(
+                        KdfPolicy.OUTPUT_BYTES,
+                        password,
+                        saltUnsigned,
+                        params.passes.toULong(),
+                        params.memoryKiB * 1024,
+                        crypto_pwhash_argon2id_ALG_ARGON2ID13,
+                    )
+                    val key = output.toSigned()
+                    output.fill(0u)
+                    Outcome.Success(SecretBytes.owned(key))
+                } catch (failure: PasswordHashingFailed) {
+                    Outcome.Failure(SecurityError.ResourceUnavailable)
+                } catch (failure: GeneralLibsodiumException) {
+                    // The binding throws this for crypto_pwhash's -1 only. Parameters were validated above, so -1 here
+                    // means Argon2id could not allocate its memory. It is never a wrong credential.
+                    Outcome.Failure(SecurityError.InsufficientMemory)
+                } finally {
+                    saltUnsigned.fill(0u)
+                }
             }
         }
     }

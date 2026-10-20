@@ -53,6 +53,9 @@ sealed interface ExportIntent : UiIntent {
 
     /** Leaves a finished export, or clears a failure so a new location can be chosen. */
     data object Acknowledge : ExportIntent
+
+    /** "Try again" after a memory shortage: returns to the password step, since the password was wiped at start. */
+    data object RetryAfterMemory : ExportIntent
 }
 
 sealed interface ExportEffect : UiEffect {

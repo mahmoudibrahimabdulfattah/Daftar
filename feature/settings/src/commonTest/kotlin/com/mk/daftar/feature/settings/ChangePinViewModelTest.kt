@@ -244,4 +244,24 @@ class ChangePinViewModelTest {
         drafts.invalidateAll()
         assertEquals(0, vm.state.value.enteredCount)
     }
+
+    @Test
+    fun aMemoryShortageAtTheCommitLeavesThePinUnchangedAndRestartsFromTheCurrentPin() = runTest(dispatcher) {
+        val gateway = FakeSettingsGateway()
+        gateway.onChange = { _, _ -> Outcome.Failure(SecurityActionFailure.InsufficientMemory) }
+        val vm = rig(gateway)
+        advanceUntilIdle()
+        completeSteps(vm, current = "123456", new = "654321")
+        advanceUntilIdle()
+
+        assertEquals(ChangePinStage.MemoryUnavailable, vm.state.value.stage)
+        assertFalse(vm.state.value.busy)
+        assertNull(vm.state.value.failure)
+
+        gateway.onChange = { _, _ -> Outcome.Success(Unit) }
+        vm.onIntent(ChangePinIntent.Restart)
+        advanceUntilIdle()
+        assertEquals(ChangePinStage.Verify, vm.state.value.stage)
+        assertEquals(0, vm.state.value.enteredCount)
+    }
 }

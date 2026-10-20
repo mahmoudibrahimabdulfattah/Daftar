@@ -141,4 +141,11 @@
     <string name="restore_use_password">استخدام كلمة سر النسخة</string>
     <string name="restore_recovery_label">مفتاح الاسترداد</string>
     <string name="restore_recovery_note">يفتح المفتاح النسخ التي أُنشئت بعد إعداده فقط.</string>
+    <string name="backup_memory_title">الذاكرة المتاحة غير كافية</string>
+    <string name="backup_memory_body">تعذّر على دفتر توفير الذاكرة اللازمة لإكمال هذه العملية. أغلق التطبيقات الأخرى أو أعد تشغيل هاتفك، ثم حاول مرة أخرى.</string>
+    <string name="backup_memory_export">لم يتم حفظ نسخة احتياطية جديدة. لم تتغير بياناتك أو نسخك الاحتياطية الحالية.</string>
+    <string name="backup_memory_restore">لم تتم استعادة النسخة الاحتياطية. لم تتغير بياناتك الحالية أو ملف النسخة الاحتياطية.</string>
+    <string name="backup_memory_restore_standard">تحتاج هذه النسخة الاحتياطية إلى ذاكرة أكبر. إذا فشلت إعادة المحاولة، فاستعدها على جهاز آخر تتوفر فيه ذاكرة كافية.</string>
+    <string name="backup_memory_try_again">إعادة المحاولة</string>
+    <string name="backup_memory_cancel">إلغاء</string>
 </resources>

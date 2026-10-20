@@ -135,4 +135,9 @@
     <string name="settings_recovery_off">Not set up</string>
     <string name="rk_copy">Copy the key</string>
     <string name="rk_copied">Copied. Paste it where you keep it safe; it is cleared from the clipboard in a minute.</string>
+    <string name="pin_memory_title">Not enough memory</string>
+    <string name="pin_memory_body">Daftar couldn’t allocate the memory needed to complete this operation. Close other apps or restart your phone, then try again.</string>
+    <string name="pin_memory_context">Your PIN has not been changed.</string>
+    <string name="pin_memory_try_again">Try again</string>
+    <string name="pin_memory_cancel">Cancel</string>
 </resources>

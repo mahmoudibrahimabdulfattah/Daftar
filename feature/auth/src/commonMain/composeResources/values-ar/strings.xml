@@ -79,4 +79,10 @@
     <string name="auth_busy_recovering">جارٍ استرداد دفترك…</string>
     <string name="auth_recovery_key_offer_heading">استرد دفترك</string>
     <string name="auth_recovery_key_offer_body">استخدم مفتاح الاسترداد الذي كتبته لتختار رمزًا جديدًا، وتبقى بياناتك كما هي.</string>
+    <string name="auth_memory_title">الذاكرة المتاحة غير كافية</string>
+    <string name="auth_memory_body">تعذّر على دفتر توفير الذاكرة اللازمة لإكمال هذه العملية. أغلق التطبيقات الأخرى أو أعد تشغيل هاتفك، ثم حاول مرة أخرى.</string>
+    <string name="auth_memory_create">لم يتم إنشاء خزنتك.</string>
+    <string name="auth_memory_unlock">ما زالت خزنتك مقفلة. لم تتغير بياناتك.</string>
+    <string name="auth_memory_try_again">إعادة المحاولة</string>
+    <string name="auth_memory_cancel">إلغاء</string>
 </resources>

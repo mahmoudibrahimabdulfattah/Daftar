@@ -1,6 +1,7 @@
 package com.mk.daftar.feature.backup
 
 import androidx.lifecycle.viewModelScope
+import com.mk.daftar.core.backup.BackupError
 import com.mk.daftar.core.backup.BackupExportController
 import com.mk.daftar.core.backup.BackupExportState
 import com.mk.daftar.core.backup.BackupPasswordPolicy
@@ -53,7 +54,20 @@ class ExportViewModel(private val controller: BackupExportController) :
                 controller.acknowledge()
                 if (finished is BackupExportState.Complete) emitEffect(ExportEffect.Close)
             }
+
+            ExportIntent.RetryAfterMemory -> retryAfterMemory()
         }
+    }
+
+    /**
+     * The controller wiped the password when the export started, so a retry asks for it again. Nothing was written, so
+     * the password step opens empty and the earlier failure is cleared.
+     */
+    private fun retryAfterMemory() {
+        val operation = currentState.operation
+        if (operation !is BackupExportState.Failed || operation.error != BackupError.InsufficientMemory) return
+        controller.acknowledge()
+        reduce { copy(step = ExportStep.PASSWORD, password = "", confirm = "", submitAttempted = false) }
     }
 
     private fun submit() {

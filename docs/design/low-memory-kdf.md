@@ -21,6 +21,11 @@ Incident: release 1.0.0 (1) crashed on a Samsung Galaxy A10s (2 GB RAM, Android 
    - **PIN change:** retain the existing exact parameters, including legacy passes. No automatic upgrade or downgrade. Commit the replacement envelope atomically after success.
    - Serialize memory-intensive KDF operations. No retry loops or fallback for wrong credentials, authentication failures or invalid parameters.
 
+   **Standard in practice.** Standard is the existing calibrated 64 MiB profile: creation keeps the calibrator's pass count
+   (3 to 6, the largest that stays within its time budget). LowMemory is used only after an allocation failure: when the
+   first 64 MiB derivation (pass 3) fails, the vault is created once with LowMemory. When a later calibration step fails
+   after pass 3 succeeded, the largest successful Standard pass count is kept rather than dropping to LowMemory.
+
 3. **Backups**
 
    Header storage alone does **not** establish that the current reader honours its parameters; that remains unverified from this brief.

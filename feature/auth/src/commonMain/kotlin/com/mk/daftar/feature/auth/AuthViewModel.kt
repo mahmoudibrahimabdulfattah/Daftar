@@ -52,6 +52,12 @@ class AuthViewModel(
     private var pinnedUnavailable: AuthUnavailableReason? = null
 
     /**
+     * The operation that a memory shortage interrupted. It is re-run only by "Try again", with the candidate or the entry
+     * the screen still holds. Nothing is retried on its own.
+     */
+    private var memoryRetry: (() -> Unit)? = null
+
+    /**
      * Whether the vault opened since this screen last showed a lock. This view model outlives each session, so after a
      * successful unlock its phase can still read Unlock; the next lock is nevertheless a new episode.
      */
@@ -75,6 +81,8 @@ class AuthViewModel(
             AuthIntent.Submit -> submit()
             AuthIntent.Back -> back()
             AuthIntent.RestartCreation -> restartCreation()
+            AuthIntent.RetryAfterMemory -> retryAfterMemory()
+            AuthIntent.CancelAfterMemory -> cancelAfterMemory()
             AuthIntent.EnableBiometrics -> enableBiometrics()
             AuthIntent.SkipBiometrics -> createVault()
             AuthIntent.BiometricUnlock -> biometricUnlock()
@@ -222,9 +230,16 @@ class AuthViewModel(
         run(AuthBusy.Creating) {
             val result = try {
                 gateway.create(pin)
-            } finally {
+            } catch (failure: Throwable) {
                 pin.wipe()
+                throw failure
             }
+            if (result is AuthResult.Security && result.error == SecurityError.InsufficientMemory) {
+                // Nothing was created, so the candidate stays for "Try again".
+                candidate = pin
+                return@run memoryUnavailable(AuthError.InsufficientMemoryCreate) { createVault() }
+            }
+            pin.wipe()
             coroutineContext.ensureActive()
             when (result) {
                 AuthResult.Opened -> {
@@ -255,9 +270,15 @@ class AuthViewModel(
         run(AuthBusy.Enrolling) {
             val result = try {
                 gateway.createWithBiometrics(pin)
-            } finally {
+            } catch (failure: Throwable) {
                 pin.wipe()
+                throw failure
             }
+            if (result is AuthResult.Security && result.error == SecurityError.InsufficientMemory) {
+                candidate = pin
+                return@run memoryUnavailable(AuthError.InsufficientMemoryCreate) { enableBiometrics() }
+            }
+            pin.wipe()
             coroutineContext.ensureActive()
             when (result) {
                 AuthResult.Opened -> {
@@ -286,9 +307,16 @@ class AuthViewModel(
         run(AuthBusy.Unlocking) {
             val result = try {
                 gateway.unlock(pin)
-            } finally {
+            } catch (failure: Throwable) {
                 pin.wipe()
+                throw failure
             }
+            // The entry is kept, so "Try again" submits the same digits. An allocation failure never counts as a PIN.
+            if (result is AuthResult.Security && result.error == SecurityError.InsufficientMemory) {
+                pin.wipe()
+                return@run memoryUnavailable(AuthError.InsufficientMemoryUnlock) { unlock() }
+            }
+            pin.wipe()
             coroutineContext.ensureActive()
             when (result) {
                 AuthResult.Opened -> {
@@ -375,7 +403,11 @@ class AuthViewModel(
 
                 is AuthResult.Biometric -> afterBiometricFailure(result.reason)
 
-                is AuthResult.Security -> afterFailedOpen(result.error, AuthError.OpenFailed)
+                is AuthResult.Security -> if (result.error == SecurityError.InsufficientMemory) {
+                    memoryUnavailable(AuthError.InsufficientMemoryUnlock) { biometricUnlock() }
+                } else {
+                    afterFailedOpen(result.error, AuthError.OpenFailed)
+                }
 
                 is AuthResult.Storage -> {
                     entry.clear()
@@ -403,6 +435,34 @@ class AuthViewModel(
             AuthBiometricFailure.EnrollmentChanged,
             AuthBiometricFailure.StorageFailure,
             -> refreshNow(notice = AuthNotice.BiometricsUnavailable)
+        }
+    }
+
+    /**
+     * An allocation failure: the screen stays with its input, shows the memory notice, and waits for the user. Nothing is
+     * counted against the PIN and the vault is not changed.
+     */
+    private fun memoryUnavailable(error: AuthError, retry: () -> Unit) {
+        memoryRetry = retry
+        reduce { copy(error = error) }
+    }
+
+    private fun retryAfterMemory() {
+        if (currentState.busy != null || currentState.error !in MEMORY_ERRORS) return
+        val retry = memoryRetry ?: return
+        memoryRetry = null
+        reduce { copy(error = null) }
+        retry()
+    }
+
+    private fun cancelAfterMemory() {
+        if (currentState.busy != null || currentState.error !in MEMORY_ERRORS) return
+        memoryRetry = null
+        if (currentState.phase == AuthPhase.Unlock) {
+            entry.clear()
+            reduce { copy(error = null, enteredCount = 0) }
+        } else {
+            reduce { copy(error = null) }
         }
     }
 
@@ -488,9 +548,16 @@ class AuthViewModel(
         run(AuthBusy.Recovering) {
             val result = try {
                 gateway.recover(key, pin)
-            } finally {
+            } catch (failure: Throwable) {
                 pin.wipe()
+                throw failure
             }
+            if (result is AuthResult.Security && result.error == SecurityError.InsufficientMemory) {
+                // The recovery key and the candidate stay for "Try again"; the vault remains locked.
+                candidate = pin
+                return@run memoryUnavailable(AuthError.InsufficientMemoryUnlock) { recoverVault() }
+            }
+            pin.wipe()
             coroutineContext.ensureActive()
             when {
                 result == AuthResult.Opened -> {
@@ -707,6 +774,9 @@ class AuthViewModel(
     }
 
     private companion object {
+        val MEMORY_ERRORS: Set<AuthError> =
+            setOf(AuthError.InsufficientMemoryCreate, AuthError.InsufficientMemoryUnlock)
+
         val ONE_SECOND: Duration = 1000.milliseconds
 
         fun ceilSeconds(remaining: Duration): Int = ((remaining.inWholeMilliseconds + 999) / 1000).toInt()

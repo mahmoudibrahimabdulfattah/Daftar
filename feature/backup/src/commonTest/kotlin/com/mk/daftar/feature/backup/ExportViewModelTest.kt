@@ -89,7 +89,7 @@ class ExportViewModelTest {
         override suspend fun discard(destination: PickedDestination) = Unit
     }
 
-    private class FakeEncryptor : BackupEncryptor {
+    private class FakeEncryptor(var failure: BackupError? = null) : BackupEncryptor {
         var calls = 0
         var seenPassword: ByteArray? = null
 
@@ -102,6 +102,7 @@ class ExportViewModelTest {
             calls++
             seenPassword = password.copyOf()
             password.fill(0)
+            failure?.let { return Outcome.Failure(it) }
             return Outcome.Success(ByteArray(120))
         }
     }
@@ -140,8 +141,8 @@ class ExportViewModelTest {
     private fun harness(
         source: BackupSnapshotSource = FakeSource(),
         documents: BackupDocuments = FakeDocuments(),
+        encryptor: FakeEncryptor = FakeEncryptor(),
     ): Harness {
-        val encryptor = FakeEncryptor()
         val staging = FakeStaging()
         val controller = BackupExportController(
             source = source,
@@ -331,5 +332,42 @@ class ExportViewModelTest {
         fresh.onIntent(ExportIntent.Acknowledge)
         settle()
         assertEquals(BackupExportState.Idle, h.controller.state.value)
+    }
+
+    @Test
+    fun memoryShortageKeepsTheScreenAndTryAgainReturnsToAnEmptyPasswordStep() {
+        val encryptor = FakeEncryptor(failure = BackupError.InsufficientMemory)
+        val h = harness(encryptor = encryptor)
+        h.viewModel.enterPassword(strong)
+        h.viewModel.onIntent(ExportIntent.Submit)
+        settle()
+        assertEquals(BackupExportState.Failed(BackupError.InsufficientMemory), h.viewModel.state.value.operation)
+        assertTrue(h.staging.staged == 0, "nothing was staged, so nothing is written")
+
+        encryptor.failure = null
+        h.viewModel.onIntent(ExportIntent.RetryAfterMemory)
+        settle()
+        assertEquals(BackupExportState.Idle, h.viewModel.state.value.operation)
+        assertEquals(ExportStep.PASSWORD, h.viewModel.state.value.step)
+        assertEquals("", h.viewModel.state.value.password)
+        assertTrue(h.effects.isEmpty())
+
+        h.viewModel.enterPassword(strong)
+        h.viewModel.onIntent(ExportIntent.Submit)
+        settle()
+        assertEquals(2, encryptor.calls)
+        assertEquals(BackupExportState.Complete(exportFileName), h.viewModel.state.value.operation)
+    }
+
+    @Test
+    fun cancellingAMemoryShortageLeavesTheExport() {
+        val h = harness(encryptor = FakeEncryptor(failure = BackupError.InsufficientMemory))
+        h.viewModel.enterPassword(strong)
+        h.viewModel.onIntent(ExportIntent.Submit)
+        settle()
+        h.viewModel.onIntent(ExportIntent.Back)
+        settle()
+        assertEquals(BackupExportState.Idle, h.viewModel.state.value.operation)
+        assertEquals(listOf<ExportEffect>(ExportEffect.Close), h.effects)
     }
 }

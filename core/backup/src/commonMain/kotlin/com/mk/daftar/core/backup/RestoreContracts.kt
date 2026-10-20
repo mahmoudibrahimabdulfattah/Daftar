@@ -46,6 +46,9 @@ enum class RestoreFailure {
 
     /** The replacement may have taken effect. The next start selects one complete vault and finishes the work. */
     RecoveryRequired,
+
+    /** Argon2id could not allocate memory for the new vault. The original vault and the backup file are unchanged. */
+    InsufficientMemory,
 }
 
 /**

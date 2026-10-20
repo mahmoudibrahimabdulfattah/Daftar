@@ -343,22 +343,21 @@ internal class DefaultVaultSecurity(
             is Outcome.Failure -> return Outcome.Failure(prepared.error)
             is Outcome.Success -> Unit
         }
-        val passes = when (val selected = KdfCalibrator(kdf, clock, random).selectPasses()) {
-            is Outcome.Failure -> return Outcome.Failure(selected.error)
+        // Standard is the calibrated 64 MiB profile. A null pass count means even pass 3 could not allocate 64 MiB.
+        val standardPasses = when (val selected = KdfCalibrator(kdf, clock, random).selectPasses()) {
+            is Outcome.Failure -> if (selected.error == SecurityError.InsufficientMemory) {
+                null
+            } else {
+                return Outcome.Failure(selected.error)
+            }
+
             is Outcome.Success -> selected.data
         }
         val vaultId = random.bytes(EnvelopeCodec.ID_BYTES)
-        val header = EnvelopeHeader(
-            generation = 1L,
-            vaultId = vaultId,
-            dekId = random.bytes(EnvelopeCodec.ID_BYTES),
-            kdf = KdfParams(KdfPolicy.MEMORY_KIB, passes, KdfPolicy.LANES),
-            salt = random.bytes(KdfPolicy.SALT_BYTES),
-        )
-        val nonce = random.bytes(EnvelopeCodec.NONCE_BYTES)
+        val dekId = random.bytes(EnvelopeCodec.ID_BYTES)
         val dek = SecretBytes.owned(random.bytes(KEY_BYTES))
-        val sealed = pin.use { pinBytes -> dek.use { dekBytes -> sealEnvelope(pinBytes, header, nonce, dekBytes) } }
-        val envelope = when (sealed) {
+        val sealed = sealNewEnvelope(pin, dek, vaultId, dekId, standardPasses)
+        val (header, envelope) = when (sealed) {
             is Outcome.Failure -> {
                 dek.wipe()
                 return Outcome.Failure(sealed.error)
@@ -387,6 +386,47 @@ internal class DefaultVaultSecurity(
             }
         }
         return publish(dek, sessionMutex.withLock { sessionGeneration }, UnlockProof.Pin)
+    }
+
+    /**
+     * Seals a new vault's envelope with Standard at [standardPasses], or LowMemory when Standard is unavailable. A Standard
+     * allocation failure during sealing falls back to LowMemory once. Only a complete, proved envelope is returned, so
+     * nothing is persisted from a failed attempt.
+     */
+    private suspend fun sealNewEnvelope(
+        pin: SecretBytes,
+        dek: SecretBytes,
+        vaultId: ByteArray,
+        dekId: ByteArray,
+        standardPasses: Int?,
+    ): Outcome<Pair<EnvelopeHeader, ByteArray>, SecurityError> {
+        val lowMemory = KdfParams(KdfPolicy.LOW_MEMORY_KIB, KdfPolicy.LOW_MEMORY_PASSES, KdfPolicy.LANES)
+        val candidates = if (standardPasses == null) {
+            listOf(lowMemory)
+        } else {
+            listOf(KdfParams(KdfPolicy.MEMORY_KIB, standardPasses, KdfPolicy.LANES), lowMemory)
+        }
+        var last: Outcome<Pair<EnvelopeHeader, ByteArray>, SecurityError> = Outcome.Failure(
+            SecurityError.InsufficientMemory,
+        )
+        for (params in candidates) {
+            val header = EnvelopeHeader(
+                generation = 1L,
+                vaultId = vaultId,
+                dekId = dekId,
+                kdf = params,
+                salt = random.bytes(KdfPolicy.SALT_BYTES),
+            )
+            val nonce = random.bytes(EnvelopeCodec.NONCE_BYTES)
+            val sealed = pin.use { pinBytes -> dek.use { dekBytes -> sealEnvelope(pinBytes, header, nonce, dekBytes) } }
+            last = when (sealed) {
+                is Outcome.Failure -> Outcome.Failure(sealed.error)
+                is Outcome.Success -> Outcome.Success(header to sealed.data)
+            }
+            if (last is Outcome.Success) return last
+            if ((last as Outcome.Failure).error != SecurityError.InsufficientMemory) return last
+        }
+        return last
     }
 
     /**

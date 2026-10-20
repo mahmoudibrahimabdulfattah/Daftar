@@ -31,7 +31,9 @@ fun pinMessageFor(state: AuthUiState): PinMessage? {
         return null
     }
     state.retrySeconds?.let { return PinMessage.Backoff(it) }
-    state.error?.let { return PinMessage.Failure(it) }
+    // A memory shortage has its own notice on the screen, so it never takes the message lane.
+    state.error?.takeIf { it != AuthError.InsufficientMemoryCreate && it != AuthError.InsufficientMemoryUnlock }
+        ?.let { return PinMessage.Failure(it) }
     when (state.busy) {
         AuthBusy.Creating, AuthBusy.Unlocking, AuthBusy.Recovering -> return PinMessage.Busy(state.busy)
         AuthBusy.Enrolling, AuthBusy.UnlockingBiometric, null -> Unit

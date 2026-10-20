@@ -56,6 +56,11 @@ import com.mk.daftar.feature.backup.resources.backup_failed_write
 import com.mk.daftar.feature.backup.resources.backup_intro_continue
 import com.mk.daftar.feature.backup.resources.backup_intro_heading
 import com.mk.daftar.feature.backup.resources.backup_intro_message
+import com.mk.daftar.feature.backup.resources.backup_memory_body
+import com.mk.daftar.feature.backup.resources.backup_memory_cancel
+import com.mk.daftar.feature.backup.resources.backup_memory_export
+import com.mk.daftar.feature.backup.resources.backup_memory_title
+import com.mk.daftar.feature.backup.resources.backup_memory_try_again
 import com.mk.daftar.feature.backup.resources.backup_password_heading
 import com.mk.daftar.feature.backup.resources.backup_password_hint
 import com.mk.daftar.feature.backup.resources.backup_password_invalid
@@ -259,6 +264,20 @@ private fun BusyBody(heading: String, message: String) {
 
 @Composable
 private fun FailedBody(error: BackupError, onIntent: (ExportIntent) -> Unit) {
+    if (error == BackupError.InsufficientMemory) {
+        // Nothing was saved and the data is unchanged: the notice offers the same export again or cancels it.
+        DaftarResultState(
+            title = stringResource(Res.string.backup_memory_title),
+            message = stringResource(Res.string.backup_memory_body) + "\n" +
+                stringResource(Res.string.backup_memory_export),
+            primaryLabel = stringResource(Res.string.backup_memory_try_again),
+            onPrimary = { onIntent(ExportIntent.RetryAfterMemory) },
+            tone = DaftarResultTone.Error,
+            secondaryLabel = stringResource(Res.string.backup_memory_cancel),
+            onSecondary = { onIntent(ExportIntent.Back) },
+        )
+        return
+    }
     val reason = if (error == BackupError.WriteFailed) {
         stringResource(Res.string.backup_failed_write)
     } else {

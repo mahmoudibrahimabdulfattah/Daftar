@@ -75,6 +75,9 @@ sealed interface SecurityActionFailure {
     /** Security state could not be written. The previous state stays in effect. */
     data object StorageFailure : SecurityActionFailure
 
+    /** Argon2id could not allocate its memory. Nothing changed, and it never counts as a wrong PIN. */
+    data object InsufficientMemory : SecurityActionFailure
+
     /** The vault locked while the action was in flight. Nothing new was committed. */
     data object SessionEnded : SecurityActionFailure
 
@@ -179,6 +182,9 @@ sealed interface ChangePinStage {
      * replaced, so the old PIN is known to work.
      */
     data class Failed(val previousPinStillWorks: Boolean) : ChangePinStage
+
+    /** Argon2id could not allocate its memory. The PIN has not been changed; the screen offers a retry from step one. */
+    data object MemoryUnavailable : ChangePinStage
 }
 
 data class ChangePinUiState(

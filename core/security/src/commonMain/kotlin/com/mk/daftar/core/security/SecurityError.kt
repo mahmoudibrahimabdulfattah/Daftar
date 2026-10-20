@@ -28,6 +28,12 @@ sealed interface SecurityError {
     /** Memory or another required resource could not be obtained. */
     data object ResourceUnavailable : SecurityError
 
+    /**
+     * Argon2id could not allocate its memory (libsodium `crypto_pwhash` returned -1). Nothing was changed. It is never a
+     * wrong credential, so it never counts toward the PIN backoff.
+     */
+    data object InsufficientMemory : SecurityError
+
     /** Security state could not be written durably. The previously committed state remains in effect. */
     data object PersistenceFailure : SecurityError
 

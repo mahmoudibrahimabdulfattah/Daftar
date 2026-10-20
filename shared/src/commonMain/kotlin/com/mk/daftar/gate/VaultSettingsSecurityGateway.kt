@@ -79,6 +79,7 @@ internal fun SecurityError.toSettingsFailure(): SecurityActionFailure = when (th
     is SecurityError.Throttled -> SecurityActionFailure.Throttled(retryAfter)
     SecurityError.PersistenceFailure -> SecurityActionFailure.StorageFailure
     SecurityError.SessionSuperseded -> SecurityActionFailure.SessionEnded
+    SecurityError.InsufficientMemory -> SecurityActionFailure.InsufficientMemory
     else -> SecurityActionFailure.Failed
 }
 
