@@ -34,8 +34,8 @@ android {
     namespace = "com.mk.daftar.android"
     defaultConfig {
         applicationId = "com.mk.daftar"
-        versionCode = 1
-        versionName = "1.0.0"
+        versionCode = 2
+        versionName = "1.0.1"
         testInstrumentationRunner = "androidx.test.runner.AndroidJUnitRunner"
         // Crash reports and analytics are on in release only, so emulator and debug sessions never reach the data.
         manifestPlaceholders["crashlyticsCollectionEnabled"] = "true"

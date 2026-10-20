@@ -2,6 +2,7 @@
 
 package com.mk.daftar.core.security
 
+import com.ionspin.kotlin.crypto.GeneralLibsodiumException
 import com.ionspin.kotlin.crypto.LibsodiumInitializer
 import com.ionspin.kotlin.crypto.aead.AeadCorrupedOrTamperedDataException
 import com.ionspin.kotlin.crypto.aead.AuthenticatedEncryptionWithAssociatedData
@@ -72,6 +73,10 @@ internal class LibsodiumPinKdf(private val dispatcher: CoroutineDispatcher = Dis
                 output.fill(0u)
                 Outcome.Success(SecretBytes.owned(key))
             } catch (failure: PasswordHashingFailed) {
+                Outcome.Failure(SecurityError.ResourceUnavailable)
+            } catch (failure: GeneralLibsodiumException) {
+                // crypto_pwhash reports -1 when the device cannot allocate the Argon2id memory. It is a resource
+                // failure the caller reports, never a crash.
                 Outcome.Failure(SecurityError.ResourceUnavailable)
             } finally {
                 saltUnsigned.fill(0u)
