@@ -42,6 +42,12 @@ import com.mk.daftar.core.designsystem.theme.DaftarTheme
 import com.mk.daftar.core.ui.mvi.CollectEffects
 import com.mk.daftar.core.ui.shell.pageScroll
 import com.mk.daftar.feature.backup.resources.Res
+import com.mk.daftar.feature.backup.resources.backup_memory_body
+import com.mk.daftar.feature.backup.resources.backup_memory_cancel
+import com.mk.daftar.feature.backup.resources.backup_memory_restore
+import com.mk.daftar.feature.backup.resources.backup_memory_restore_standard
+import com.mk.daftar.feature.backup.resources.backup_memory_title
+import com.mk.daftar.feature.backup.resources.backup_memory_try_again
 import com.mk.daftar.feature.backup.resources.restore_account_count
 import com.mk.daftar.feature.backup.resources.restore_bank_count
 import com.mk.daftar.feature.backup.resources.restore_cancel
@@ -422,12 +428,38 @@ private fun BusyBody(heading: String, message: String) {
 
 @Composable
 private fun FailedBody(problem: RestoreProblem, onIntent: (RestoreIntent) -> Unit) {
+    if (problem == RestoreProblem.InsufficientMemory || problem == RestoreProblem.InsufficientMemoryStandard) {
+        // Nothing was restored. The notice offers the same file again, with its password, or cancels the restore.
+        val advice = if (problem == RestoreProblem.InsufficientMemoryStandard) {
+            "\n" + stringResource(Res.string.backup_memory_restore_standard)
+        } else {
+            ""
+        }
+        DaftarResultState(
+            title = stringResource(Res.string.backup_memory_title),
+            message = stringResource(Res.string.backup_memory_body) + "\n" +
+                stringResource(Res.string.backup_memory_restore) + advice,
+            primaryLabel = stringResource(Res.string.backup_memory_try_again),
+            onPrimary = { onIntent(RestoreIntent.RetryAfterMemory) },
+            tone = DaftarResultTone.Error,
+            secondaryLabel = stringResource(Res.string.backup_memory_cancel),
+            onSecondary = { onIntent(RestoreIntent.Close) },
+        )
+        return
+    }
     val reason = when (problem) {
         RestoreProblem.Unreadable -> stringResource(Res.string.restore_failed_unreadable)
+
         RestoreProblem.NewerFormat -> stringResource(Res.string.restore_failed_newer)
+
         RestoreProblem.FileUnavailable -> stringResource(Res.string.restore_failed_file)
+
         RestoreProblem.NotReplaced -> stringResource(Res.string.restore_failed_not_replaced)
+
         RestoreProblem.RecoveryRequired -> stringResource(Res.string.restore_failed_recovery)
+
+        RestoreProblem.InsufficientMemory, RestoreProblem.InsufficientMemoryStandard ->
+            stringResource(Res.string.backup_memory_body)
     }
     val retryable = problem != RestoreProblem.RecoveryRequired
     DaftarResultState(

@@ -20,6 +20,12 @@ sealed interface BackupError {
     data object ResourceUnavailable : BackupError
 
     /**
+     * Argon2id could not allocate its memory for this profile. Nothing was written or changed. The export tries LowMemory
+     * once, so this reaches the caller only when that also failed, or when a restore cannot allocate.
+     */
+    data object InsufficientMemory : BackupError
+
+    /**
      * The file is a newer or unknown format: its version, KDF, cipher or parameters are outside this app's allowlist.
      */
     data object UnsupportedFormat : BackupError

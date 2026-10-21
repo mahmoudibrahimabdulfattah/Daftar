@@ -58,6 +58,12 @@ enum class RestoreProblem {
 
     /** The replacement may have taken effect. The next start resolves it; the screen must not claim either outcome. */
     RecoveryRequired,
+
+    /** Argon2id could not allocate its memory. The file and the current data are unchanged, and the user may retry. */
+    InsufficientMemory,
+
+    /** The same, for a Standard (64 MiB) backup: the notice also advises restoring it on a device with more memory. */
+    InsufficientMemoryStandard,
 }
 
 /** The validated facts a review shows: counts and the export date. */
@@ -138,6 +144,9 @@ sealed interface RestoreIntent : UiIntent {
 
     /** Leaves a finished restore, or clears a failure so a different file can be chosen. */
     data object Acknowledge : RestoreIntent
+
+    /** "Try again" after a memory shortage: the same file, back to its password step. */
+    data object RetryAfterMemory : RestoreIntent
 
     /** Leaves the wizard from any step that is not committing. */
     data object Close : RestoreIntent

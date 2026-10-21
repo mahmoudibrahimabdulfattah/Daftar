@@ -107,9 +107,33 @@ class PasswordCrypto internal constructor(
     }
 }
 
+/**
+ * The Argon2id step behind [PasswordCrypto]. Production uses [LibsodiumPasswordKdf]. Tests substitute it to simulate an
+ * allocation failure at chosen parameters, so the export fallback can be exercised without exhausting memory.
+ */
+fun interface PasswordKdf {
+    suspend fun derive(
+        password: ByteArray,
+        salt: ByteArray,
+        memoryKiB: Int,
+        passes: Int,
+    ): Outcome<SecretBytes, SecurityError>
+}
+
+/** The libsodium Argon2id step, with the same allowlist and allocation-failure mapping as the PIN envelope. */
+val LibsodiumPasswordKdf: PasswordKdf = PasswordKdf { password, salt, memoryKiB, passes ->
+    LibsodiumPinKdf().derive(password, salt, KdfParams(memoryKiB, passes, KdfPolicy.LANES))
+}
+
 /** A password-crypto facade backed by libsodium. Libsodium initializes on first use and is reported when it fails. */
-fun createPasswordCrypto(): PasswordCrypto = PasswordCrypto(
-    kdf = LibsodiumPinKdf(),
+fun createPasswordCrypto(kdf: PasswordKdf = LibsodiumPasswordKdf): PasswordCrypto = PasswordCrypto(
+    kdf = object : PinKdf {
+        override suspend fun derive(
+            pin: ByteArray,
+            salt: ByteArray,
+            params: KdfParams,
+        ): Outcome<SecretBytes, SecurityError> = kdf.derive(pin, salt, params.memoryKiB, params.passes)
+    },
     aead = LibsodiumAead(),
     random = LibsodiumSecureRandom(),
 )

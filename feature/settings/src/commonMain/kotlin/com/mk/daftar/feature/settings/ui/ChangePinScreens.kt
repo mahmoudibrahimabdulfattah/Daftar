@@ -20,6 +20,7 @@ import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import com.mk.daftar.core.designsystem.component.DaftarMark
+import com.mk.daftar.core.designsystem.component.DaftarNotePanel
 import com.mk.daftar.core.designsystem.component.DaftarNoteTone
 import com.mk.daftar.core.designsystem.component.DaftarTextButton
 import com.mk.daftar.core.designsystem.component.OutlineButton
@@ -46,6 +47,11 @@ import com.mk.daftar.feature.settings.resources.pin_failed_previous_heading
 import com.mk.daftar.feature.settings.resources.pin_failed_retry
 import com.mk.daftar.feature.settings.resources.pin_failed_unknown_body
 import com.mk.daftar.feature.settings.resources.pin_failed_unknown_heading
+import com.mk.daftar.feature.settings.resources.pin_memory_body
+import com.mk.daftar.feature.settings.resources.pin_memory_cancel
+import com.mk.daftar.feature.settings.resources.pin_memory_context
+import com.mk.daftar.feature.settings.resources.pin_memory_title
+import com.mk.daftar.feature.settings.resources.pin_memory_try_again
 import com.mk.daftar.feature.settings.resources.pin_mismatch
 import com.mk.daftar.feature.settings.resources.pin_new_heading
 import com.mk.daftar.feature.settings.resources.pin_new_label
@@ -101,6 +107,11 @@ fun ChangePinContent(
             ChangePinStage.ConfirmPin -> ConfirmStep(state = state, onIntent = onIntent)
 
             ChangePinStage.Saving -> SavingStep()
+
+            ChangePinStage.MemoryUnavailable -> MemoryStep(
+                onRetry = { onIntent(ChangePinIntent.Restart) },
+                onBack = onBack,
+            )
 
             is ChangePinStage.Failed -> FailedStep(
                 previousPinStillWorks = stage.previousPinStillWorks,
@@ -217,6 +228,41 @@ private fun SavingStep() {
             textAlign = TextAlign.Center,
             modifier = Modifier.fillMaxWidth(),
         )
+    }
+}
+
+/**
+ * An allocation failure during the change. The PIN has not been changed, so the notice states that and offers the same
+ * step again or a way back. Nothing is counted toward the PIN backoff.
+ */
+@Composable
+private fun MemoryStep(onRetry: () -> Unit, onBack: () -> Unit) {
+    val colors = DaftarTheme.colors
+    val typography = DaftarTheme.typography
+    Column(
+        modifier = Modifier.fillMaxWidth().padding(top = DaftarSpacing.md),
+        horizontalAlignment = Alignment.CenterHorizontally,
+        verticalArrangement = Arrangement.spacedBy(DaftarSpacing.sm),
+    ) {
+        DaftarMark(Modifier.size(PIN_MARK_SIZE), contentDescription = null)
+        Text(
+            text = stringResource(Res.string.pin_memory_title),
+            style = typography.screenHeading,
+            color = colors.ink,
+            textAlign = TextAlign.Center,
+            modifier = Modifier.fillMaxWidth().semantics { heading() },
+        )
+        DaftarNotePanel(modifier = Modifier.fillMaxWidth(), tone = DaftarNoteTone.Error, icon = DaftarIcons.Alert) {
+            Text(stringResource(Res.string.pin_memory_body), style = typography.noteBody)
+            Text(stringResource(Res.string.pin_memory_context), style = typography.noteBody)
+        }
+        Spacer(Modifier.height(DaftarSpacing.xs))
+        PrimaryButton(onClick = onRetry, fullWidth = true, modifier = Modifier.fillMaxWidth()) {
+            Text(stringResource(Res.string.pin_memory_try_again))
+        }
+        DaftarTextButton(onClick = onBack, modifier = Modifier.fillMaxWidth()) {
+            Text(stringResource(Res.string.pin_memory_cancel))
+        }
     }
 }
 

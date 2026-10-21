@@ -72,4 +72,10 @@
     <string name="auth_busy_recovering">Recovering your notebook…</string>
     <string name="auth_recovery_key_offer_heading">Recover your notebook</string>
     <string name="auth_recovery_key_offer_body">Use the recovery key you wrote down to choose a new PIN. Your data stays as it is.</string>
+    <string name="auth_memory_title">Not enough memory</string>
+    <string name="auth_memory_body">Daftar couldn’t allocate the memory needed to complete this operation. Close other apps or restart your phone, then try again.</string>
+    <string name="auth_memory_create">Your vault has not been created.</string>
+    <string name="auth_memory_unlock">Your vault remains locked. Your data is unchanged.</string>
+    <string name="auth_memory_try_again">Try again</string>
+    <string name="auth_memory_cancel">Cancel</string>
 </resources>

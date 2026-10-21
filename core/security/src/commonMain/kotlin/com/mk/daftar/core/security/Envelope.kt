@@ -2,20 +2,40 @@ package com.mk.daftar.core.security
 
 import com.mk.daftar.core.common.Outcome
 
-/** Argon2id v1.3 parameters persisted with the envelope. The allowlist is checked before any memory is allocated. */
+/**
+ * Argon2id v1.3 parameters persisted with the envelope. The allowlist is checked before any memory is allocated.
+ *
+ * Standard is the calibrated 64 MiB profile, passes 3..6, chosen at creation. LowMemory (19 MiB, passes 3) is used
+ * for a new vault only after Standard fails with an allocation failure. Both are the profiles new writes may use.
+ * Reads accept exactly the same set, so a stored envelope is never rejected for a profile this build can write.
+ */
 internal object KdfPolicy {
-    /** 64 MiB, the fixed memory cost stored in the envelope as KiB. */
+    /** 64 MiB, the Standard memory cost stored in the envelope as KiB. */
     const val MEMORY_KIB = 64 * 1024
+
+    /** 19 MiB, the LowMemory fallback used only after a Standard allocation failure. */
+    const val LOW_MEMORY_KIB = 19456
     const val MIN_PASSES = 3
     const val MAX_PASSES = 6
+    const val LOW_MEMORY_PASSES = 3
 
     /** libsodium's Argon2id implementation is single-lane. */
     const val LANES = 1
     const val SALT_BYTES = 16
     const val OUTPUT_BYTES = 32
 
-    fun allows(params: KdfParams): Boolean =
-        params.memoryKiB == MEMORY_KIB && params.passes in MIN_PASSES..MAX_PASSES && params.lanes == LANES
+    /** Profiles a new write may use: Standard 64 MiB at passes 3..6, or LowMemory at passes 3. */
+    fun allowsNewWrite(params: KdfParams): Boolean = allows(params)
+
+    /** Profiles a stored record may carry; anything else is rejected before allocating. */
+    fun allows(params: KdfParams): Boolean {
+        if (params.lanes != LANES) return false
+        return when (params.memoryKiB) {
+            MEMORY_KIB -> params.passes in MIN_PASSES..MAX_PASSES
+            LOW_MEMORY_KIB -> params.passes == LOW_MEMORY_PASSES
+            else -> false
+        }
+    }
 }
 
 internal data class KdfParams(val memoryKiB: Int, val passes: Int, val lanes: Int)

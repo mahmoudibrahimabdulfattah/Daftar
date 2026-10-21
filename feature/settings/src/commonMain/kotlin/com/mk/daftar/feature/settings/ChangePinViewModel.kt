@@ -79,7 +79,7 @@ class ChangePinViewModel(
             ChangePinStage.Verify -> verifyCurrent()
             ChangePinStage.NewPin -> chooseNew()
             ChangePinStage.ConfirmPin -> confirmNew()
-            ChangePinStage.Saving, is ChangePinStage.Failed -> Unit
+            ChangePinStage.Saving, is ChangePinStage.Failed, ChangePinStage.MemoryUnavailable -> Unit
         }
     }
 
@@ -120,6 +120,10 @@ class ChangePinViewModel(
 
             // The vault locked while the check was running. The gate takes over, so nothing is announced here.
             SecurityActionFailure.SessionEnded -> Unit
+
+            SecurityActionFailure.InsufficientMemory -> reduce {
+                copy(stage = ChangePinStage.MemoryUnavailable, failure = null)
+            }
 
             else -> reduce { copy(failure = failure) }
         }
@@ -175,6 +179,11 @@ class ChangePinViewModel(
             is Outcome.Success -> reduce { copy(busy = false) }
 
             is Outcome.Failure -> when (val failure = outcome.error) {
+                // Nothing was replaced: the previous PIN still works, and "Try again" starts from the current PIN.
+                SecurityActionFailure.InsufficientMemory -> reduce {
+                    copy(stage = ChangePinStage.MemoryUnavailable, busy = false)
+                }
+
                 // A storage failure is confirmed before the envelope was replaced, so the previous PIN still works.
                 SecurityActionFailure.StorageFailure -> reduce {
                     copy(stage = ChangePinStage.Failed(previousPinStillWorks = true), busy = false)

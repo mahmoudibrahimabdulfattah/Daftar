@@ -52,8 +52,24 @@ object BackupFormat {
 
     const val KDF_ARGON2ID13: Int = 1
     const val AEAD_XCHACHA20_POLY1305: Int = 1
+
+    /** The Standard profile: 64 MiB, three passes. Every export tries it first. */
     const val MEMORY_KIB: Int = 64 * 1024
     const val PASSES: Int = 3
+
+    /** The LowMemory profile: 19 MiB, three passes. Used for an export only after Standard cannot allocate. */
+    const val LOW_MEMORY_KIB: Int = 19456
+
+    /**
+     * Whether [file] records the Standard profile (64 MiB). False for LowMemory, for any other or unreadable header. Reads
+     * only the header bytes, so it never derives a key.
+     */
+    fun isStandardProfile(file: ByteArray): Boolean =
+        file.size >= HEADER_BYTES && readU32(file, 12) == MEMORY_KIB.toLong() && readU32(file, 16) == PASSES.toLong()
+
+    /** The only Argon2id profiles a reader accepts. Anything else is refused before any memory is allocated. */
+    fun isReadableProfile(memoryKiB: Long, passes: Long): Boolean =
+        passes == PASSES.toLong() && (memoryKiB == MEMORY_KIB.toLong() || memoryKiB == LOW_MEMORY_KIB.toLong())
     const val LANES: Int = 1
     const val KEY_BYTES: Int = 32
     const val SALT_BYTES: Int = 16
@@ -68,15 +84,23 @@ object BackupFormat {
 }
 
 /** The parsed fixed header. [ciphertextLength] includes the tag. */
-internal class BackupHeader(val salt: ByteArray, val nonce: ByteArray, val ciphertextLength: Int) {
+internal class BackupHeader(
+    val salt: ByteArray,
+    val nonce: ByteArray,
+    val ciphertextLength: Int,
+    val memoryKiB: Int = BackupFormat.MEMORY_KIB,
+    val passes: Int = BackupFormat.PASSES,
+) {
+    val profile: BackupKdfProfile get() = BackupKdfProfile(memoryKiB, passes)
+
     fun encode(): ByteArray {
         val out = ByteArray(BackupFormat.HEADER_BYTES)
         BackupFormat.MAGIC.copyInto(out, 0)
         putU16(out, 8, BackupFormat.CONTAINER_VERSION)
         out[10] = BackupFormat.KDF_ARGON2ID13.toByte()
         out[11] = BackupFormat.AEAD_XCHACHA20_POLY1305.toByte()
-        putU32(out, 12, BackupFormat.MEMORY_KIB.toLong())
-        putU32(out, 16, BackupFormat.PASSES.toLong())
+        putU32(out, 12, memoryKiB.toLong())
+        putU32(out, 16, passes.toLong())
         out[20] = BackupFormat.LANES.toByte()
         out[21] = BackupFormat.KEY_BYTES.toByte()
         out[22] = BackupFormat.SALT_BYTES.toByte()
@@ -103,9 +127,7 @@ internal class BackupHeader(val salt: ByteArray, val nonce: ByteArray, val ciphe
             if (file[11].toInt() != BackupFormat.AEAD_XCHACHA20_POLY1305) return failure(BackupError.UnsupportedFormat)
             val memory = readU32(file, 12)
             val passes = readU32(file, 16)
-            if (memory != BackupFormat.MEMORY_KIB.toLong() || passes != BackupFormat.PASSES.toLong()) {
-                return failure(BackupError.UnsupportedFormat)
-            }
+            if (!BackupFormat.isReadableProfile(memory, passes)) return failure(BackupError.UnsupportedFormat)
             if (file[20].toInt() != BackupFormat.LANES) return failure(BackupError.UnsupportedFormat)
             if (file[21].toInt() != BackupFormat.KEY_BYTES) return failure(BackupError.UnsupportedFormat)
             if (file[22].toInt() != BackupFormat.SALT_BYTES) return failure(BackupError.NotABackup)
@@ -124,6 +146,8 @@ internal class BackupHeader(val salt: ByteArray, val nonce: ByteArray, val ciphe
                 salt = file.copyOfRange(23, 23 + BackupFormat.SALT_BYTES),
                 nonce = file.copyOfRange(40, 40 + BackupFormat.NONCE_BYTES),
                 ciphertextLength = ciphertextLength.toInt(),
+                memoryKiB = memory.toInt(),
+                passes = passes.toInt(),
             )
             return Outcome.Success(header)
         }
@@ -136,9 +160,7 @@ internal class BackupHeader(val salt: ByteArray, val nonce: ByteArray, val ciphe
             }
             if (bytes[10].toInt() != BackupFormat.KDF_ARGON2ID13) return failure(BackupError.UnsupportedFormat)
             if (bytes[11].toInt() != BackupFormat.AEAD_XCHACHA20_POLY1305) return failure(BackupError.UnsupportedFormat)
-            if (readU32(bytes, 12) != BackupFormat.MEMORY_KIB.toLong() ||
-                readU32(bytes, 16) != BackupFormat.PASSES.toLong()
-            ) {
+            if (!BackupFormat.isReadableProfile(readU32(bytes, 12), readU32(bytes, 16))) {
                 return failure(BackupError.UnsupportedFormat)
             }
             if (bytes[20].toInt() != BackupFormat.LANES) return failure(BackupError.UnsupportedFormat)
@@ -150,6 +172,8 @@ internal class BackupHeader(val salt: ByteArray, val nonce: ByteArray, val ciphe
                     salt = bytes.copyOfRange(23, 23 + BackupFormat.SALT_BYTES),
                     nonce = bytes.copyOfRange(40, 40 + BackupFormat.NONCE_BYTES),
                     ciphertextLength = 0,
+                    memoryKiB = readU32(bytes, 12).toInt(),
+                    passes = readU32(bytes, 16).toInt(),
                 ),
             )
         }
@@ -202,9 +226,15 @@ internal class BackupHeaderV2(
     val wrappedKey: ByteArray,
     val recoverySealed: ByteArray?,
     val ciphertextLength: Int,
+    val memoryKiB: Int = BackupFormat.MEMORY_KIB,
+    val passes: Int = BackupFormat.PASSES,
 ) {
+    val profile: BackupKdfProfile get() = BackupKdfProfile(memoryKiB, passes)
+
     /** The first 64 bytes: the associated data of the wrapped key. */
-    fun prefix(): ByteArray = BackupHeader(salt, nonce, 0).encode().copyOf(PREFIX_BYTES).also { putU16(it, 8, VERSION) }
+    fun prefix(): ByteArray = BackupHeader(salt, nonce, 0, memoryKiB, passes).encode()
+        .copyOf(PREFIX_BYTES)
+        .also { putU16(it, 8, VERSION) }
 
     fun encode(): ByteArray {
         val out = ByteArray(HEADER_BYTES)
@@ -251,6 +281,8 @@ internal class BackupHeaderV2(
                     wrappedKey = file.copyOfRange(88, 88 + WRAPPED_KEY_BYTES),
                     recoverySealed = if (flag == 1) file.copyOfRange(137, 137 + SEALED_KEY_BYTES) else null,
                     ciphertextLength = ciphertextLength.toInt(),
+                    memoryKiB = prefix.memoryKiB,
+                    passes = prefix.passes,
                 ),
             )
         }
@@ -261,4 +293,15 @@ internal class BackupHeaderV2(
 internal fun containerVersionOf(file: ByteArray): Int? {
     if (file.size < 10 || !file.copyOfRange(0, BackupFormat.MAGIC.size).contentEquals(BackupFormat.MAGIC)) return null
     return readU16(file, 8)
+}
+
+/** An Argon2id profile for a backup: memory in KiB and passes. The lanes, salt and output size are fixed. */
+internal data class BackupKdfProfile(val memoryKiB: Int, val passes: Int) {
+    companion object {
+        /** Every export tries this profile first. */
+        val STANDARD = BackupKdfProfile(BackupFormat.MEMORY_KIB, BackupFormat.PASSES)
+
+        /** Used once, and only after Standard fails with an allocation failure. */
+        val LOW_MEMORY = BackupKdfProfile(BackupFormat.LOW_MEMORY_KIB, BackupFormat.PASSES)
+    }
 }

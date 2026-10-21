@@ -48,6 +48,7 @@ import androidx.compose.ui.semantics.heading
 import androidx.compose.ui.semantics.liveRegion
 import androidx.compose.ui.semantics.semantics
 import androidx.compose.ui.text.TextStyle
+import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.rememberTextMeasurer
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.Constraints
@@ -111,6 +112,12 @@ import com.mk.daftar.feature.auth.resources.auth_field_label
 import com.mk.daftar.feature.auth.resources.auth_field_state
 import com.mk.daftar.feature.auth.resources.auth_forgot_pin
 import com.mk.daftar.feature.auth.resources.auth_incorrect_pin
+import com.mk.daftar.feature.auth.resources.auth_memory_body
+import com.mk.daftar.feature.auth.resources.auth_memory_cancel
+import com.mk.daftar.feature.auth.resources.auth_memory_create
+import com.mk.daftar.feature.auth.resources.auth_memory_title
+import com.mk.daftar.feature.auth.resources.auth_memory_try_again
+import com.mk.daftar.feature.auth.resources.auth_memory_unlock
 import com.mk.daftar.feature.auth.resources.auth_open_failed
 import com.mk.daftar.feature.auth.resources.auth_recovery_backup_warning
 import com.mk.daftar.feature.auth.resources.auth_recovery_body
@@ -733,10 +740,20 @@ private fun PinInputBlock(state: AuthUiState, lanes: PinLanes, onIntent: (AuthIn
     }
     val invalid = state.error == AuthError.PinMismatch ||
         (state.error == AuthError.IncorrectPin && state.retrySeconds == null)
+    val memoryError = state.error?.takeIf {
+        it == AuthError.InsufficientMemoryCreate || it == AuthError.InsufficientMemoryUnlock
+    }
     Column(
         modifier = Modifier.fillMaxWidth(),
         horizontalAlignment = Alignment.CenterHorizontally,
     ) {
+        if (memoryError != null) {
+            // The keypad gives way to the notice: the user retries the same operation or cancels it.
+            PinInput(state = state, invalid = false)
+            Spacer(Modifier.height(DaftarSpacing.sm))
+            MemoryNotice(error = memoryError, state = state, onIntent = onIntent)
+            return@Column
+        }
         PinInput(state = state, invalid = invalid)
         Spacer(Modifier.height(DaftarSpacing.xs))
         PinMessageLane(state = state, height = lanes.message)
@@ -746,6 +763,49 @@ private fun PinInputBlock(state: AuthUiState, lanes: PinLanes, onIntent: (AuthIn
         PrimaryAction(state = state, label = label, onIntent = onIntent)
         Spacer(Modifier.height(DaftarSpacing.xs))
         PinFooterLane(state = state, height = lanes.footer, onIntent = onIntent)
+    }
+}
+
+/**
+ * The allocation-failure notice: title, the shared body, and the line that says what is unchanged on this screen. Its two
+ * buttons repeat the interrupted operation or dismiss it. Nothing here counts toward the PIN backoff.
+ */
+@Composable
+private fun MemoryNotice(error: AuthError, state: AuthUiState, onIntent: (AuthIntent) -> Unit) {
+    Column(
+        modifier = Modifier.fillMaxWidth(),
+        horizontalAlignment = Alignment.CenterHorizontally,
+        verticalArrangement = Arrangement.spacedBy(DaftarSpacing.xs),
+    ) {
+        DaftarNotePanel(modifier = Modifier.fillMaxWidth(), tone = DaftarNoteTone.Error, icon = DaftarIcons.Alert) {
+            Text(
+                text = stringResource(Res.string.auth_memory_title),
+                style = DaftarTheme.typography.noteBody.copy(fontWeight = FontWeight.SemiBold),
+            )
+            Text(stringResource(Res.string.auth_memory_body), style = DaftarTheme.typography.noteBody)
+            val context = if (error == AuthError.InsufficientMemoryCreate) {
+                Res.string.auth_memory_create
+            } else {
+                Res.string.auth_memory_unlock
+            }
+            Text(stringResource(context), style = DaftarTheme.typography.noteBody)
+        }
+        PrimaryButton(
+            onClick = { onIntent(AuthIntent.RetryAfterMemory) },
+            enabled = state.busy == null,
+            fullWidth = true,
+            modifier = Modifier.fillMaxWidth(),
+        ) {
+            Text(stringResource(Res.string.auth_memory_try_again))
+        }
+        OutlineButton(
+            onClick = { onIntent(AuthIntent.CancelAfterMemory) },
+            enabled = state.busy == null,
+            fullWidth = true,
+            modifier = Modifier.fillMaxWidth(),
+        ) {
+            Text(stringResource(Res.string.auth_memory_cancel))
+        }
     }
 }
 
@@ -988,9 +1048,15 @@ private fun ErrorNote(icon: ImageVector, message: String) {
 
 private fun AuthError.messageResource(): StringResource = when (this) {
     AuthError.PinMismatch -> Res.string.p25_pin_mismatch
+
     AuthError.IncorrectPin -> Res.string.auth_incorrect_pin
+
     AuthError.OpenFailed -> Res.string.auth_open_failed
+
     AuthError.RecoveryKeyRejected -> Res.string.auth_recovery_key_rejected
+
+    // Memory errors have their own notice; this message is never shown for them.
+    AuthError.InsufficientMemoryCreate, AuthError.InsufficientMemoryUnlock -> Res.string.auth_memory_title
 }
 
 private fun AuthNotice.messageResource(): StringResource = when (this) {

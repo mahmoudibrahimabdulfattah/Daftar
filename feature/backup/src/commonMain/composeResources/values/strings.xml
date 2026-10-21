@@ -117,4 +117,11 @@
     <string name="restore_use_password">Use the backup password</string>
     <string name="restore_recovery_label">Recovery key</string>
     <string name="restore_recovery_note">The key opens only backups made after it was set up.</string>
+    <string name="backup_memory_title">Not enough memory</string>
+    <string name="backup_memory_body">Daftar couldn’t allocate the memory needed to complete this operation. Close other apps or restart your phone, then try again.</string>
+    <string name="backup_memory_export">No new backup was saved. Your data and existing backups are unchanged.</string>
+    <string name="backup_memory_restore">The backup was not restored. Your current data and the backup file are unchanged.</string>
+    <string name="backup_memory_restore_standard">This backup requires more memory. If retrying fails, restore it on another device with enough available memory.</string>
+    <string name="backup_memory_try_again">Try again</string>
+    <string name="backup_memory_cancel">Cancel</string>
 </resources>

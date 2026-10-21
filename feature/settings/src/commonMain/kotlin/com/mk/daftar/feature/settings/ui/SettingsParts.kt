@@ -248,7 +248,7 @@ internal fun biometricFailureMessage(failure: SecurityActionFailure?): String? =
     SecurityActionFailure.BiometricInvalidated -> stringResource(Res.string.bio_invalidated_notice)
     SecurityActionFailure.StorageFailure -> stringResource(Res.string.bio_storage)
     SecurityActionFailure.SessionEnded -> null
-    SecurityActionFailure.Failed -> stringResource(Res.string.bio_failed)
+    SecurityActionFailure.Failed, SecurityActionFailure.InsufficientMemory -> stringResource(Res.string.bio_failed)
     is SecurityActionFailure.Throttled -> null
     SecurityActionFailure.WrongPin -> null
 }

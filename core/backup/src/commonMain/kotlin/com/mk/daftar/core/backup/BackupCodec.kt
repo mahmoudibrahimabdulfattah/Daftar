@@ -3,6 +3,7 @@ package com.mk.daftar.core.backup
 import com.mk.daftar.core.common.Outcome
 import com.mk.daftar.core.security.PasswordCrypto
 import com.mk.daftar.core.security.SecretBytes
+import com.mk.daftar.core.security.SecurityError
 import kotlin.time.Instant
 import kotlinx.serialization.SerializationException
 import kotlinx.serialization.json.Json
@@ -61,18 +62,51 @@ class BackupCodec(
         exportedAt: Instant,
         appVersion: String,
     ): Outcome<ByteArray, BackupError> {
-        val salt = random(BackupFormat.SALT_BYTES) ?: return fail(password, BackupError.ResourceUnavailable)
-        val nonce = random(BackupFormat.NONCE_BYTES) ?: return fail(password, BackupError.ResourceUnavailable)
-        val publicKey = recoveryPublicKey()
-            ?: return encodeWith(snapshot, password, exportedAt, appVersion, salt, nonce)
-        return encodeWithRecovery(snapshot, password, exportedAt, appVersion, salt, nonce, publicKey)
+        try {
+            val salt = random(BackupFormat.SALT_BYTES) ?: return Outcome.Failure(BackupError.ResourceUnavailable)
+            val nonce = random(BackupFormat.NONCE_BYTES) ?: return Outcome.Failure(BackupError.ResourceUnavailable)
+            val publicKey = recoveryPublicKey()
+            val standard =
+                writeAt(snapshot, password, exportedAt, appVersion, salt, nonce, publicKey, BackupKdfProfile.STANDARD)
+            if (standard !is Outcome.Failure || standard.error != BackupError.InsufficientMemory) return standard
+            // Standard could not allocate its memory: one LowMemory attempt with the same salt and nonce. The file
+            // records the profile it was written with, so the reader derives with exactly that profile.
+            return writeAt(
+                snapshot,
+                password,
+                exportedAt,
+                appVersion,
+                salt,
+                nonce,
+                publicKey,
+                BackupKdfProfile.LOW_MEMORY,
+            )
+        } finally {
+            password.fill(0)
+        }
+    }
+
+    /** One export attempt at [profile]. The caller owns [password] and wipes it, so a retry still has it. */
+    private suspend fun writeAt(
+        snapshot: BackupSnapshot,
+        password: ByteArray,
+        exportedAt: Instant,
+        appVersion: String,
+        salt: ByteArray,
+        nonce: ByteArray,
+        publicKey: ByteArray?,
+        profile: BackupKdfProfile,
+    ): Outcome<ByteArray, BackupError> = if (publicKey == null) {
+        writePlain(snapshot, password, exportedAt, appVersion, salt, nonce, profile)
+    } else {
+        writeWithRecovery(snapshot, password, exportedAt, appVersion, salt, nonce, publicKey, profile)
     }
 
     /**
      * The version-two export: a random backup key encrypts the payload, and is wrapped under the password key and sealed
      * to the recovery public key. Each unwrap is proved before the file is returned.
      */
-    private suspend fun encodeWithRecovery(
+    private suspend fun writeWithRecovery(
         snapshot: BackupSnapshot,
         password: ByteArray,
         exportedAt: Instant,
@@ -80,19 +114,33 @@ class BackupCodec(
         salt: ByteArray,
         nonce: ByteArray,
         publicKey: ByteArray,
+        profile: BackupKdfProfile,
     ): Outcome<ByteArray, BackupError> {
+        if (snapshot.recordCount > BackupFormat.MAX_RECORDS) return Outcome.Failure(BackupError.TooManyRecords)
+        val plaintext = BackupJson.encodeToString(
+            PayloadDocument.serializer(),
+            snapshot.toDocument(exportedAt, appVersion),
+        ).encodeToByteArray()
         try {
-            if (snapshot.recordCount > BackupFormat.MAX_RECORDS) return Outcome.Failure(BackupError.TooManyRecords)
-            val plaintext = BackupJson.encodeToString(
-                PayloadDocument.serializer(),
-                snapshot.toDocument(exportedAt, appVersion),
-            ).encodeToByteArray()
             if (plaintext.size > BackupFormat.MAX_PLAINTEXT_BYTES) return Outcome.Failure(BackupError.TooLarge)
             val backupKey = random(BackupFormat.KEY_BYTES) ?: return Outcome.Failure(BackupError.ResourceUnavailable)
-            val wrapNonce = random(BackupFormat.NONCE_BYTES) ?: return Outcome.Failure(BackupError.ResourceUnavailable)
             try {
-                val passwordKey = deriveKey(password, salt) ?: return Outcome.Failure(BackupError.ResourceUnavailable)
-                val prefix = BackupHeaderV2(salt, nonce, wrapNonce, ByteArray(0), null, 0).prefix()
+                val wrapNonce =
+                    random(BackupFormat.NONCE_BYTES) ?: return Outcome.Failure(BackupError.ResourceUnavailable)
+                val passwordKey = when (val derived = deriveKey(password, salt, profile)) {
+                    is Outcome.Failure -> return Outcome.Failure(derived.error)
+                    is Outcome.Success -> derived.data
+                }
+                val prefix = BackupHeaderV2(
+                    salt = salt,
+                    nonce = nonce,
+                    wrapNonce = wrapNonce,
+                    wrappedKey = ByteArray(0),
+                    recoverySealed = null,
+                    ciphertextLength = 0,
+                    memoryKiB = profile.memoryKiB,
+                    passes = profile.passes,
+                ).prefix()
                 val wrapped = try {
                     crypto.seal(passwordKey, wrapNonce, prefix, backupKey)
                 } finally {
@@ -114,15 +162,55 @@ class BackupCodec(
                     wrappedKey = wrapped,
                     recoverySealed = sealed,
                     ciphertextLength = plaintext.size + BackupFormat.TAG_BYTES,
+                    memoryKiB = profile.memoryKiB,
+                    passes = profile.passes,
                 ).encode()
                 val ciphertext = crypto.sealWithKey(backupKey, nonce, header, plaintext)
                 return Outcome.Success(header + ciphertext)
             } finally {
                 backupKey.fill(0)
-                plaintext.fill(0)
             }
         } finally {
-            password.fill(0)
+            plaintext.fill(0)
+        }
+    }
+
+    /** The password-only export, container version one, at [profile]. */
+    private suspend fun writePlain(
+        snapshot: BackupSnapshot,
+        password: ByteArray,
+        exportedAt: Instant,
+        appVersion: String,
+        salt: ByteArray,
+        nonce: ByteArray,
+        profile: BackupKdfProfile,
+    ): Outcome<ByteArray, BackupError> {
+        if (snapshot.recordCount > BackupFormat.MAX_RECORDS) return Outcome.Failure(BackupError.TooManyRecords)
+        val json = snapshot.toDocument(exportedAt, appVersion).let { document ->
+            BackupJson.encodeToString(PayloadDocument.serializer(), document)
+        }
+        val plaintext = json.encodeToByteArray()
+        try {
+            if (plaintext.size > BackupFormat.MAX_PLAINTEXT_BYTES) return Outcome.Failure(BackupError.TooLarge)
+            val key = when (val derived = deriveKey(password, salt, profile)) {
+                is Outcome.Failure -> return Outcome.Failure(derived.error)
+                is Outcome.Success -> derived.data
+            }
+            try {
+                val header = BackupHeader(
+                    salt = salt,
+                    nonce = nonce,
+                    ciphertextLength = plaintext.size + BackupFormat.TAG_BYTES,
+                    memoryKiB = profile.memoryKiB,
+                    passes = profile.passes,
+                ).encode()
+                val ciphertext = crypto.seal(key, nonce, header, plaintext)
+                return Outcome.Success(header + ciphertext)
+            } finally {
+                key.wipe()
+            }
+        } finally {
+            plaintext.fill(0)
         }
     }
 
@@ -175,7 +263,10 @@ class BackupCodec(
             is Outcome.Failure -> return Outcome.Failure(parsed.error)
             is Outcome.Success -> parsed.data
         }
-        val passwordKey = deriveKey(password, header.salt) ?: return Outcome.Failure(BackupError.ResourceUnavailable)
+        val passwordKey = when (val derived = deriveKey(password, header.salt, header.profile)) {
+            is Outcome.Failure -> return Outcome.Failure(derived.error)
+            is Outcome.Success -> derived.data
+        }
         val backupKey = try {
             crypto.open(
                 passwordKey,
@@ -191,8 +282,9 @@ class BackupCodec(
     }
 
     /**
-     * Encodes with the given salt and nonce. Production always draws them fresh through [encode]. This entry point
-     * exists so the format tests can pin a known-answer vector, and it rejects any salt or nonce of the wrong length.
+     * Encodes a password-only file with the given salt and nonce at [profile]. Production always draws them fresh through
+     * [encode]. This entry point exists so the format tests can pin known-answer vectors, and it rejects any salt or nonce
+     * of the wrong length.
      */
     internal suspend fun encodeWith(
         snapshot: BackupSnapshot,
@@ -201,27 +293,11 @@ class BackupCodec(
         appVersion: String,
         salt: ByteArray,
         nonce: ByteArray,
+        profile: BackupKdfProfile = BackupKdfProfile.STANDARD,
     ): Outcome<ByteArray, BackupError> {
         try {
             require(salt.size == BackupFormat.SALT_BYTES && nonce.size == BackupFormat.NONCE_BYTES)
-            if (snapshot.recordCount > BackupFormat.MAX_RECORDS) return Outcome.Failure(BackupError.TooManyRecords)
-            val json = snapshot.toDocument(exportedAt, appVersion).let { document ->
-                BackupJson.encodeToString(PayloadDocument.serializer(), document)
-            }
-            val plaintext = json.encodeToByteArray()
-            if (plaintext.size > BackupFormat.MAX_PLAINTEXT_BYTES) return Outcome.Failure(BackupError.TooLarge)
-            try {
-                val key = deriveKey(password, salt) ?: return Outcome.Failure(BackupError.ResourceUnavailable)
-                try {
-                    val header = BackupHeader(salt, nonce, plaintext.size + BackupFormat.TAG_BYTES).encode()
-                    val ciphertext = crypto.seal(key, nonce, header, plaintext)
-                    return Outcome.Success(header + ciphertext)
-                } finally {
-                    key.wipe()
-                }
-            } finally {
-                plaintext.fill(0)
-            }
+            return writePlain(snapshot, password, exportedAt, appVersion, salt, nonce, profile)
         } finally {
             password.fill(0)
         }
@@ -238,7 +314,10 @@ class BackupCodec(
                 is Outcome.Failure -> return Outcome.Failure(parsed.error)
                 is Outcome.Success -> parsed.data
             }
-            val key = deriveKey(password, header.salt) ?: return Outcome.Failure(BackupError.ResourceUnavailable)
+            val key = when (val derived = deriveKey(password, header.salt, header.profile)) {
+                is Outcome.Failure -> return Outcome.Failure(derived.error)
+                is Outcome.Success -> derived.data
+            }
             try {
                 val associatedData = file.copyOfRange(0, BackupFormat.HEADER_BYTES)
                 val ciphertext = file.copyOfRange(BackupFormat.HEADER_BYTES, file.size)
@@ -357,21 +436,27 @@ class BackupCodec(
         null
     }
 
-    private fun fail(password: ByteArray, error: BackupError): Outcome<ByteArray, BackupError> {
-        password.fill(0)
-        return Outcome.Failure(error)
-    }
-
     private suspend fun random(size: Int): ByteArray? = when (val result = crypto.randomBytes(size)) {
         is Outcome.Failure -> null
         is Outcome.Success -> result.data
     }
 
-    /** The fixed Argon2id parameters, validated by the security layer before any allocation. */
-    private suspend fun deriveKey(password: ByteArray, salt: ByteArray): SecretBytes? =
-        when (val derived = crypto.deriveKey(password, salt, BackupFormat.MEMORY_KIB, BackupFormat.PASSES)) {
-            is Outcome.Failure -> null
-            is Outcome.Success -> derived.data
+    /** Argon2id v1.3 of [password] at [profile]. Parameters are validated by the security layer before allocation. */
+    private suspend fun deriveKey(
+        password: ByteArray,
+        salt: ByteArray,
+        profile: BackupKdfProfile,
+    ): Outcome<SecretBytes, BackupError> =
+        when (val derived = crypto.deriveKey(password, salt, profile.memoryKiB, profile.passes)) {
+            is Outcome.Failure -> Outcome.Failure(
+                if (derived.error == SecurityError.InsufficientMemory) {
+                    BackupError.InsufficientMemory
+                } else {
+                    BackupError.ResourceUnavailable
+                },
+            )
+
+            is Outcome.Success -> Outcome.Success(derived.data)
         }
 }
 

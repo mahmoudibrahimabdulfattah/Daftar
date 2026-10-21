@@ -61,6 +61,12 @@ enum class AuthError {
 
     /** The recovery key is not this vault's. Nothing changed. */
     RecoveryKeyRejected,
+
+    /** Argon2id could not allocate memory while creating the vault. Nothing was created; the screen offers a retry. */
+    InsufficientMemoryCreate,
+
+    /** Argon2id could not allocate memory while unlocking or recovering. The vault stays locked; the screen offers a retry. */
+    InsufficientMemoryUnlock,
 }
 
 /** An informative message about biometrics. It never blocks the PIN path and is never an error toast. */
@@ -177,6 +183,12 @@ sealed interface AuthIntent : UiIntent {
 
     /** "Choose another PIN": wipes the candidate and returns to an empty Create. */
     data object RestartCreation : AuthIntent
+
+    /** "Try again" after a memory shortage: repeats the same operation with the input the screen still holds. */
+    data object RetryAfterMemory : AuthIntent
+
+    /** "Cancel" after a memory shortage: dismisses the notice. Nothing is changed or created. */
+    data object CancelAfterMemory : AuthIntent
 
     /** "Enable biometrics" on the offer: creates the vault and enrolls the same key. */
     data object EnableBiometrics : AuthIntent
